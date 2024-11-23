@@ -11,7 +11,7 @@ import { DynamicWidget, useDynamicContext } from '@dynamic-labs/sdk-react-core'
 import ChainItem from '../utilities/ChainItem'
 import SelectTokenModal from '../utilities/SelectTokenModal'
 import { base, arbitrum } from 'viem/chains'
-
+import axios from 'axios'
 const Icon = [
   { icon: ARBITRUM, name: 'Arbitrum', chainId: arbitrum.id },
   { icon: BASE, name: 'Base', chainId: base.id }
@@ -53,16 +53,28 @@ function Homepage () {
   const { primaryWallet } = useDynamicContext()
   useEffect(() => {
     const fetchTokenList = async () => {
+      // try {
+      //   const response = await fetch(CORS_PROXY + UNISWAP_TOKEN_LIST)
+      //   if (!response.ok) {
+      //     throw new Error(`HTTP error! status: ${response.status}`)
+      //   }
+      //   const data = await response.json()
+      //   setMyTokenList(data) // Store the fetched token list
+      // } catch (err) {
+      //   console.log(err)
+      // } finally {
+      //   return
+      // }
       try {
-        const response = await fetch(CORS_PROXY + UNISWAP_TOKEN_LIST)
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`)
+        const response = await axios.get(CORS_PROXY + UNISWAP_TOKEN_LIST)
+        if (response.status == 200) {
+          const data = response.data
+          setMyTokenList(data)
         }
-        const data = await response.json()
-        setMyTokenList(data) // Store the fetched token list
+        console.log('response', response)
+        return
       } catch (err) {
-        console.log(err)
-      } finally {
+        console.log('axios error')
         return
       }
     }
