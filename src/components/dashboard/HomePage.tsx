@@ -1,22 +1,16 @@
 import { twMerge } from 'tailwind-merge'
 import Card from '../tailus-ui/Card'
 import { useEffect } from 'react'
-// import Separator from "../tailus-ui/Separator";
 import { Settings } from 'lucide-react'
 import { ChevronDown } from 'lucide-react'
 import BASE from '/Base.svg'
-// import GODDOG from "/Goddog.svg";
 import ARBITRUM from '/arbitrum.svg'
-// import FeeItem from '../utilities/FeeItem'
 import { useState } from 'react'
 import Data from '../data'
 import { DynamicWidget, useDynamicContext } from '@dynamic-labs/sdk-react-core'
 import ChainItem from '../utilities/ChainItem'
 import SelectTokenModal from '../utilities/SelectTokenModal'
 import { base, arbitrum } from 'viem/chains'
-// import { TokenList, schema } from "@uniswap/token-lists";
-// import Moralis from "moralis";
-// import MORALIS_KEY from "../data";
 
 const Icon = [
   { icon: ARBITRUM, name: 'Arbitrum', chainId: arbitrum.id },
@@ -45,7 +39,8 @@ function Homepage () {
   const [isSelectChain, setSelectChain] = useState(false)
   // const [fee, setFee] = useState("1%");
   // const [text, setText] = useState("");
-  const [range, setRange] = useState('Max')
+  // const [range, setRange] = useState('Max')
+  const range = 'Max'
   const [chain, setChain] = useState(0)
   const [walletBalance, setWalletBalance] = useState('0')
   const UNISWAP_TOKEN_LIST = 'https://gateway.ipfs.io/ipns/tokens.uniswap.org'
