@@ -44,13 +44,19 @@ function Homepage () {
   const [chain, setChain] = useState(0)
   const [walletBalance, setWalletBalance] = useState('0')
   const UNISWAP_TOKEN_LIST = 'https://gateway.ipfs.io/ipns/tokens.uniswap.org'
-  const CORS_PROXY = 'https://thingproxy.freeboard.io/fetch/'
+  const CORS_PROXY = 'https://thingproxy.freeboard.io/fetch/' //
   const [myTokenList, setMyTokenList] = useState(null)
   const [selectedToken, setSelectedToken] = useState<selectedTokenType>(ARB)
   const [selectedTokenBalance, setSelectedTokenBalance] = useState('')
   const [show, setShow] = useState(false)
 
   const { primaryWallet } = useDynamicContext()
+  const config = {
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET,PUT,POST,DELETE,PATCH,OPTIONS'
+    }
+  }
   useEffect(() => {
     const fetchTokenList = async () => {
       // try {
@@ -66,7 +72,10 @@ function Homepage () {
       //   return
       // }
       try {
-        const response = await axios.get(CORS_PROXY + UNISWAP_TOKEN_LIST)
+        const response = await axios.get(
+          CORS_PROXY + UNISWAP_TOKEN_LIST,
+          config
+        )
         if (response.status == 200) {
           const data = response.data
           setMyTokenList(data)
