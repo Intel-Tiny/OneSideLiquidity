@@ -1,0 +1,73 @@
+Arguments: 
+  C:\Program Files\nodejs\node.exe C:\Program Files (x86)\Yarn\bin\yarn.js add react-icons
+
+PATH: 
+  C:\Users\pc\bin;C:\Program Files\Git\mingw64\bin;C:\Program Files\Git\usr\local\bin;C:\Program Files\Git\usr\bin;C:\Program Files\Git\usr\bin;C:\Program Files\Git\mingw64\bin;C:\Program Files\Git\usr\bin;C:\Users\pc\bin;C:\Windows\system32;C:\Windows;C:\Windows\System32\Wbem;C:\Windows\System32\WindowsPowerShell\v1.0;C:\Windows\System32\OpenSSH;C:\Program Files\Git\cmd;C:\Program Files\nodejs;C:\Program Files (x86)\Yarn\bin;C:\Program Files\MongoDB\Server\7.0\bin;C:\Users\pc\AppData\Local\Programs\Python\Python313\Scripts;C:\Users\pc\AppData\Local\Programs\Python\Python313;C:\Users\pc\AppData\Local\Microsoft\WindowsApps;C:\Users\pc\AppData\Roaming\npm;C:\Users\pc\AppData\Local\Yarn\bin;C:\Users\pc\AppData\Local\Programs\Microsoft VS Code\bin;C:\Users\pc\AppData\Roaming\Programs\Zero Install;C:\Program Files\Git\usr\bin\vendor_perl;C:\Program Files\Git\usr\bin\core_perl
+
+Yarn version: 
+  1.22.4
+
+Node version: 
+  22.3.0
+
+Platform: 
+  win32 x64
+
+Trace: 
+  Error: EPERM: operation not permitted, unlink 'E:\ui\goddog\node_modules\@esbuild\win32-x64\esbuild.exe'
+
+npm manifest: 
+  {
+    "name": "tailus-ui-card-layout",
+    "private": true,
+    "version": "0.0.0",
+    "type": "module",
+    "scripts": {
+      "dev": "vite",
+      "build": "tsc && vite build",
+      "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+      "preview": "vite preview"
+    },
+    "dependencies": {
+      "@faker-js/faker": "^8.4.1",
+      "@radix-ui/react-accordion": "^1.2.0",
+      "@radix-ui/react-aspect-ratio": "^1.1.0",
+      "@radix-ui/react-avatar": "^1.1.0",
+      "@radix-ui/react-dropdown-menu": "^2.1.1",
+      "@radix-ui/react-popover": "^1.1.1",
+      "@radix-ui/react-progress": "^1.1.0",
+      "@radix-ui/react-scroll-area": "^1.1.0",
+      "@radix-ui/react-select": "^2.1.1",
+      "@radix-ui/react-separator": "^1.1.0",
+      "@radix-ui/react-tabs": "^1.1.0",
+      "@radix-ui/react-tooltip": "^1.1.2",
+      "@tailus/themer": "^0.1.8",
+      "eslint": "8.56.0",
+      "lucide-react": "^0.399.0",
+      "react": "^18.2.0",
+      "react-dom": "^18.2.0",
+      "recharts": "^2.12.7",
+      "tailwind-merge": "^2.4.0",
+      "tailwind-variants": "^0.2.1"
+    },
+    "devDependencies": {
+      "@types/react": "^18.2.65",
+      "@types/react-dom": "^18.2.21",
+      "@typescript-eslint/eslint-plugin": "^7.2.0",
+      "@typescript-eslint/parser": "^7.2.0",
+      "@vitejs/plugin-react": "^4.2.1",
+      "autoprefixer": "10.4.19",
+      "eslint-plugin-react-hooks": "^4.6.0",
+      "eslint-plugin-react-refresh": "^0.4.5",
+      "postcss": "8.4.38",
+      "tailwindcss": "3.4.3",
+      "typescript": "^5.4.2",
+      "vite": "^5.1.6"
+    }
+  }
+
+yarn manifest: 
+  No manifest
+
+Lockfile: 
+  No lockfile
