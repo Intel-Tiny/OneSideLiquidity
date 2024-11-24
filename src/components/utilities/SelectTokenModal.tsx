@@ -107,9 +107,9 @@ const SelectTokenModal = ({
         }
       )
       const data = await response.json()
-      console.log('data from dexscreener: ', data)
+      // console.log('data from dexscreener: ', data)
       const logo = data.pairs[0].info.imageUrl
-      console.log('logo', logo)
+      // console.log('logo', logo)
       const newFoundToken = {
         address: searchKeyword,
         name: metadata.name,
@@ -141,7 +141,7 @@ const SelectTokenModal = ({
           return item
         }
       })
-      console.log('result: ', result)
+      // console.log('result: ', result)
       setSearchTokens(result)
     }
   }, [searchKeyword])
