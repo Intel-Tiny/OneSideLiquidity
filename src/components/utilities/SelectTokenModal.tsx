@@ -8,7 +8,7 @@ import {
 import { X, Search } from 'lucide-react'
 import Separator from '../tailus-ui/Separator'
 import { useDynamicContext } from '@dynamic-labs/sdk-react-core'
-import { ethers } from 'ethers'
+import { ethers, Log } from 'ethers'
 // import Moralis from "moralis";
 import { Network, Alchemy } from 'alchemy-sdk'
 import BASE from '/Base.svg'
@@ -59,45 +59,45 @@ const SelectTokenModal = ({
     )
     setFilterTokens(filteredTokens)
 
-    const options = {
-      method: 'GET',
-      headers: { accept: 'application/json', 'x-chain': 'base' }
-    }
+    // const options = {
+    //   method: 'GET',
+    //   headers: { accept: 'application/json', 'x-chain': 'base' }
+    // }
 
-    fetch(
-      'https://public-api.birdeye.so/defi/token_trending?sort_by=rank&sort_type=asc&offset=0&limit=10',
-      options
-    )
-      .then(res => res.json())
-      .then(res => console.log('trending: ', res))
-      .catch(err => console.error(err))
+    // fetch(
+    //   'https://public-api.birdeye.so/defi/token_trending?sort_by=rank&sort_type=asc&offset=0&limit=10',
+    //   options
+    // )
+    //   .then(res => res.json())
+    //   .then(res => console.log('trending: ', res))
+    //   .catch(err => console.error(err))
   }, [chain])
   const fetchBalances = async () => {
     if (primaryWallet) {
       const response = await alchemy.core.getTokenBalances(
         primaryWallet?.address
       )
-      setExistingTokenList(response.tokenBalances)
+      if (response.tokenBalances.length > 0)
+        setExistingTokenList(response.tokenBalances)
     }
   }
+
   useEffect(() => {
     fetchBalances()
-  }, [primaryWallet])
+    setSearchKeyword('')
+  }, [open])
   const getTokenBalance = (tokenAddress: string, decimals: number) => {
+    let balanceOfToken = 0
     existingTokenList.map((item: any) => {
-      if (item.contractAddress === tokenAddress) {
+      if (item.contractAddress.toLowerCase() === tokenAddress.toLowerCase()) {
         const amount = BigInt(item.tokenBalance)
-        const balanceOfToken = Number(
-          ethers.parseUnits(String(amount), decimals)
-        )
-        return balanceOfToken.toFixed(3)
+        balanceOfToken = Number(ethers.formatUnits(String(amount), decimals))
       }
     })
-    return 0
+    return balanceOfToken.toFixed(3)
   }
   const searchTokenAddress = async () => {
     const metadata = await alchemy.core.getTokenMetadata(searchKeyword)
-    console.log('metadata: ', metadata)
     if (metadata) {
       const response = await fetch(
         `https://api.dexscreener.com/latest/dex/tokens/${searchKeyword}`,
@@ -107,9 +107,7 @@ const SelectTokenModal = ({
         }
       )
       const data = await response.json()
-      // console.log('data from dexscreener: ', data)
       const logo = data.pairs[0].info.imageUrl
-      // console.log('logo', logo)
       const newFoundToken = {
         address: searchKeyword,
         name: metadata.name,
@@ -141,7 +139,6 @@ const SelectTokenModal = ({
           return item
         }
       })
-      // console.log('result: ', result)
       setSearchTokens(result)
     }
   }, [searchKeyword])
