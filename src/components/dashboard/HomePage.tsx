@@ -201,7 +201,9 @@ function Homepage () {
         selectToken={selectedToken}
         symbol={Icon[chain].icon}
         tokenAmount={amount}
+        isLoading={isLoading}
         onApprove={() => {
+          setIsLoading(true)
           setIsApprove(false)
           setPreviewShow(false)
           setAmount('')

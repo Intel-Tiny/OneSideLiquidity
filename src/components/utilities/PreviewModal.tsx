@@ -15,6 +15,7 @@ import { Network, Alchemy } from 'alchemy-sdk'
 import BASE from '/Base.svg'
 import ARBITRUM from '/arbitrum.svg'
 import { Check } from 'lucide-react'
+import Loader from './Loader'
 
 type PreviewType = {
   name: string
@@ -30,7 +31,8 @@ const PreviewModal = ({
   onApprove,
   selectToken,
   symbol,
-  tokenAmount
+  tokenAmount,
+  isLoading
 }: // AllTokenData,
 // chain,
 // BasicTokens
@@ -41,6 +43,7 @@ const PreviewModal = ({
   selectToken: any
   symbol: any
   tokenAmount: string
+  isLoading: boolean
   // AllTokenData: any
   // chain: number
   // BasicTokens: any
@@ -96,7 +99,7 @@ const PreviewModal = ({
                         className='bg-red-700 hover:border-white text-white  border-red-500 border cursor-pointer p-2 rounded-lg'
                         onClick={onApprove}
                       >
-                        Add
+                        {isLoading ? <Loader /> : 'Add'}
                       </button>
                     </div>
                   </div>
