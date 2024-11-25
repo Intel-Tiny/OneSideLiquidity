@@ -5,6 +5,34 @@ const MORALIS_KEY =
 const Tokens = {
   tokens: [
     {
+      chainId: 42161,
+      address: '0xb08D8BeCAB1bf76A9Ce3d2d5fa946F65EC1d3e83',
+      name: 'GammaSwap',
+      symbol: 'GS',
+      decimals: 18,
+      logoURI:
+        'https://dd.dexscreener.com/ds-data/tokens/arbitrum/0xb08d8becab1bf76a9ce3d2d5fa946f65ec1d3e83.png?key=886ce3',
+      extensions: {
+        bridgeInfo: {
+          '10': {
+            tokenAddress: '0xAd42D013ac31486B73b6b059e748172994736426'
+          },
+          '56': {
+            tokenAddress: '0x111111111117dC0aa78b770fA6A738034120C302'
+          },
+          '8453': {
+            tokenAddress: '0xc5fecC3a29Fb57B5024eEc8a2239d4621e111CBE'
+          },
+          '42161': {
+            tokenAddress: '0x6314C31A7a1652cE482cffe247E9CB7c3f4BB9aF'
+          },
+          '43114': {
+            tokenAddress: '0xd501281565bf7789224523144Fe5D98e8B28f267'
+          }
+        }
+      }
+    },
+    {
       chainId: 1,
       address: '0x111111111117dC0aa78b770fA6A738034120C302',
       name: '1inch',
