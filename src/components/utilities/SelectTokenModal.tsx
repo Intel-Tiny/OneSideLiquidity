@@ -16,10 +16,12 @@ import ARBITRUM from '/arbitrum.svg'
 import { Check } from 'lucide-react'
 
 type selectedTokenType = {
-  name: string
-  symbol: string
-  logoURI: string
-}
+  name: string;
+  symbol: string;
+  logoURI: string;
+  address: string;
+  decimals: number;
+};
 
 const SelectTokenModal = ({
   open,
