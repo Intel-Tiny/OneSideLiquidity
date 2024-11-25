@@ -14,6 +14,7 @@ import PreviewModal from '../utilities/PreviewModal'
 import { base, arbitrum } from 'viem/chains'
 import { getSigner } from '@dynamic-labs/ethers-v6'
 import { ethers } from 'ethers'
+import Loader from '../utilities/Loader'
 // import Background from '../utilities/Background'
 const Icon = [
   {
@@ -151,10 +152,10 @@ function Homepage () {
 
   const handleApprove = async () => {
     console.log('approve start')
+    setIsApprove(true)
     setIsLoading(true)
     await new Promise(resolve => setTimeout(resolve, 1200))
     setIsLoading(false)
-    setIsApprove(true)
     // setPreviewShow(true)
     return 9
     // if (primaryWallet) {
@@ -188,7 +189,6 @@ function Homepage () {
           AllTokenData={myTokenList}
           chain={Icon[chain].chainId}
           BasicTokens={BasicTokens[chain]}
-          // selectedToken={selectedToken}
           setSelectedToken={setSelectedTokenInfo}
           setSelectedTokenBalance={setSelectedTokenBalance}
           selectedToken={selectedToken}
@@ -365,15 +365,16 @@ function Homepage () {
                 ? 'Insufficient Balance'
                 : 'Deposit and Start Earning'}
             </button>
+
             <button
               className={
                 isApprove
-                  ? 'block bg-red-700 hover:border-white text-white  border-red-500 border cursor-pointer p-2 rounded-lg'
+                  ? `block bg-red-700 hover:border-white text-white border-red-500 border cursor-pointer p-2 rounded-xl`
                   : 'hidden'
               }
               onClick={() => setPreviewShow(true)}
             >
-              Preview
+              {isLoading ? <Loader /> : 'Preview'}
             </button>
           </Card>
         </div>
