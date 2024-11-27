@@ -184,7 +184,7 @@ function Homepage() {
         setIsApprove(true);
       } catch (err) {
         setIsLoading(false);
-        setIsApprove(true);
+        setIsApprove(false);
         if (String(err).includes("Error: user rejected action")) {
           toast.error(`User rejected!`);
         } else {
@@ -267,8 +267,16 @@ function Homepage() {
       console.log("upperPrice: ", upperPrice);
       const tickLower = getPriceToTick(lowerPrice);
       const tickUpper = getPriceToTick(upperPrice);
-      const tickLower1 = BigInt(Math.floor((tickLower) / 100) * 100);
-      const tickUpper1 = BigInt(Math.floor((tickUpper) / 100) * 100);
+      let tempTickLower = Math.floor(tickLower / 100) * 100;
+      let tempTickUpper = Math.floor(tickUpper / 100) * 100;
+      if (tempTickLower % 200 != 0) {
+        tempTickLower += 100;
+      }
+      if (tempTickUpper % 200 != 0) {
+        tempTickUpper += 100;
+      }
+      const tickLower1 = BigInt(tempTickLower);
+      const tickUpper1 = BigInt(tempTickUpper);
       const mintFunctionSignature =
         "mint((address,address,uint24,int24,int24,uint256,uint256,uint256,uint256,address,uint256))";
       console.log("primaryWallet.address: ", primaryWallet?.address);
@@ -303,9 +311,93 @@ function Homepage() {
       toast.success("Successfully added!");
       return;
     } catch (err) {
-      //fasle
-      toast.error("Transaction failed!");
-      return;
+      try {
+        const abi = Data.routerABI;
+        const signer = await getSigner(primaryWallet as any);
+        const routerContract = new ethers.Contract(
+          Icon[chain].routerAddress,
+          abi,
+          signer
+        );
+
+        const createFunctionSignature =
+          "createAndInitializePoolIfNecessary(address,address,uint24,uint160)";
+        let address1 = selectedToken.address; // First address
+        let address2 = GoddogTokenAddress; // Second address
+        const fee = BigInt("10000"); // uint24 value
+        const [price1, price2] = await calculateTokenPrices(address1, address2);
+        console.log("price1:", price1, " price2:", price2);
+        let currentPrice = Number(price1) / Number(price2);
+        console.log("currentPrice:", currentPrice * 0.95);
+        const lowerPrice = currentPrice * 0.96;
+        const upperPrice = currentPrice * 3;
+        currentPrice = currentPrice * 0.95;
+        currentPrice = 1.0 / currentPrice;
+        const sqrtPrice = calculateSqrtPriceX96(currentPrice);
+        console.log("sqrtPrice: ", sqrtPrice);
+
+        const iface = new ethers.Interface(abi);
+        const params1 = [address2, address1, fee, BigInt(sqrtPrice)];
+        console.log("params1:", params1);
+        const data1 = iface.encodeFunctionData(
+          createFunctionSignature,
+          params1
+        );
+        console.log("data1", data1);
+
+        console.log("lowerPrice: ", lowerPrice);
+        console.log("upperPrice: ", upperPrice);
+        const tickLower = getPriceToTick(lowerPrice);
+        const tickUpper = getPriceToTick(upperPrice);
+        let tempTickLower = Math.floor(tickLower / 100) * 100;
+        let tempTickUpper = Math.floor(tickUpper / 100) * 100;
+        if (tempTickLower % 200 != 0) {
+          tempTickLower += 100;
+        }
+        if (tempTickUpper % 200 != 0) {
+          tempTickUpper += 100;
+        }
+        const tickLower1 = BigInt(tempTickLower);
+        const tickUpper1 = BigInt(tempTickUpper);
+        const mintFunctionSignature =
+          "mint((address,address,uint24,int24,int24,uint256,uint256,uint256,uint256,address,uint256))";
+        console.log("primaryWallet.address: ", primaryWallet?.address);
+        console.log("Date.now(): ", Date.now());
+        const desiredAmount = BigInt(
+          Number(amount) * 10 ** selectedToken.decimals
+        );
+        const params2 = [
+          {
+            token0: address2,
+            token1: address1,
+            fee: fee,
+            tickLower: -tickUpper1,
+            tickUpper: -tickLower1,
+            amount0Desired: 0,
+            amount1Desired: desiredAmount,
+            amount0Min: 0,
+            amount1Min: desiredAmount,
+            recipient: primaryWallet?.address,
+            deadline: BigInt(Math.floor(Date.now() / 1000) + 1200),
+          },
+        ];
+        console.log("params2: ", params2);
+        const data2 = iface.encodeFunctionData(mintFunctionSignature, params2);
+        console.log("data2", data2);
+        const txData = [data1, data2];
+        const tx = await routerContract.multicall(txData);
+        await tx.wait();
+        // const tx = await routerContract.multicall.estimateGas(txData);
+        // console.log("tx", tx);
+        console.log("transaction success");
+        toast.success("Successfully added!");
+      } catch (error) {
+        toast.error("Transaction failed!");
+        return;
+      }
+      // //fasle
+      // toast.error("Transaction failed!");
+      // return;
     }
   };
   console.log("isLoading======>", isLoading);
