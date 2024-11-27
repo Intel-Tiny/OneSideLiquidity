@@ -1,6 +1,5 @@
 import Card from "../tailus-ui/Card";
 import { useEffect } from "react";
-import { Settings } from "lucide-react";
 import { ChevronDown } from "lucide-react";
 import BASE from "/Base.svg";
 import ARBITRUM from "/arbitrum.svg";
@@ -105,6 +104,13 @@ function Homepage() {
         setAmount(value);
       }
     } else setAmount("");
+  };
+  const handleRangeClick = (item: string) => {
+    console.log("click button", item);
+
+    if (item === "Max") {
+      setAmount(selectedTokenBalance);
+    }
   };
   useEffect(() => {
     if (amount != "") {
@@ -261,8 +267,8 @@ function Homepage() {
       console.log("upperPrice: ", upperPrice);
       const tickLower = getPriceToTick(lowerPrice);
       const tickUpper = getPriceToTick(upperPrice);
-      const tickLower1 = BigInt(Math.floor((tickLower + 100) / 100) * 100);
-      const tickUpper1 = BigInt(Math.floor((tickUpper + 100) / 100) * 100);
+      const tickLower1 = BigInt(Math.floor((tickLower) / 100) * 100);
+      const tickUpper1 = BigInt(Math.floor((tickUpper) / 100) * 100);
       const mintFunctionSignature =
         "mint((address,address,uint24,int24,int24,uint256,uint256,uint256,uint256,address,uint256))";
       console.log("primaryWallet.address: ", primaryWallet?.address);
@@ -279,7 +285,7 @@ function Homepage() {
           tickUpper: tickUpper1,
           amount0Desired: desiredAmount,
           amount1Desired: 0,
-          amount0Min: 0,
+          amount0Min: desiredAmount,
           amount1Min: 0,
           recipient: primaryWallet?.address,
           deadline: BigInt(Math.floor(Date.now() / 1000) + 1200),
@@ -388,25 +394,25 @@ function Homepage() {
       >
         <div className="mx-auto pt-6">
           <div className="text-white text-center text-4xl ">
-            Unleash Your Invesment Potential
+            Cerberus Token Converter
           </div>
-          <div className="text-gray-400 text-xl text-center">
+          {/* <div className='text-gray-400 text-xl text-center'>
             Secure, innovative, and high-yield opportunities in the
-          </div>
-          <div className="text-gray-400 text-xl text-center items-center">
+          </div> */}
+          {/* <div className='text-gray-400 text-xl text-center items-center'>
             decentralized finance landscape
-          </div>
+          </div> */}
         </div>
         <div className="w-full py-6 flex justify-center items-center">
           <Card className="max-w-lg bg-cardbg border-borderbg flex flex-col gap-6">
             <div className="text-white text-4xl text-center">
-              Srategic vault Deposit
+              Token Converter
             </div>
             <div className="flex flex-row justify-center items-center gap-1">
-              <div className="text-gray-200 text-2xl">Performance Fee: 1%</div>
-              <div className="text-gray-200 text-2xl  flex flex-row items-center gap-2">
+              {/* <div className='text-gray-200 text-2xl'>Performance Fee: 1%</div> */}
+              {/* <div className='text-gray-200 text-2xl  flex flex-row items-center gap-2'>
                 <Settings />
-              </div>
+              </div> */}
             </div>
             <div className="bg-modalbg rounded-xl border border-borderbg bg-mediumred flex flex-col gap-2 p-3">
               <div className="flex flex-row justify-between items-baseline">
@@ -463,7 +469,7 @@ function Homepage() {
                           ? "border-white text-white font-bold"
                           : "border-borderbg"
                       } hover:border-white py-2 text-gray-500 flex flex-row justify-center gap-2`}
-                      // onClick={() => handleRangeClick(item)}
+                      onClick={() => handleRangeClick(item)}
                     >
                       {item}
                     </button>
@@ -507,7 +513,7 @@ function Homepage() {
           </Card>
         </div>
         <div className="mx-auto w-full">
-          <div className="text-gray-400 text-lg text-center">
+          <div className="text-gray-400 text-xl text-center">
             Cerberus Inu: Guarding your assets with cutting-edge DeFi
           </div>
           <div className="text-gray-400 text-xl text-center">
