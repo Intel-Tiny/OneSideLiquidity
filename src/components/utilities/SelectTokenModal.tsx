@@ -8,7 +8,7 @@ import {
 import { X, Search } from "lucide-react";
 import Separator from "../tailus-ui/Separator";
 import { useDynamicContext } from "@dynamic-labs/sdk-react-core";
-import { ethers, Log } from "ethers";
+import { ethers } from "ethers";
 // import Moralis from "moralis";
 import { Network, Alchemy } from "alchemy-sdk";
 import BASE from "/Base.svg";

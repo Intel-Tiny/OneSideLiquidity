@@ -1,29 +1,29 @@
-import { Fragment, useEffect, useState } from 'react'
+import { Fragment } from 'react'
 import {
   Dialog,
   DialogPanel,
   Transition,
   TransitionChild
 } from '@headlessui/react'
-import { X, Search, ChevronDown } from 'lucide-react'
+import { X } from 'lucide-react'
 
-import Separator from '../tailus-ui/Separator'
-import { useDynamicContext } from '@dynamic-labs/sdk-react-core'
-import { ethers, Log } from 'ethers'
-// import Moralis from "moralis";
-import { Network, Alchemy } from 'alchemy-sdk'
-import BASE from '/Base.svg'
-import ARBITRUM from '/arbitrum.svg'
-import { Check } from 'lucide-react'
+// import Separator from '../tailus-ui/Separator'
+// import { useDynamicContext } from '@dynamic-labs/sdk-react-core'
+// import { ethers, Log } from 'ethers'
+// // import Moralis from "moralis";
+// import { Network, Alchemy } from 'alchemy-sdk'
+// import BASE from '/Base.svg'
+// import ARBITRUM from '/arbitrum.svg'
+// import { Check } from 'lucide-react'
 import Loader from './Loader'
 
-type PreviewType = {
-  name: string
-  symbol: string
-  logoURI: string
-  address: string
-  decimals: number
-}
+// type PreviewType = {
+//   name: string
+//   symbol: string
+//   logoURI: string
+//   address: string
+//   decimals: number
+// }
 
 const PreviewModal = ({
   open,
