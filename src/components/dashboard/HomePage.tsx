@@ -184,7 +184,7 @@ function Homepage() {
         setIsApprove(true);
       } catch (err) {
         setIsLoading(false);
-        setIsApprove(false);
+        setIsApprove(true);
         if (String(err).includes("Error: user rejected action")) {
           toast.error(`User rejected!`);
         } else {
@@ -297,6 +297,8 @@ function Homepage() {
       const txData = [data1, data2];
       const tx = await routerContract.multicall(txData);
       await tx.wait();
+      // const tx = await routerContract.multicall.estimateGas(txData);
+      // console.log("tx", tx);
       console.log("transaction success");
       toast.success("Successfully added!");
       return;
