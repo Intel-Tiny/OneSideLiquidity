@@ -1,20 +1,20 @@
 Arguments: 
-  C:\Program Files\nodejs\node.exe C:\Program Files (x86)\Yarn\bin\yarn.js add react-icons
+  C:\Program Files\nodejs\node.exe C:\Program Files (x86)\Yarn\bin\yarn.js add react-hot-toast
 
 PATH: 
-  C:\Users\pc\bin;C:\Program Files\Git\mingw64\bin;C:\Program Files\Git\usr\local\bin;C:\Program Files\Git\usr\bin;C:\Program Files\Git\usr\bin;C:\Program Files\Git\mingw64\bin;C:\Program Files\Git\usr\bin;C:\Users\pc\bin;C:\Windows\system32;C:\Windows;C:\Windows\System32\Wbem;C:\Windows\System32\WindowsPowerShell\v1.0;C:\Windows\System32\OpenSSH;C:\Program Files\Git\cmd;C:\Program Files\nodejs;C:\Program Files (x86)\Yarn\bin;C:\Program Files\MongoDB\Server\7.0\bin;C:\Users\pc\AppData\Local\Programs\Python\Python313\Scripts;C:\Users\pc\AppData\Local\Programs\Python\Python313;C:\Users\pc\AppData\Local\Microsoft\WindowsApps;C:\Users\pc\AppData\Roaming\npm;C:\Users\pc\AppData\Local\Yarn\bin;C:\Users\pc\AppData\Local\Programs\Microsoft VS Code\bin;C:\Users\pc\AppData\Roaming\Programs\Zero Install;C:\Program Files\Git\usr\bin\vendor_perl;C:\Program Files\Git\usr\bin\core_perl
+  C:\Users\Bolt\bin;C:\Program Files\Git\mingw64\bin;C:\Program Files\Git\usr\local\bin;C:\Program Files\Git\usr\bin;C:\Program Files\Git\usr\bin;C:\Program Files\Git\mingw64\bin;C:\Program Files\Git\usr\bin;C:\Users\Bolt\bin;C:\Program Files (x86)\VMware\VMware Workstation\bin;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0;C:\WINDOWS\System32\OpenSSH;C:\Program Files (x86)\Yarn\bin;C:\Program Files\nodejs;C:\Program Files (x86)\Bitvise SSH Client;C:\Program Files\Git\cmd;C:\Program Files\Go\bin;C:\Users\Bolt\AppData\Local\Programs\Python\Python313;C:\Users\Bolt\AppData\Local\Programs\Python\Python313\Scripts;C:\Users\Bolt\AppData\Local\Programs\Python\Python313;C:\Users\Bolt\AppData\Local\Programs\Python\Launcher;C:\Users\Bolt\AppData\Local\Microsoft\WindowsApps;C:\Users\Bolt\AppData\Local\Yarn\bin;C:\Users\Bolt\AppData\Local\Programs\Microsoft VS Code\bin;C:\Users\Bolt\AppData\Roaming\npm;C:\Users\Bolt\go\bin;C:\Program Files\Git\usr\bin\vendor_perl;C:\Program Files\Git\usr\bin\core_perl
 
 Yarn version: 
   1.22.4
 
 Node version: 
-  22.3.0
+  22.7.0
 
 Platform: 
   win32 x64
 
 Trace: 
-  Error: EPERM: operation not permitted, unlink 'E:\ui\goddog\node_modules\@esbuild\win32-x64\esbuild.exe'
+  Error: EPERM: operation not permitted, unlink 'E:\Work\React\OneSideLiquidityWebsite\node_modules\@esbuild\win32-x64\esbuild.exe'
 
 npm manifest: 
   {
@@ -29,7 +29,11 @@ npm manifest:
       "preview": "vite preview"
     },
     "dependencies": {
+      "@dynamic-labs/ethereum": "^3.8.0",
+      "@dynamic-labs/ethers-v6": "^3.8.1",
+      "@dynamic-labs/sdk-react-core": "^3.8.0",
       "@faker-js/faker": "^8.4.1",
+      "@headlessui/react": "^2.2.0",
       "@radix-ui/react-accordion": "^1.2.0",
       "@radix-ui/react-aspect-ratio": "^1.1.0",
       "@radix-ui/react-avatar": "^1.1.0",
@@ -41,14 +45,27 @@ npm manifest:
       "@radix-ui/react-separator": "^1.1.0",
       "@radix-ui/react-tabs": "^1.1.0",
       "@radix-ui/react-tooltip": "^1.1.2",
+      "@reduxjs/toolkit": "^2.3.0",
       "@tailus/themer": "^0.1.8",
+      "@uniswap/token-lists": "^1.0.0-beta.34",
+      "alchemy-sdk": "^3.5.0",
+      "axios": "^1.7.7",
+      "dotenv": "^16.4.5",
       "eslint": "8.56.0",
+      "ethers": "^6.13.4",
       "lucide-react": "^0.399.0",
+      "moralis": "^2.27.2",
       "react": "^18.2.0",
       "react-dom": "^18.2.0",
+      "react-icons": "^5.2.1",
+      "react-redux": "^9.1.2",
+      "react-router-dom": "^6.26.0",
+      "react-toast": "^1.0.3",
       "recharts": "^2.12.7",
       "tailwind-merge": "^2.4.0",
-      "tailwind-variants": "^0.2.1"
+      "tailwind-variants": "^0.2.1",
+      "tw-elements-react": "^1.0.0-alpha-end",
+      "viem": "^2.21.48"
     },
     "devDependencies": {
       "@types/react": "^18.2.65",
@@ -56,11 +73,11 @@ npm manifest:
       "@typescript-eslint/eslint-plugin": "^7.2.0",
       "@typescript-eslint/parser": "^7.2.0",
       "@vitejs/plugin-react": "^4.2.1",
-      "autoprefixer": "10.4.19",
+      "autoprefixer": "^10.4.19",
       "eslint-plugin-react-hooks": "^4.6.0",
       "eslint-plugin-react-refresh": "^0.4.5",
-      "postcss": "8.4.38",
-      "tailwindcss": "3.4.3",
+      "postcss": "^8.4.38",
+      "tailwindcss": "^3.4.3",
       "typescript": "^5.4.2",
       "vite": "^5.1.6"
     }
