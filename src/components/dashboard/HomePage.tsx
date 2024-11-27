@@ -16,6 +16,7 @@ import axios from 'axios'
 import { getSigner } from '@dynamic-labs/ethers-v6'
 import { ethers } from 'ethers'
 import Loader from '../utilities/Loader'
+import { Toaster, toast } from 'react-hot-toast'
 // import Background from '../utilities/Background'
 const Icon = [
   {
@@ -172,12 +173,17 @@ function Homepage () {
         console.log('tx start')
         await tx.wait()
         console.log('approved')
+        toast.success('Successfully approved!')
         setIsLoading(false)
         setIsApprove(true)
       } catch (err) {
         setIsLoading(false)
         setIsApprove(false)
-        console.log('approved error')
+        if (String(err).includes('Error: user rejected action')) {
+          toast.error(`User rejected!`)
+        } else {
+          toast.error(`Approve failed!`)
+        }
       }
     }
   }
@@ -286,8 +292,11 @@ function Homepage () {
       const tx = await routerContract.multicall(txData)
       await tx.wait()
       console.log('transaction success')
+      toast.success('Successfully added!')
       return
     } catch (err) {
+      //fasle
+      toast.error('Transaction failed!')
       return
     }
   }
@@ -295,6 +304,7 @@ function Homepage () {
 
   return (
     <div className='w-full'>
+      <Toaster />
       {myTokenList && (
         <SelectTokenModal
           open={show}
