@@ -4,6 +4,7 @@ import { ChevronDown } from "lucide-react";
 import BASE from "/Base.svg";
 import ARBITRUM from "/arbitrum.svg";
 import LOGO from "/Goddog.svg";
+import Uniswap_LOGO from "/uniswap.webp";
 import { useState, ChangeEvent } from "react";
 import Data from "../data";
 import { DynamicWidget, useDynamicContext } from "@dynamic-labs/sdk-react-core";
@@ -553,7 +554,7 @@ function Homepage() {
       >
         <div className="mx-auto pt-6">
           <div className="text-white text-center text-4xl ">
-            Cerberus Token Converter
+            Cerberus by GODDOG
           </div>
           {/* <div className='text-gray-400 text-xl text-center'>
             Secure, innovative, and high-yield opportunities in the
@@ -564,8 +565,13 @@ function Homepage() {
         </div>
         <div className="w-full py-6 flex justify-center items-center">
           <Card className="max-w-lg bg-cardbg border-borderbg flex flex-col gap-6">
-            <div className="text-white text-4xl text-center">
-              Token Converter
+            <div className="text-white text-3xl text-center">
+              <img
+                src={}
+                alt="ETH"
+                className="w-10 h-10 rounded-full"
+              ></img>
+              Uniswap V3 Deployer
             </div>
             <div className="flex flex-row justify-center items-center gap-1">
               {/* <div className='text-gray-200 text-2xl'>Performance Fee: 1%</div> */}
