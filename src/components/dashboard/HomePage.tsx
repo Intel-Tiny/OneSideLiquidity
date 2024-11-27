@@ -60,6 +60,7 @@ const USDC: selectedTokenType = {
 const tokenABI = [
   // Only include the approve function
   "function approve(address spender, uint256 amount) public returns (bool)",
+  "function allowance(address owner, address spender) public view returns (uint256)",
 ];
 function Homepage() {
   const [isSelectChain, setSelectChain] = useState(false);
@@ -80,6 +81,7 @@ function Homepage() {
   const [isButtonDisabled, setIsButtonDisabled] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isApprove, setIsApprove] = useState(false);
+  const [approvedAmount, setApprovedAmount] = useState(0);
 
   const setSelectedTokenInfo = (item: any) => {
     setSelectedToken(item);
@@ -96,15 +98,27 @@ function Homepage() {
         console.log("price error", error);
       });
   };
-  const handleInputChange = (event: ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = async (event: ChangeEvent<HTMLInputElement>) => {
     const value = event.target.value;
     if (value.length && value[0] != ".") {
       let inValue: string = value[value.length - 1];
       if (inValue === "." || (inValue >= "0" && inValue <= "9")) {
+        if (approvedAmount >= Number(value)) {
+          setIsApprove(true);
+        } else {
+          setIsApprove(false);
+        }
+        console.log("approvedAmount: ", approvedAmount);
+        console.log("value: ", Number(value));
         setAmount(value);
       }
-    } else setAmount("");
+    } else {
+      setAmount("");
+      setIsApprove(false);
+      setIsButtonDisabled(true);
+    }
   };
+
   const handleRangeClick = (item: string) => {
     console.log("click button", item);
 
@@ -114,9 +128,11 @@ function Homepage() {
   };
   useEffect(() => {
     if (amount != "") {
-      if (parseFloat(amount) > parseFloat(selectedTokenBalance))
+      console.log("amount: ", amount);
+      if (parseFloat(amount) > parseFloat(selectedTokenBalance)) {
+        console.log("here");
         setIsButtonDisabled(true);
-      else setIsButtonDisabled(false);
+      } else setIsButtonDisabled(false);
     } else {
       setIsButtonDisabled(true);
     }
@@ -226,6 +242,45 @@ function Homepage() {
     console.log("here is price1 and price2", price1, " ", price2);
     return [price1, price2];
   };
+  const getApprovedAmountOfSelectedToken = async () => {
+    try {
+      const signer = await getSigner(primaryWallet as any);
+      console.log("signer: ", signer);
+
+      const selectedTokenContract = new ethers.Contract(
+        selectedToken.address,
+        tokenABI,
+        signer
+      );
+
+      const approvedAmount0 = await selectedTokenContract.allowance(
+        primaryWallet?.address,
+        Icon[chain].routerAddress
+      );
+
+      // Use ethers.utils.formatUnits instead of ethers.formatUnits
+      const approvedAmount1 = ethers.formatUnits(
+        approvedAmount0,
+        selectedToken.decimals
+      );
+
+      // Convert to a number and update state
+      setApprovedAmount(Number(approvedAmount1));
+    } catch (error) {
+      console.error("Error fetching approved amount:", error);
+    }
+  };
+
+  const getApprovedAmount = async () => {
+    await getApprovedAmountOfSelectedToken();
+  };
+
+  useEffect(() => {
+    if (selectedToken) {
+      getApprovedAmount();
+    }
+  }, [selectedToken]);
+
   const getPriceToTick = (price: number) => {
     return Math.floor(Math.log(price) / Math.log(1.0001));
   };
@@ -235,6 +290,7 @@ function Homepage() {
     return BigInt(Math.floor(sqrt * Number(Q96)));
   };
   const handleAddLiquidity = async () => {
+    setIsLoading(true);
     try {
       const abi = Data.routerABI;
       const signer = await getSigner(primaryWallet as any);
@@ -309,6 +365,8 @@ function Homepage() {
       // console.log("tx", tx);
       console.log("transaction success");
       toast.success("Successfully added!");
+      setSelectedTokenBalance(String(Number(selectedTokenBalance) - Number(amount)));
+      setIsLoading(false);
       return;
     } catch (err) {
       try {
@@ -389,9 +447,14 @@ function Homepage() {
         await tx.wait();
         // const tx = await routerContract.multicall.estimateGas(txData);
         // console.log("tx", tx);
-        console.log("transaction success");
+        setSelectedTokenBalance(
+          String(Number(selectedTokenBalance) - Number(amount))
+        );
         toast.success("Successfully added!");
+        setIsLoading(false);
+        return;
       } catch (error) {
+        setIsLoading(false);
         toast.error("Transaction failed!");
         return;
       }
