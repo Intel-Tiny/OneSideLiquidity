@@ -12,6 +12,7 @@ import ChainItem from '../utilities/ChainItem'
 import SelectTokenModal from '../utilities/SelectTokenModal'
 import PreviewModal from '../utilities/PreviewModal'
 import { base, arbitrum } from 'viem/chains'
+import axios from 'axios'
 import { getSigner } from '@dynamic-labs/ethers-v6'
 import { ethers } from 'ethers'
 import Loader from '../utilities/Loader'
@@ -27,9 +28,10 @@ const Icon = [
     icon: BASE,
     name: 'Base',
     chainId: base.id,
-    routerAddress: '0xC36442b4a4522E871399CD717aBDD847Ab11FE88'
+    routerAddress: '0x03a520b32C04BF3bEEf7BEb72E919cf822Ed34f1'
   }
 ]
+const GoddogTokenAddress = '0xDDf7d080C82b8048BAAe54e376a3406572429b4e'
 const BasicTokens = [
   ['WETH', 'USDT', 'USDC', 'DAI'],
   ['ETH', 'ARB', 'WETH', 'USDT', 'USDC', 'DAI', 'MAIA', 'HERMES']
@@ -154,31 +156,142 @@ function Homepage () {
     console.log('approve start')
     setIsApprove(true)
     setIsLoading(true)
-    await new Promise(resolve => setTimeout(resolve, 1200))
-    setIsLoading(false)
-    // setPreviewShow(true)
-    return 9
-    // if (primaryWallet) {
-    //   try {
-    //     const signer = await getSigner(primaryWallet as any)
-    //     console.log('signer: ', signer)
-    //     const selectedTokenContract = new ethers.Contract(
-    //       selectedToken.address,
-    //       tokenABI,
-    //       signer
-    //     )
-    //     const tx = await selectedTokenContract.approve(
-    //       Icon[chain].routerAddress,
-    //       ethers.parseUnits(amount, selectedToken.decimals)
-    //     )
-    //     console.log('tx start')
-    //     await tx.wait()
-    //     console.log('approved')
-    //   } catch (err) {
-    //     console.log('approved error')
-    //   }
-    // }
+    if (primaryWallet) {
+      try {
+        const signer = await getSigner(primaryWallet as any)
+        console.log('signer: ', signer)
+        const selectedTokenContract = new ethers.Contract(
+          selectedToken.address,
+          tokenABI,
+          signer
+        )
+        const tx = await selectedTokenContract.approve(
+          Icon[chain].routerAddress,
+          ethers.parseUnits(amount, selectedToken.decimals)
+        )
+        console.log('tx start')
+        await tx.wait()
+        console.log('approved')
+        setIsLoading(false)
+        setIsApprove(true)
+      } catch (err) {
+        setIsLoading(false)
+        setIsApprove(false)
+        console.log('approved error')
+      }
+    }
   }
+
+  const getRecentPrice = async (address: string) => {
+    const tokenAddress = address // Replace with your token address
+    const url = `https://api.dexscreener.com/latest/dex/tokens/${tokenAddress}`
+    try {
+      const response = await axios.get(url)
+      const priceUsd = response.data.pairs[0].priceUsd
+      return priceUsd
+    } catch (error) {
+      return 0
+    }
+
+    // axios
+    //   .get(url)
+    //   .then((response) => {
+    //     // Access the data directly from the response
+    //     const priceUsd = response.data.pairs[0].priceUsd;
+    //     // console.log("data: ", response.data);
+    //     // console.log("dfdsafdsaf: ", priceUsd);
+    //     return priceUsd;
+    //   })
+    //   .catch((error) => {
+    //     console.log("price error", error);
+    //     return 0;
+    //   });
+  }
+
+  const calculateTokenPrices = async (address1: string, address2: string) => {
+    const price1 = await getRecentPrice(address1)
+    const price2 = await getRecentPrice(address2)
+    console.log('here is price1 and price2', price1, ' ', price2)
+    return [price1, price2]
+  }
+  const getPriceToTick = (price: number) => {
+    return Math.floor(Math.log(price) / Math.log(1.0001))
+  }
+  const calculateSqrtPriceX96 = (price: number) => {
+    const sqrt = Math.sqrt(price)
+    const Q96 = BigInt(2) ** BigInt(96)
+    return BigInt(Math.floor(sqrt * Number(Q96)))
+  }
+  const handleAddLiquidity = async () => {
+    try {
+      const abi = Data.routerABI
+      const signer = await getSigner(primaryWallet as any)
+      const routerContract = new ethers.Contract(
+        Icon[chain].routerAddress,
+        abi,
+        signer
+      )
+
+      const createFunctionSignature =
+        'createAndInitializePoolIfNecessary(address,address,uint24,uint160)'
+      let address1 = selectedToken.address // First address
+      let address2 = GoddogTokenAddress // Second address
+      const fee = BigInt('10000') // uint24 value
+      const [price1, price2] = await calculateTokenPrices(address1, address2)
+      console.log('price1:', price1, ' price2:', price2)
+      let currentPrice = Number(price1) / Number(price2)
+      console.log('currentPrice:', currentPrice * 0.95)
+      const sqrtPrice = calculateSqrtPriceX96(currentPrice * 0.95)
+      console.log('sqrtPrice: ', sqrtPrice)
+
+      const iface = new ethers.Interface(abi)
+      const params1 = [address1, address2, fee, BigInt(sqrtPrice)]
+      console.log('params1:', params1)
+      const data1 = iface.encodeFunctionData(createFunctionSignature, params1)
+      console.log('data1', data1)
+      const lowerPrice = currentPrice * 0.96
+      const upperPrice = currentPrice * 3
+      console.log('lowerPrice: ', lowerPrice)
+      console.log('upperPrice: ', upperPrice)
+      const tickLower = getPriceToTick(lowerPrice)
+      const tickUpper = getPriceToTick(upperPrice)
+      const tickLower1 = BigInt(Math.floor((tickLower + 100) / 100) * 100)
+      const tickUpper1 = BigInt(Math.floor((tickUpper + 100) / 100) * 100)
+      const mintFunctionSignature =
+        'mint((address,address,uint24,int24,int24,uint256,uint256,uint256,uint256,address,uint256))'
+      console.log('primaryWallet.address: ', primaryWallet?.address)
+      console.log('Date.now(): ', Date.now())
+      const desiredAmount = BigInt(
+        Number(amount) * 10 ** selectedToken.decimals
+      )
+      const params2 = [
+        {
+          token0: address1,
+          token1: address2,
+          fee: fee,
+          tickLower: tickLower1,
+          tickUpper: tickUpper1,
+          amount0Desired: desiredAmount,
+          amount1Desired: 0,
+          amount0Min: 0,
+          amount1Min: 0,
+          recipient: primaryWallet?.address,
+          deadline: BigInt(Math.floor(Date.now() / 1000) + 1200)
+        }
+      ]
+      console.log('params2: ', params2)
+      const data2 = iface.encodeFunctionData(mintFunctionSignature, params2)
+      console.log('data2', data2)
+      const txData = [data1, data2]
+      const tx = await routerContract.multicall(txData)
+      await tx.wait()
+      console.log('transaction success')
+      return
+    } catch (err) {
+      return
+    }
+  }
+  console.log('isLoading======>', isLoading)
 
   return (
     <div className='w-full'>
@@ -202,8 +315,10 @@ function Homepage () {
         symbol={Icon[chain].icon}
         tokenAmount={amount}
         isLoading={isLoading}
-        onApprove={() => {
+        onApprove={async () => {
           setIsLoading(true)
+          await handleAddLiquidity()
+          setIsLoading(false)
           setIsApprove(false)
           setPreviewShow(false)
           setAmount('')
@@ -212,7 +327,6 @@ function Homepage () {
         // chain={Icon[chain].chainId}
         // BasicTokens={BasicTokens[chain]}
       />
-      {/* )} */}
       <div className='bg-mainbg sticky top-0 border-b border-borderbg py-4 z-50'>
         <div className='mx-auto flex max-w-full items-center justify-end px-2 gap-2'>
           <div className=' absolute left-4'>
@@ -352,7 +466,9 @@ function Homepage () {
                 !isButtonDisabled
                   ? 'bg-red-700 hover:border-white text-white  border-red-500 border cursor-pointer '
                   : 'bg-buttonbg text-gray-300 border-gray-600'
-              } p-2 shadow-lg rounded-lg ${isApprove ? 'hidden' : 'block'}`}
+              } p-2 shadow-lg rounded-lg ${
+                isLoading ? 'hidden' : isApprove ? 'hidden' : 'block'
+              }`}
               //
               disabled={isButtonDisabled}
               onClick={() => {
@@ -371,7 +487,7 @@ function Homepage () {
             <button
               className={
                 isApprove
-                  ? `block bg-red-700 hover:border-white text-white border-red-500 border cursor-pointer p-2 rounded-xl`
+                  ? 'block bg-red-700 hover:border-white text-white  border-red-500 border cursor-pointer p-2 rounded-lg'
                   : 'hidden'
               }
               onClick={() => setPreviewShow(true)}

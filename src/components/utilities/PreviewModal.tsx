@@ -86,7 +86,7 @@ const PreviewModal = ({
                           <img src={symbol} alt='ETH'></img>
                         </div>
                         <div className='text-gray-300 text-3xl ml-2'>
-                          {selectToken.name}
+                          {selectToken.symbol}
                         </div>
                       </div>
                       <div className='text-gray-300 text-2xl text-center'>
