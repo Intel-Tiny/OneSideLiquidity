@@ -3,7 +3,7 @@ import { useEffect } from "react";
 import { ChevronDown } from "lucide-react";
 import BASE from "/Base.svg";
 import ARBITRUM from "/arbitrum.svg";
-import LOGO from "/logo.jpg";
+import LOGO from "/Goddog.svg";
 import { useState, ChangeEvent } from "react";
 import Data from "../data";
 import { DynamicWidget, useDynamicContext } from "@dynamic-labs/sdk-react-core";
@@ -365,7 +365,9 @@ function Homepage() {
       // console.log("tx", tx);
       console.log("transaction success");
       toast.success("Successfully added!");
-      setSelectedTokenBalance(String(Number(selectedTokenBalance) - Number(amount)));
+      setSelectedTokenBalance(
+        String(Number(selectedTokenBalance) - Number(amount))
+      );
       setIsLoading(false);
       return;
     } catch (err) {
@@ -506,7 +508,7 @@ function Homepage() {
             <img
               src={LOGO}
               alt="LOGO"
-              className="rounded-full w-12 h-12 border-2 border-white"
+              className="rounded-full w-12 h-12 border-0 border-white"
             />
           </div>
           <div className="relative">
