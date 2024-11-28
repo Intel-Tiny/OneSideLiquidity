@@ -364,8 +364,7 @@ function Homepage() {
       await tx.wait();
       // const tx = await routerContract.multicall.estimateGas(txData);
       // console.log("tx", tx);
-      console.log("transaction success");
-      toast.success("Successfully added!");
+      toast.success("The position was successfully created!");
       setSelectedTokenBalance(
         String(Number(selectedTokenBalance) - Number(amount))
       );
@@ -453,7 +452,7 @@ function Homepage() {
         setSelectedTokenBalance(
           String(Number(selectedTokenBalance) - Number(amount))
         );
-        toast.success("Successfully added!");
+        toast.success("The position was successfully created!");
         setIsLoading(false);
         return;
       } catch (error) {
@@ -565,13 +564,13 @@ function Homepage() {
         </div>
         <div className="w-full py-6 flex justify-center items-center">
           <Card className="max-w-lg bg-cardbg border-borderbg flex flex-col gap-6">
-            <div className="text-white text-3xl text-center">
+            <div className="text-white text-3xl text-center flex flex-row gap-2 items-center justify-center">
               <img
-                src={}
+                src={Uniswap_LOGO}
                 alt="ETH"
                 className="w-10 h-10 rounded-full"
               ></img>
-              Uniswap V3 Deployer
+              <div>Uniswap V3 Deployer</div>
             </div>
             <div className="flex flex-row justify-center items-center gap-1">
               {/* <div className='text-gray-200 text-2xl'>Performance Fee: 1%</div> */}
