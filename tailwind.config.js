@@ -33,9 +33,11 @@ export default {
         cardbg: "#1d0000",
         modalbg: "#2d0000",
         borderbg: "#2a1010",
-        buttonbg: "#5a0000"
-
+        buttonbg: "#5a0000",
       },
+      backgroundImage: theme => ({
+        'main-bgcolor': 'linear-gradient(to bottom, black, #1a0000)',
+      })
     },
   },
   plugins: [shade, components, animations, rounded],

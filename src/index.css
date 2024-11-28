@@ -23,9 +23,3 @@
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background-color: #718096; /* Thumb color on hover */
 }
-.multi-bg {
-  background-image: url('back1.jpg'), url('back2.jpg');
-  background-position: center, top right;
-  background-repeat: no-repeat, no-repeat;
-  background-size: cover, contain; /* Adjust as needed */
-}
