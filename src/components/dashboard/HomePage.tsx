@@ -499,7 +499,7 @@ function Homepage () {
         // chain={Icon[chain].chainId}
         // BasicTokens={BasicTokens[chain]}
       />
-      <div className='bg-mainbg sticky top-0 border-b border-borderbg py-4 z-50'>
+      <div className=' sticky top-0 border border-borderbg py-4 z-50'>
         <div className='mx-auto flex max-w-full items-center justify-end px-2 gap-2'>
           <div className=' absolute left-4'>
             <img
@@ -545,7 +545,7 @@ function Homepage () {
       </div>
       <div
         className={
-          'relative w-full h-full  lg:mr-0  lg:rounded-t-[--card-radius] mx-auto'
+          'relative flex flex-1 flex-col justify-start items-center mx-auto'
         }
       >
         <div className='mx-auto pt-6'>
