@@ -5,9 +5,8 @@ import { base, arbitrum } from "viem/chains";
 import { Provider } from "react-redux";
 import store from "./store/index";
 
-
-
 function App() {
+
   const dynamicSettings = {
     environmentId: "3f6134d4-3d91-4d31-879e-aa828e2e3b3f",
     walletConnectors: [EthereumWalletConnectors],
@@ -45,6 +44,7 @@ function App() {
         secondary: "#1D4ED8",
       },
     },
+    siweStatement: `Welcome to Cerberus by Goddog. Signing is the only way we can truly know that you are the owner of the wallet you are connecting. Signing is a safe, gas-less transaction that does not in any way give James permission to perform any transactions with your wallet.`,
   };
 
   return (
