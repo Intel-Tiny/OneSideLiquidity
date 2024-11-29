@@ -286,7 +286,7 @@ const SelectTokenModal = ({
                                     src={item.logoURI}
                                     className="h-8 w-8 rounded-full"
                                   />
-                                  <div className="bg-blue-950 w-5 h-5 absolute bottom  right-0 border-2 rounded-sm border-blue-950">
+                                  <div className="w-4 h-4 absolute bottom  right-1  rounded-sm">
                                     <img
                                       src={chain == 8453 ? BASE : ARBITRUM}
                                       alt="ETH"
