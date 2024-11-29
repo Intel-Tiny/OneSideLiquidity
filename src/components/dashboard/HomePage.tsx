@@ -560,9 +560,9 @@ function Homepage() {
               <img
                 src={Uniswap_LOGO}
                 alt="ETH"
-                className="w-10 h-10 rounded-full"
+                className="w-20 h-20 rounded-full"
               ></img>
-              <div>Uniswap V3 Launcher</div>
+              <div>Powered by Uniswap V3</div>
             </div>
             <div className="flex flex-row justify-center items-center gap-1">
               {/* <div className='text-gray-200 text-2xl'>Performance Fee: 1%</div> */}
