@@ -18,26 +18,27 @@ export default {
     extend: {
       keyframes: {
         fadeIn: {
-          '0%': { opacity: 0 },
-          '100%': { opacity: 1 },
+          "0%": { opacity: 0 },
+          "100%": { opacity: 1 },
         },
       },
       animation: {
-        fadeIn: 'fadeIn 1s ease-in-out',
+        fadeIn: "fadeIn 1s ease-in-out",
       },
       colors: {
         ...palettes.trust,
         gray: grays.neutral,
         softblack: "#000D3D",
-        mainbg: "#150505",
-        cardbg: "#1d0000",
+        mainbg: "#252831",
+        cardbg: "#33363F",
         modalbg: "#2d0000",
-        borderbg: "#2a1010",
+        borderbg: "#33363F",
+        hoverbg: "#3B3E47",
         buttonbg: "#5a0000",
       },
-      backgroundImage: theme => ({
-        'main-bgcolor': 'linear-gradient(to bottom, black, #1a0000)',
-      })
+      backgroundImage: (theme) => ({
+        "main-bgcolor": "linear-gradient(to bottom, black, #1a0000)",
+      }),
     },
   },
   plugins: [shade, components, animations, rounded],

@@ -51,55 +51,55 @@ const PreviewModal = ({
   return (
     <>
       <Transition appear show={open} as={Fragment}>
-        <Dialog as='div' className='relative' onClose={onClose}>
-          <div className='fixed inset-0 bg-black/65 z-40' />
-          <div className='fixed inset-0 py-10 overflow-y-auto z-40'>
-            <div className='flex min-h-full items-center justify-center text-center'>
+        <Dialog as="div" className="relative" onClose={onClose}>
+          <div className="fixed inset-0 bg-black/65 z-40" />
+          <div className="fixed inset-0 py-10 overflow-y-auto z-40">
+            <div className="flex min-h-full items-center justify-center text-center">
               <TransitionChild
                 as={Fragment}
-                enter='ease-out duration-300'
-                enterFrom='opacity-0 scale-95'
-                enterTo='opacity-100 scale-100'
-                leave='ease-in duration-200'
-                leaveFrom='opacity-100 scale-100'
-                leaveTo='opacity-0 scale-95'
+                enter="ease-out duration-300"
+                enterFrom="opacity-0 scale-95"
+                enterTo="opacity-100 scale-100"
+                leave="ease-in duration-200"
+                leaveFrom="opacity-100 scale-100"
+                leaveTo="opacity-0 scale-95"
               >
-                <DialogPanel className='max-w-lg w-full flex flex-col rounded-2xl bg-red-950 text-left align-middle shadow-xl transition-all  border-red-900 border-2 min-h-[300px] justify-center'>
-                  <div className='w-full flex flex-col gap-2'>
-                    <div className='flex justify-between mx-2 p-3'>
-                      <div className='text-gray-300 text-xl text-center'>
+                <DialogPanel className="max-w-sm w-full flex flex-col rounded-2xl bg-[#33363F] text-left align-middle shadow-xl transition-all  border-[#33363F] border-2 min-h-[200px] justify-center">
+                  <div className="w-full flex flex-col gap-2">
+                    <div className="flex justify-between p-3">
+                      <div className="text-gray-300 text-xl text-center">
                         Add liquidity
                       </div>
                       <X
-                        className='text-xl text-gray-300 cursor-pointer'
+                        className="text-xl text-gray-300 cursor-pointer"
                         onClick={onClose}
                       />
                     </div>
-                    <div className='flex flex-row gap-2 justify-between p-5 rounded-lg border border-red-900 m-3 bg-modalbg'>
-                      <div className=' relative w-10 h-10 flex flex-row items-end'>
+                    <div className="flex flex-row gap-2 justify-between p-5 rounded-lg m-3">
+                      <div className=" relative w-10 h-10 flex flex-row items-end">
                         <img
                           src={selectToken?.logoURI}
-                          alt='ETH'
-                          className='w-10 h-10 rounded-full'
+                          alt="ETH"
+                          className="w-10 h-10 rounded-full"
                         ></img>
-                        <div className='bg-blue-950 w-5 h-5 absolute bottom  right-0 border-2 rounded-sm border-blue-950'>
-                          <img src={symbol} alt='ETH'></img>
+                        <div className="bg-blue-950 w-5 h-5 absolute bottom  right-0 border-2 rounded-sm border-blue-950">
+                          <img src={symbol} alt="ETH"></img>
                         </div>
-                        <div className='text-gray-300 text-3xl ml-2'>
+                        <div className="text-gray-300 text-3xl ml-2">
                           {selectToken.symbol}
                         </div>
                       </div>
-                      <div className='text-gray-300 text-2xl text-center'>
+                      <div className="text-gray-300 text-2xl text-center">
                         {tokenAmount}
                       </div>
                     </div>
 
-                    <div className='flex flex-col gap-2 p-3'>
+                    <div className="flex flex-col gap-2 p-3">
                       <button
-                        className='bg-red-700 hover:border-white text-white  border-red-500 border cursor-pointer p-2 rounded-lg'
+                        className="bg-[#FFE804]  text-black  border-[#FFE804] hover:bg-[#E7D206] border cursor-pointer p-2 rounded-lg"
                         onClick={onApprove}
                       >
-                        {isLoading ? <Loader /> : 'Add'}
+                        {isLoading ? <Loader /> : "Add"}
                       </button>
                     </div>
                   </div>
@@ -110,7 +110,7 @@ const PreviewModal = ({
         </Dialog>
       </Transition>
     </>
-  )
+  );
 }
 
 export default PreviewModal
