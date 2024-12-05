@@ -1,3 +1,4 @@
+/* eslint-disable */
 import Card from "../tailus-ui/Card";
 import { useEffect } from "react";
 import { ChevronDown } from "lucide-react";
@@ -15,7 +16,8 @@ import { base, arbitrum } from "viem/chains";
 import axios from "axios";
 import { getSigner } from "@dynamic-labs/ethers-v6";
 import { ethers } from "ethers";
-import Loader from "../utilities/Loader";
+import { IoSettingsSharp } from "react-icons/io5";
+// import Loader from "../utilities/Loader";
 import { Toaster, toast } from "react-hot-toast";
 // import Background from '../utilities/Background'
 const Icon = [
@@ -67,7 +69,8 @@ function Homepage() {
   const [isSelectChain, setSelectChain] = useState(false);
   // const [fee, setFee] = useState("1%");
   // const [text, setText] = useState("");
-  const [range, setRange] = useState<number>();
+  // @ts-ignore
+  const [range, setRange] = useState<number>(0);
   const [chain, setChain] = useState(0);
   // const [walletBalance, setWalletBalance] = useState('0')
   const [myTokenList, setMyTokenList] = useState<any>(null);
@@ -77,9 +80,12 @@ function Homepage() {
   const [previewShow, setPreviewShow] = useState(false);
   const [amount, setAmount] = useState("");
   const [tokenPrice, setTokenPrice] = useState(0);
+  // @ts-ignore
   const { primaryWallet } = useDynamicContext();
+  // @ts-ignore
   const [isButtonDisabled, setIsButtonDisabled] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  // @ts-ignore
   const [isApprove, setIsApprove] = useState(false);
   const [approvedAmount, setApprovedAmount] = useState(0);
 
@@ -119,10 +125,11 @@ function Homepage() {
     }
   }, [amount]);
 
-  const handleRangeClick = (item: number) => {
+  const handleRangeClick = () => {
+    console.log("henle", selectedTokenBalance)
     if (Number(selectedTokenBalance)) {
-      setRange(item);
-      setAmount(String((Number(selectedTokenBalance) * (item + 1)) / 4.0));
+      // setRange(item);
+      setAmount(String(Number(selectedTokenBalance)));
     }
   };
   useEffect(() => {
@@ -178,9 +185,10 @@ function Homepage() {
     }
   };
   useEffect(() => {
+    // @ts-ignore
     handleNetworkSwitch(); // Call the inner async function
   }, [chain, primaryWallet]); // Add all dependencies
-
+// @ts-ignore
   const handleApprove = async () => {
     console.log("approve start");
     setIsApprove(true);
@@ -494,7 +502,7 @@ function Homepage() {
         // chain={Icon[chain].chainId}
         // BasicTokens={BasicTokens[chain]}
       />
-      <div className=" sticky top-0 border border-borderbg py-4 z-50">
+      <div className="sticky top-0 border border-borderbg py-4 z-50">
         <div className="mx-auto flex max-w-full items-center justify-end px-2 gap-2">
           <div className=" absolute left-4">
             <img
@@ -508,11 +516,13 @@ function Homepage() {
               className="bg-[#43454D] rounded-md flex flex-row justify-between text-gray-500 p-1 gap-1 px-2 py-1 items-center hover:cursor-pointer"
               onClick={() => setSelectChain(!isSelectChain)}
             >
-              <img
-                src={Icon[chain].icon}
-                alt="icon"
-                className="w-8 h-8 rounded-full"
-              ></img>
+              <div>
+                <img
+                  src={Icon[chain].icon}
+                  alt="icon"
+                  className="w-8 h-8 rounded-full"
+                ></img>
+              </div>
               <ChevronDown />
             </div>
             {isSelectChain && (
@@ -543,7 +553,7 @@ function Homepage() {
           "relative flex flex-1 flex-col justify-start items-center mx-auto"
         }
       >
-        <div className="mx-auto pt-6">
+        <div className="mx-auto pt-20">
           {/* <div className="text-white text-center text-4xl ">
             Cerberus by GODDOG
           </div> */}
@@ -554,56 +564,62 @@ function Homepage() {
             decentralized finance landscape
           </div> */}
         </div>
-        <div className="w-full py-6 flex justify-center items-center">
-          <Card className="max-w-lg bg-cardbg border-borderbg flex flex-col rounded-2xl gap-6">
-            <div className="text-white text-3xl text-center flex flex-row gap-2 items-center justify-center">
-              <img
-                src={Uniswap_LOGO}
-                alt="ETH"
-                className="w-20 h-20 rounded-full"
-              ></img>
-              <div>Powered by Uniswap V3</div>
+        <div className="flex justify-between w-full pl-2 pr-2">
+          <div className="text-white text-xl font-semibold flex gap-1 items-center">
+            <img
+              src={Uniswap_LOGO}
+              alt="ETH"
+              className="w-12 h-12 rounded-full"
+            ></img>
+            <div>Powered by Uniswap V3</div>
+          </div>
+          <div className="text-white flex gap-2 items-center">
+            <IoSettingsSharp className="w-6 h-6 cursor-pointer" />
+          </div>
+        </div>
+        <div className="w-full pb-6 flex justify-center items-center">
+          <Card className="max-w-lg bg-gray border-borderbg flex flex-col rounded-3xl gap-2">
+            <div className="flex text-white  font-semibold flex-row items-center gap-1">
+              <p>
+                Deposit
+              </p>
             </div>
-            <div className="flex flex-row justify-center items-center gap-1">
-              {/* <div className='text-gray-200 text-2xl'>Performance Fee: 1%</div> */}
-              {/* <div className='text-gray-200 text-2xl  flex flex-row items-center gap-2'>
-                <Settings />
-              </div> */}
-            </div>
-            <div className="rounded-xl flex flex-col gap-2 p-3">
-              <div className="flex flex-row justify-between items-baseline">
+            <div className="rounded-xl flex flex-col gap-1">
+              <div className="flex flex-row justify-between items-center gap-3">
                 <input
-                  className="text-5xl outline-none text-white w-full p-0 m-0 bg-cardbg"
-                  placeholder="0.00"
+                  className="text-5xl outline-none text-white w-full gap-2 bg-[#0A0A0A]"
+                  placeholder="0"
                   value={amount}
                   onChange={handleInputChange}
                 ></input>
+                <div>
+                  <img
+                    src={
+                      selectedToken?.logoURI
+                        ? selectedToken?.logoURI
+                        : Icon[chain].icon
+                    }
+                    alt="ETH"
+                    className="w-20 rounded-full"
+                  ></img>
+                </div>
                 <div
-                  className="rounded-md flex flex-row text-gray-500 p-2 pr-5 gap-3 items-center hover:cursor-pointer hover:bg-hoverbg"
+                  className="rounded-md flex flex-row text-gray-500 gap-3 items-center hover:cursor-pointer hover:bg-hoverbg"
                   onClick={() => setShow(true)}
                 >
-                  <div className=" relative w-10 h-10 flex flex-row items-end">
-                    <img
-                      src={
-                        selectedToken?.logoURI
-                          ? selectedToken?.logoURI
-                          : Icon[chain].icon
-                      }
-                      alt="ETH"
-                      className="w-10 h-10 rounded-full"
-                    ></img>
+                  {/* <div className=" relative w-10 h-10 flex flex-row items-end">
                     <div className="w-5 h-5 absolute bottom  right-0 rounded-sm">
                       <img src={Icon[chain].icon} alt="ETH"></img>
                     </div>
-                  </div>
-                  <div className="flex flex-col justify-start">
-                    <div className="flex flex-row text-white">
+                  </div> */}
+                  <div className="flex flex-col justify-end">
+                    <div className="flex flex-row text-2xl text-white">
                       <div>{selectedToken.symbol}</div>
-                      <div>
+                      <div className="flex items-center">
                         <ChevronDown />
                       </div>
                     </div>
-                    <div className="text-gray-500">{Icon[chain].name}</div>
+                    {/* <div className="text-gray-500">{Icon[chain].name}</div> */}
                   </div>
                 </div>
               </div>
@@ -611,17 +627,28 @@ function Homepage() {
                 <div className="text-gray-400 text-xl ">
                   {parseFloat(amount) > 0
                     ? "$" + (parseFloat(amount) * tokenPrice).toFixed(3)
-                    : "-"}
+                    : "$0"}
                 </div>
-                <div className="text-gray-500 text-xl hover:text-white">
-                  {selectedTokenBalance !== ""
+                <div className="text-gray-500 text-md hover:text-white font-semibold">
+                  {/* {selectedTokenBalance !== ""
                     ? "Balance: " + selectedTokenBalance
-                    : ""}
+                    : ""} */}
+                  <div className="flex items-center gap-1">
+                    <div className="flex items-center">
+                      <p>0.004 {selectedToken.symbol}</p>
+                    </div>
+                    <div
+                      onClick={handleRangeClick} 
+                      className="text-[14px] flex text-black items-center font-normal px-2 py-0.5 bg-[#FFFF00] rounded-[0.5rem] cursor-pointer"
+                    >
+                      <p>Max{amount}</p>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
 
-            <div className="w-full">
+            {/* <div className="w-full">
               <div className="flex row justify-between items-center gap-1">
                 {Data.Range.map((item, index) => {
                   return (
@@ -639,8 +666,8 @@ function Homepage() {
                   );
                 })}
               </div>
-            </div>
-            <button
+            </div> */}
+            {/* <button
               className={`${
                 !isButtonDisabled
                   ? "bg-[#FFE804]  hover:bg-[#E7D206]  border-[#FFE804] hover:border-[#FFE804] text-black  border cursor-pointer "
@@ -672,8 +699,14 @@ function Homepage() {
               onClick={() => setPreviewShow(true)}
             >
               {isLoading ? <Loader /> : "Preview"}
-            </button>
+            </button> */}
           </Card>
+        </div>
+        <div
+          onClick={() => setShow(true)} 
+          className="flex cursor-pointer items-center py-4 font-semibold rounded-3xl text-white text-2xl bg-mainbg w-full "
+        >
+          <p className="mx-auto">Select a token</p>
         </div>
         <div className="mx-auto w-full">
           <div className="text-gray-400 text-xl text-center">
