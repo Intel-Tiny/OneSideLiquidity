@@ -671,7 +671,7 @@ function Homepage() {
         </div>
         {selectedToken?
           (<div
-            className="flex cursor-pointer items-center py-4 font-semibold rounded-3xl text-white text-2xl bg-[#43454D] w-full "
+            className="flex cursor-pointer items-center py-2 font-semibold rounded-2xl text-white text-xl bg-[#43454D] w-full "
           >
             <button
               className={`cursor-pointer mx-auto ${
