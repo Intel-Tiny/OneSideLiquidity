@@ -635,7 +635,7 @@ function Homepage() {
                     : ""} */}
                   <div className="flex items-center gap-1">
                     <div className="flex items-center">
-                      <p>0.004 {selectedToken.symbol}</p>
+                      <p>{amount?amount:"0"} {selectedToken.symbol}</p>
                     </div>
                     <div
                       onClick={handleRangeClick} 
@@ -671,7 +671,7 @@ function Homepage() {
         </div>
         {selectedToken?
           (<div
-            className="flex cursor-pointer items-center py-4 font-semibold rounded-3xl text-white text-2xl bg-mainbg w-full "
+            className="flex cursor-pointer items-center py-4 font-semibold rounded-3xl text-white text-2xl bg-neutral-800 w-full "
           >
             <button
               className={`cursor-pointer mx-auto ${
