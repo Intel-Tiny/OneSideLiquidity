@@ -468,7 +468,7 @@ function Homepage() {
   console.log("isLoading======>", isLoading);
 
   return (
-    <div className="w-full h-full flex flex-col justify-between">
+    <div className="w-full h-full flex flex-col justify-between bg-mainbg">
       <Toaster />
       {myTokenList && (
         <SelectTokenModal
@@ -671,7 +671,7 @@ function Homepage() {
         </div>
         {selectedToken?
           (<div
-            className="flex cursor-pointer items-center py-4 font-semibold rounded-3xl text-white text-2xl bg-neutral-800 w-full "
+            className="flex cursor-pointer items-center py-2 font-semibold rounded-2xl text-white text-xl bg-[#43454D] w-full "
           >
             <button
               className={`cursor-pointer mx-auto ${
@@ -695,7 +695,7 @@ function Homepage() {
             <button
               className={
                 isApprove
-                  ? ""
+                  ? "cursor-pointer mx-auto"
                   : "hidden"
               }
               onClick={() => setPreviewShow(true)}
