@@ -17,7 +17,7 @@ import axios from "axios";
 import { getSigner } from "@dynamic-labs/ethers-v6";
 import { ethers } from "ethers";
 import { IoSettingsSharp } from "react-icons/io5";
-// import Loader from "../utilities/Loader";
+import Loader from "../utilities/Loader";
 import { Toaster, toast } from "react-hot-toast";
 // import Background from '../utilities/Background'
 const Icon = [
@@ -641,7 +641,7 @@ function Homepage() {
                       onClick={handleRangeClick} 
                       className="text-[14px] flex text-black items-center font-normal px-2 py-0.5 bg-[#FFFF00] rounded-[0.5rem] cursor-pointer"
                     >
-                      <p>Max{amount}</p>
+                      <p>Max</p>
                     </div>
                   </div>
                 </div>
@@ -667,12 +667,14 @@ function Homepage() {
                 })}
               </div>
             </div> */}
-            {/* <button
-              className={`${
-                !isButtonDisabled
-                  ? "bg-[#FFE804]  hover:bg-[#E7D206]  border-[#FFE804] hover:border-[#FFE804] text-black  border cursor-pointer "
-                  : "bg-hoverbg text-gray-300 border-gray-600"
-              } p-2 shadow-lg rounded-lg ${
+          </Card>
+        </div>
+        {selectedToken?
+          (<div
+            className="flex cursor-pointer items-center py-4 font-semibold rounded-3xl text-white text-2xl bg-mainbg w-full "
+          >
+            <button
+              className={`cursor-pointer mx-auto ${
                 isLoading ? "hidden" : isApprove ? "hidden" : "block"
               }`}
               //
@@ -693,29 +695,28 @@ function Homepage() {
             <button
               className={
                 isApprove
-                  ? "block bg-[#FFE804]  text-black hover:bg-[#E7D206]  border-[#FFE804] border cursor-pointer p-2 rounded-lg"
+                  ? ""
                   : "hidden"
               }
               onClick={() => setPreviewShow(true)}
             >
               {isLoading ? <Loader /> : "Preview"}
-            </button> */}
-          </Card>
-        </div>
-        <div
-          onClick={() => setShow(true)} 
-          className="flex cursor-pointer items-center py-4 font-semibold rounded-3xl text-white text-2xl bg-mainbg w-full "
-        >
-          <p className="mx-auto">Select a token</p>
-        </div>
-        <div className="mx-auto w-full">
+            </button>
+          </div>):
+          (<div
+            className="flex cursor-pointer items-center py-4 font-semibold rounded-3xl text-white text-2xl bg-mainbg w-full "
+          >
+            <p className="mx-auto">Select a token</p>
+          </div>)
+}
+        {/* <div className="mx-auto w-full">
           <div className="text-gray-400 text-xl text-center">
             Cerberus Inu: Guarding your assets with cutting-edge DeFi
           </div>
           <div className="text-gray-400 text-xl text-center">
             strategies and multi-layered security protocols.
           </div>
-        </div>
+        </div> */}
       </div>
     </div>
   );
