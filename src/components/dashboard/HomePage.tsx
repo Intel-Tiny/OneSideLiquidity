@@ -587,7 +587,7 @@ function Homepage() {
             <div className="rounded-xl flex flex-col gap-1">
               <div className="flex flex-row justify-between items-center gap-3">
                 <input
-                  className="text-5xl outline-none text-white w-full gap-2 bg-[#0A0A0A]"
+                  className="text-5xl outline-none text-white w-full gap-2 bg-transparent"
                   placeholder="0"
                   value={amount}
                   onChange={handleInputChange}
