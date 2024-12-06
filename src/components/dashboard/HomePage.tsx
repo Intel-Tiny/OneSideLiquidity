@@ -362,7 +362,7 @@ function Homepage() {
       console.log("params1:", params1);
       const data1 = iface.encodeFunctionData(createFunctionSignature, params1);
       console.log("data1", data1);
-      const lowerPrice = currentPrice * 0.958 * 1.0001;
+      const lowerPrice = currentPrice * 0.958 ; //Slightly;
       const upperPrice = currentPrice * 3;
       console.log("lowerPrice: ", lowerPrice);
       console.log("upperPrice: ", upperPrice);
@@ -452,10 +452,10 @@ function Homepage() {
 
         console.log("lowerPrice: ", lowerPrice);
         console.log("upperPrice: ", upperPrice);
-        const tickLower = getPriceToTick(lowerPrice);
-        const tickUpper = getPriceToTick(upperPrice);
-        let tempTickLower = Math.floor(tickLower / 100) * 100;
-        let tempTickUpper = Math.floor(tickUpper / 100) * 100;
+        const tickLower = Math.floor(Math.log(lowerPrice));
+        const tickUpper = Math.floor(Math.log(upperPrice));
+        let tempTickLower = Math.floor(tickLower / 200) * 200;
+        let tempTickUpper = Math.floor(tickUpper / 200) * 200;
         if (tempTickLower % 200 != 0) {
           tempTickLower += 100;
         }
