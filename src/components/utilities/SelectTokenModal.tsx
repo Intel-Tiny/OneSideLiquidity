@@ -11,7 +11,7 @@ import { useDynamicContext } from "@dynamic-labs/sdk-react-core";
 import { ethers } from "ethers";
 // import Moralis from "moralis";
 //@ts-ignore
-import { Network, Alchemy, TokenBalancesOptionsErc20, TokenBalancesResponseErc20   } from "alchemy-sdk";
+import { Network, Alchemy, TokenBalancesOptionsErc20, TokenBalancesResponseErc20, TokenBalanceType } from "alchemy-sdk";
 import BASE from "/Base.svg";
 import ARBITRUM from "/arbitrum.svg";
 import { Check } from "lucide-react";
@@ -76,13 +76,14 @@ const SelectTokenModal = ({
     //   .then(res => console.log('trending: ', res))
     //   .catch(err => console.error(err))
   }, [chain]);
+  
   // async function getAllTokenBalances(alchemy: Alchemy, address: string): Promise<TokenBalancesResponseErc20['tokenBalances']> {
   //   let allBalances: TokenBalancesResponseErc20['tokenBalances'] = [];
   //   let pageKey: string | undefined = undefined;
     
   //   do {
   //     const options: TokenBalancesOptionsErc20 = {
-  //       type: 'erc20',
+  //       type:  TokenBalanceType.ERC20,
   //       pageKey: pageKey
   //     };
   
@@ -95,6 +96,22 @@ const SelectTokenModal = ({
   //   return allBalances;
   // }
   
+  // async function fetchBalances() {
+  //   try {
+  //     const primaryWallet = { address: '0x...' }; // Replace with actual wallet address
+      
+  //     if (primaryWallet?.address) {
+  //       const allBalances = await getAllTokenBalances(alchemy, primaryWallet.address);
+  //       console.log('All token balances:', allBalances);
+  //       setExistingTokenList(allBalances);
+  //     } else {
+  //       console.error('No wallet address provided');
+  //     }
+  //   } catch (error) {
+  //     console.error('Error fetching token balances:', error);
+  //   }
+  // }
+
   const fetchBalances = async () => {
     if (primaryWallet) {
       const response = await alchemy.core.getTokenBalances(
