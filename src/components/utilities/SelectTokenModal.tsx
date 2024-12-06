@@ -10,7 +10,8 @@ import Separator from "../tailus-ui/Separator";
 import { useDynamicContext } from "@dynamic-labs/sdk-react-core";
 import { ethers } from "ethers";
 // import Moralis from "moralis";
-import { Network, Alchemy } from "alchemy-sdk";
+//@ts-ignore
+import { Network, Alchemy, TokenBalancesOptionsErc20, TokenBalancesResponseErc20   } from "alchemy-sdk";
 import BASE from "/Base.svg";
 import ARBITRUM from "/arbitrum.svg";
 import { Check } from "lucide-react";
@@ -75,6 +76,25 @@ const SelectTokenModal = ({
     //   .then(res => console.log('trending: ', res))
     //   .catch(err => console.error(err))
   }, [chain]);
+  // async function getAllTokenBalances(alchemy: Alchemy, address: string): Promise<TokenBalancesResponseErc20['tokenBalances']> {
+  //   let allBalances: TokenBalancesResponseErc20['tokenBalances'] = [];
+  //   let pageKey: string | undefined = undefined;
+    
+  //   do {
+  //     const options: TokenBalancesOptionsErc20 = {
+  //       type: 'erc20',
+  //       pageKey: pageKey
+  //     };
+  
+  //     const response: TokenBalancesResponseErc20 = await alchemy.core.getTokenBalances(address, options);
+      
+  //     allBalances = allBalances.concat(response.tokenBalances);
+  //     pageKey = response.pageKey;
+  //   } while (pageKey);
+    
+  //   return allBalances;
+  // }
+  
   const fetchBalances = async () => {
     if (primaryWallet) {
       const response = await alchemy.core.getTokenBalances(
