@@ -77,51 +77,66 @@ const SelectTokenModal = ({
     //   .catch(err => console.error(err))
   }, [chain]);
   
-  // async function getAllTokenBalances(alchemy: Alchemy, address: string): Promise<TokenBalancesResponseErc20['tokenBalances']> {
-  //   let allBalances: TokenBalancesResponseErc20['tokenBalances'] = [];
-  //   let pageKey: string | undefined = undefined;
-    
-  //   do {
-  //     const options: TokenBalancesOptionsErc20 = {
-  //       type:  TokenBalanceType.ERC20,
-  //       pageKey: pageKey
-  //     };
-  
-  //     const response: TokenBalancesResponseErc20 = await alchemy.core.getTokenBalances(address, options);
-      
-  //     allBalances = allBalances.concat(response.tokenBalances);
-  //     pageKey = response.pageKey;
-  //   } while (pageKey);
-    
-  //   return allBalances;
-  // }
-  
-  // async function fetchBalances() {
-  //   try {
-  //     const primaryWallet = { address: '0x...' }; // Replace with actual wallet address
-      
-  //     if (primaryWallet?.address) {
-  //       const allBalances = await getAllTokenBalances(alchemy, primaryWallet.address);
-  //       console.log('All token balances:', allBalances);
-  //       setExistingTokenList(allBalances);
-  //     } else {
-  //       console.error('No wallet address provided');
-  //     }
-  //   } catch (error) {
-  //     console.error('Error fetching token balances:', error);
-  //   }
-  // }
-
-  const fetchBalances = async () => {
-    if (primaryWallet) {
-      const response = await alchemy.core.getTokenBalances(
-        primaryWallet?.address
-      );
-      console.log("response: ", response);
-      if (response.tokenBalances.length > 0)
-        setExistingTokenList(response.tokenBalances);
+  async function getAddress(alchemy: Alchemy, nameOrAddress: string): Promise<string> {
+    if (alchemy.config.network === Network.ARB_MAINNET) {
+      // For Arbitrum, assume the input is already an address
+      return nameOrAddress;
+    } else {
+      // For other networks, attempt ENS resolution
+      try {
+        const resolvedAddress = await alchemy.core.resolveName(nameOrAddress);
+        return resolvedAddress || nameOrAddress;
+      } catch (error) {
+        console.warn('ENS resolution failed, using input as address:', error);
+        return nameOrAddress;
+      }
     }
-  };
+  }
+
+  async function getAllTokenBalances(alchemy: Alchemy, address: string): Promise<TokenBalancesResponseErc20['tokenBalances']> {
+    let allBalances: TokenBalancesResponseErc20['tokenBalances'] = [];
+    let pageKey: string | undefined = undefined;
+    
+    do {
+      const options: TokenBalancesOptionsErc20 = {
+        type:  TokenBalanceType.ERC20,
+        pageKey: pageKey
+      };
+  
+      const response: TokenBalancesResponseErc20 = await alchemy.core.getTokenBalances(address, options);
+      
+      allBalances = allBalances.concat(response.tokenBalances);
+      pageKey = response.pageKey;
+    } while (pageKey);
+    
+    return allBalances;
+  }
+  async function fetchBalances() {
+    try {
+      
+      if (primaryWallet?.address) {
+        const resolvedAddress = await getAddress(alchemy, primaryWallet.address);
+        const allBalances = await getAllTokenBalances(alchemy, resolvedAddress);
+        console.log('All token balances:', allBalances);
+        setExistingTokenList(allBalances);
+      } else {
+        console.error('No wallet address provided');
+      }
+    } catch (error) {
+      console.error('Error fetching token balances:', error);
+    }
+  }
+
+  // const fetchBalances = async () => {
+  //   if (primaryWallet) {
+  //     const response = await alchemy.core.getTokenBalances(
+  //       primaryWallet?.address
+  //     );
+  //     console.log("response: ", response);
+  //     if (response.tokenBalances.length > 0)
+  //       setExistingTokenList(response.tokenBalances);
+  //   }
+  // };
 
   useEffect(() => {
     fetchBalances();
