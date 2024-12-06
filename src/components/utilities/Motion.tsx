@@ -1,5 +1,5 @@
 /* eslint-disable */
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useEffect } from 'react'
 import { Canvas } from '@react-three/fiber'
 import { OrbitControls, Text, Line } from '@react-three/drei'
 import * as THREE from 'three'
@@ -14,10 +14,21 @@ interface LiquidityPositionProps {
     index: number
   }
   
+interface MainProps{
+    currentTick: number
+    lowerTick: number
+    upperTick: number
+}
 
   
   interface AxisIndicatorsProps {
     size: number
+  }
+  interface AxisIndicators1Props {
+    size: number
+    axisC: number
+    delta: number
+    lowerTick: number
   }
   
   interface FullRangeIndicatorProps {
@@ -26,7 +37,10 @@ interface LiquidityPositionProps {
   
   interface CurrentPricePlaneProps {
     size: number
+    axisC: number
+    delta: number
     currentTick: number
+    lowerTick: number
   }
   
 
@@ -48,20 +62,20 @@ const LiquidityPosition = React.memo<LiquidityPositionProps>(({ position, width,
 
 LiquidityPosition.displayName = 'LiquidityPosition'
 
-const AxisLabels = React.memo<AxisIndicatorsProps>(({ size }) => {
-  const ticks = useMemo(() => [-270000, -260000, -250000, -240000], [])
+const AxisLabels = React.memo<AxisIndicators1Props>(({ size, axisC, delta, lowerTick }) => {
+  const ticks = useMemo(() => [axisC, axisC-delta, axisC-2*delta, axisC-3*delta], [])
   return (
     <>
       {ticks.map((tick, index) => (
         <Text
           key={index}
-          position={[((tick + 270000) / 30000) * size - size / 2, -0.5, size / 2 + 0.5]}
+          position={[-size/2 + (axisC-tick)/(3 * delta) * size, - 0.5, size / 2 + 0.5]}
           color="white"
           fontSize={0.9}
           anchorX="center"
           anchorY="top"
         >
-          {tick.toString()}
+          {lowerTick>0?tick.toString():-tick.toString()}
         </Text>
       ))}
       <Text position={[0, -1, size / 2 + 1]} color="white" fontSize={1} anchorX="center" anchorY="top">
@@ -146,8 +160,8 @@ const FullRangeIndicator = React.memo<FullRangeIndicatorProps>(({ size }) => {
 
 FullRangeIndicator.displayName = 'FullRangeIndicator'
 
-const CurrentPricePlane = React.memo<CurrentPricePlaneProps>(({ size, currentTick }) => {
-  const position = ((currentTick + 270000) / 30000) * size - size / 2
+const CurrentPricePlane = React.memo<CurrentPricePlaneProps>(({ size, currentTick, axisC, lowerTick }) => {
+  const position = -size/2 + (axisC - Math.abs(currentTick)) / (axisC - Math.abs(lowerTick)) * size * 2 / 3
   return (
     <group>
       <mesh position={[position, size / 2, 0]}>
@@ -169,44 +183,32 @@ const CurrentPricePlane = React.memo<CurrentPricePlaneProps>(({ size, currentTic
 
 CurrentPricePlane.displayName = 'CurrentPricePlane'
 
-export default function InteractiveLiquidityVisualization() {
+export default function InteractiveLiquidityVisualization({currentTick, lowerTick, upperTick}:MainProps) {
+  const [axisC, setAxisC] = useState<number>(0);
+  const [axisDelta, setAxisDelta] = useState<number>(0);
   const [fullRangeWeight] = useState(330000)
   const [baseOrderWidth] = useState(7000)
   const [limitOrderWidth] = useState(20000)
   const [limitOrderSide] = useState("right")
 
   const size = 40
-  const currentTick = -259545
-
+//   const currentTick = -259545
+  useEffect(() => { 
+    setAxisC(Math.abs(lowerTick) + 2 * Math.abs(lowerTick - upperTick));
+    setAxisDelta(Math.abs(lowerTick - upperTick));
+    console.log("axios", lowerTick, upperTick)
+  }, [])
   const liquidityData = useMemo(() => {
-    const fullRange = {
-      name: "Full Range",
-      tickLower: -887200,
-      tickUpper: 887200,
-      height: 1 * (fullRangeWeight / 1000000),
-      color: "#4a9e9e",
-      hoverColor: "#5abebe",
-    }
-
-    const baseOrder = {
-      name: "Base Order",
-      tickLower: currentTick - baseOrderWidth / 2,
-      tickUpper: currentTick + baseOrderWidth / 2,
-      height: 8,
-      color: "#4a4a9e",
-      hoverColor: "#5a5abe",
-    }
-
     const limitOrder = {
       name: "Limit Order",
-      tickLower: limitOrderSide === "left" ? currentTick - limitOrderWidth : currentTick,
-      tickUpper: limitOrderSide === "left" ? currentTick : currentTick + limitOrderWidth,
-      height: 12,
+      tickLower: lowerTick,
+      tickUpper: upperTick,
+      height: 15,
       color: "#9e4a4a",
       hoverColor: "#be5a5a",
     }
 
-    return [fullRange, baseOrder, limitOrder]
+    return [limitOrder]
   }, [fullRangeWeight, baseOrderWidth, limitOrderWidth, currentTick, limitOrderSide])
 
   return (
@@ -217,16 +219,16 @@ export default function InteractiveLiquidityVisualization() {
               <pointLight position={[10, 10, 10]} />
               <OrbitControls />
 
-              <AxisLabels size={size} />
+              <AxisLabels size={size} axisC={axisC} delta = {axisDelta} lowerTick = {lowerTick} />
               <AxisIndicators size={size} />
               <GridFloor />
-              <FullRangeIndicator size={size} />
-              <CurrentPricePlane size={size} currentTick={currentTick} />
+              {/* <FullRangeIndicator size={size} /> */}
+              <CurrentPricePlane size={size} currentTick={currentTick} axisC={axisC} delta = {axisDelta} lowerTick = {lowerTick} />
 
               {liquidityData.map((data, index) => {
-                const width = ((data.tickUpper - data.tickLower) / 30000) * size
+                const width = size/3
                 const position: [number, number, number] = [
-                  ((data.tickLower + data.tickUpper) / 2 + 270000) / 30000 * size - size / 2,
+                  -size / 2 + (axisC - Math.abs(lowerTick + upperTick) /2 ) /(3 * axisDelta) * size,
                   data.height / 2,
                   0
                 ]
