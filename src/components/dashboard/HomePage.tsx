@@ -352,7 +352,7 @@ function Homepage() {
       const fee = BigInt("10000"); // uint24 value
       const [price1, price2] = await calculateTokenPrices(address1, address2);
       console.log("price1:", price1, " price2:", price2);
-      let currentPrice = Number(price1) / Number(price2);
+      let currentPrice = Number(price2) / Number(price1);
       console.log("currentPrice:", currentPrice * 0.958);
       const sqrtPrice = calculateSqrtPriceX96(currentPrice * 0.958);
       console.log("sqrtPrice: ", sqrtPrice);
