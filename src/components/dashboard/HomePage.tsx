@@ -19,8 +19,6 @@ import { ethers } from "ethers";
 import { IoSettingsSharp } from "react-icons/io5";
 import Loader from "../utilities/Loader";
 import { Toaster, toast } from "react-hot-toast";
-import BackTh from "../utilities/BackTh";
-import * as THREE from 'three';
 import InteractiveLiquidityVisualization from "../utilities/Motion";
 
 
