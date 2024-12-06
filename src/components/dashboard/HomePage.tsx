@@ -91,7 +91,20 @@ function Homepage() {
   // @ts-ignore
   const [isApprove, setIsApprove] = useState(false);
   const [approvedAmount, setApprovedAmount] = useState(0);
-
+  const getPriceToTick = (price: number) => {
+    return Math.floor(Math.log(price) / Math.log(1.0001));
+  };
+  const handleTick = (num:number) => {
+    let tickCurrent = getPriceToTick(num);
+    let tempCurrent = Math.floor(tickCurrent / 100) * 100;
+    if (tempCurrent % 200 != 0) {
+      tempCurrent += 100;
+    }
+    return tempCurrent;
+  }
+  const [currentTick, setCurrentTick] = useState<number>(getPriceToTick(0.1));
+  const [lowerTick, setLowerTick] = useState<number>(handleTick(0.09));
+  const [upperTick, setUpperTick] = useState<number>(handleTick(0.29));
   const setSelectedTokenInfo = (item: any) => {
     setSelectedToken(item);
     const tokenAddress = item.address; // Replace with your token address
@@ -285,9 +298,6 @@ function Homepage() {
     }
   }, [selectedToken]);
 
-  const getPriceToTick = (price: number) => {
-    return Math.floor(Math.log(price) / Math.log(1.0001));
-  };
   const calculateSqrtPriceX96 = (price: number) => {
     const sqrt = Math.sqrt(price);
     const Q96 = BigInt(2) ** BigInt(96);
@@ -312,8 +322,8 @@ function Homepage() {
       const [price1, price2] = await calculateTokenPrices(address1, address2);
       console.log("price1:", price1, " price2:", price2);
       let currentPrice = Number(price1) / Number(price2);
-      console.log("currentPrice:", currentPrice * 0.95);
-      const sqrtPrice = calculateSqrtPriceX96(currentPrice * 0.95);
+      console.log("currentPrice:", currentPrice * 0.958);
+      const sqrtPrice = calculateSqrtPriceX96(currentPrice * 0.958);
       console.log("sqrtPrice: ", sqrtPrice);
 
       const iface = new ethers.Interface(abi);
@@ -321,7 +331,7 @@ function Homepage() {
       console.log("params1:", params1);
       const data1 = iface.encodeFunctionData(createFunctionSignature, params1);
       console.log("data1", data1);
-      const lowerPrice = currentPrice * 0.96;
+      const lowerPrice = currentPrice * 0.958 * 1.0001;
       const upperPrice = currentPrice * 3;
       console.log("lowerPrice: ", lowerPrice);
       console.log("upperPrice: ", upperPrice);
@@ -335,6 +345,7 @@ function Homepage() {
       if (tempTickUpper % 200 != 0) {
         tempTickUpper += 100;
       }
+      console.log("TICIC", currentPrice, tickLower, tickUpper);
       const tickLower1 = BigInt(tempTickLower);
       const tickUpper1 = BigInt(tempTickUpper);
       const mintFunctionSignature =
@@ -391,10 +402,10 @@ function Homepage() {
         const [price1, price2] = await calculateTokenPrices(address1, address2);
         console.log("price1:", price1, " price2:", price2);
         let currentPrice = Number(price1) / Number(price2);
-        console.log("currentPrice:", currentPrice * 0.95);
-        const lowerPrice = currentPrice * 0.96;
+        console.log("currentPrice:", currentPrice * 0.958);
+        const lowerPrice = currentPrice * 0.958 * 1.0001;
         const upperPrice = currentPrice * 3;
-        currentPrice = currentPrice * 0.95;
+        currentPrice = currentPrice * 0.958;
         currentPrice = 1.0 / currentPrice;
         const sqrtPrice = calculateSqrtPriceX96(currentPrice);
         console.log("sqrtPrice: ", sqrtPrice);
@@ -420,6 +431,14 @@ function Homepage() {
         if (tempTickUpper % 200 != 0) {
           tempTickUpper += 100;
         }
+        let tickCurrent = getPriceToTick(currentPrice);
+        let tempCurrent = Math.floor(tickCurrent / 100) * 100;
+        if (tempCurrent % 200 != 0) {
+          tempCurrent += 100;
+        }
+        setLowerTick(tempTickLower);
+        setUpperTick(tempTickUpper);
+        setCurrentTick(tempCurrent);
         const tickLower1 = BigInt(tempTickLower);
         const tickUpper1 = BigInt(tempTickUpper);
         const mintFunctionSignature =
@@ -469,7 +488,6 @@ function Homepage() {
     }
   };
   console.log("isLoading======>", isLoading);
-
   return (
     <div className="w-full h-full flex flex-col justify-between bg-mainbg bg-center bg-cover">
       <Toaster />
@@ -723,9 +741,11 @@ function Homepage() {
         </div> */}
         
       </div>
-      <InteractiveLiquidityVisualization />
-
-        {/* <BackTh /> */}
+      <InteractiveLiquidityVisualization
+        currentTick = {currentTick}
+        lowerTick = {lowerTick}
+        upperTick = {upperTick}
+      />
     </div>
   );
 }
