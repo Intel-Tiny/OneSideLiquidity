@@ -102,6 +102,7 @@ function Homepage() {
     }
     return tempCurrent;
   }
+  // @ts-ignore
   const [currentTick, setCurrentTick] = useState<number>(getPriceToTick(0.1));
   const [lowerTick, setLowerTick] = useState<number>(handleTick(0.09));
   const [upperTick, setUpperTick] = useState<number>(handleTick(0.29));
