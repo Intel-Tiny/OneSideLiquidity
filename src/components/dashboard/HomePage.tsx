@@ -19,6 +19,9 @@ import { ethers } from "ethers";
 import { IoSettingsSharp } from "react-icons/io5";
 import Loader from "../utilities/Loader";
 import { Toaster, toast } from "react-hot-toast";
+import InteractiveLiquidityVisualization from "../utilities/Motion";
+
+
 // import Background from '../utilities/Background'
 const Icon = [
   {
@@ -468,7 +471,7 @@ function Homepage() {
   console.log("isLoading======>", isLoading);
 
   return (
-    <div className="w-full h-full flex flex-col justify-between bg-mainbg">
+    <div className="w-full h-full flex flex-col justify-between bg-mainbg bg-center bg-cover">
       <Toaster />
       {myTokenList && (
         <SelectTokenModal
@@ -671,7 +674,7 @@ function Homepage() {
         </div>
         {selectedToken?
           (<div
-            className="flex cursor-pointer items-center py-2 font-semibold rounded-2xl text-white text-xl bg-[#43454D] w-full "
+            className={`${isLoading || isApprove ?"bg-[#FFFF00] text-black": "text-white bg-[#43454D]"} flex cursor-pointer items-center py-2 font-semibold rounded-2xl  text-xl w-full`}
           >
             <button
               className={`cursor-pointer mx-auto ${
@@ -709,6 +712,7 @@ function Homepage() {
             <p className="mx-auto">Select a token</p>
           </div>)
 }
+
         {/* <div className="mx-auto w-full">
           <div className="text-gray-400 text-xl text-center">
             Cerberus Inu: Guarding your assets with cutting-edge DeFi
@@ -717,7 +721,11 @@ function Homepage() {
             strategies and multi-layered security protocols.
           </div>
         </div> */}
+        
       </div>
+      <InteractiveLiquidityVisualization />
+
+        {/* <BackTh /> */}
     </div>
   );
 }
