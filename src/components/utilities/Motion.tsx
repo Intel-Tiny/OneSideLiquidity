@@ -1,14 +1,9 @@
 /* eslint-disable */
-import React, { useState, useCallback, useMemo } from 'react'
+import React, { useState, useMemo } from 'react'
 import { Canvas } from '@react-three/fiber'
 import { OrbitControls, Text, Line } from '@react-three/drei'
 import * as THREE from 'three'
-import { Slider } from "./Animation/Slider"
-import { Label } from "./Animation/Label"
-import { RadioGroup, RadioGroupItem } from "./Animation/Radio_group"
 
-const TokenA_USD_PRICE = 2000
-const oooOOO_USD_PRICE = 0.00001
 // Add these interface definitions at the top of the file
 interface LiquidityPositionProps {
     position: [number, number, number]
@@ -19,9 +14,7 @@ interface LiquidityPositionProps {
     index: number
   }
   
-  interface AxisLabelsProps {
-    size: number
-  }
+
   
   interface AxisIndicatorsProps {
     size: number
@@ -177,10 +170,10 @@ const CurrentPricePlane = React.memo<CurrentPricePlaneProps>(({ size, currentTic
 CurrentPricePlane.displayName = 'CurrentPricePlane'
 
 export default function InteractiveLiquidityVisualization() {
-  const [fullRangeWeight, setFullRangeWeight] = useState(330000)
-  const [baseOrderWidth, setBaseOrderWidth] = useState(7000)
-  const [limitOrderWidth, setLimitOrderWidth] = useState(20000)
-  const [limitOrderSide, setLimitOrderSide] = useState("right")
+  const [fullRangeWeight] = useState(330000)
+  const [baseOrderWidth] = useState(7000)
+  const [limitOrderWidth] = useState(20000)
+  const [limitOrderSide] = useState("right")
 
   const size = 40
   const currentTick = -259545
