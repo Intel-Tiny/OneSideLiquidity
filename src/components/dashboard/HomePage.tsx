@@ -772,7 +772,7 @@ function Homepage() {
         
       </div>
       <InteractiveLiquidityVisualization
-        currentTick = {currentTick}
+        currentTick = {lowerTick-200}
         lowerTick = {lowerTick}
         upperTick = {upperTick}
       />

@@ -71,7 +71,7 @@ const AxisLabels = React.memo<AxisIndicators1Props>(({ size, axisC, delta, lower
       {ticks.map((tick, index) => (
         <Text
           key={index}
-          position={[-size/2 + (axisC-tick)/(3 * delta) * size, - 0.5, size / 2 + 0.5]}
+          position={[lowerTick>0?(size/2 - (axisC-tick)/(3 * delta) * size):(-size/2 + (axisC-tick)/(3 * delta) * size), - 0.5, size / 2 + 0.5]}
           color="white"
           fontSize={0.9}
           anchorX="center"
@@ -163,9 +163,9 @@ const FullRangeIndicator = React.memo<FullRangeIndicatorProps>(({ size }) => {
 FullRangeIndicator.displayName = 'FullRangeIndicator'
 
 const CurrentPricePlane = React.memo<CurrentPricePlaneProps>(({ size, currentTick, axisC, lowerTick, uperTick }) => {
-  const position = -size/2 + (axisC - Math.abs(currentTick)) / (axisC - Math.abs(lowerTick>0?lowerTick:uperTick)) * size * 2 / 3
-  const positionLow = -size/2 + (axisC - Math.abs(lowerTick)) / (axisC - Math.abs(lowerTick>0?lowerTick:uperTick)) * size * 2 / 3
-  const positionUpper = -size/2 + (axisC - Math.abs(uperTick)) / (axisC - Math.abs(lowerTick>0?lowerTick:uperTick)) * size * 2 / 3
+  const position = lowerTick>0?size/2 - (axisC - Math.abs(currentTick)) / (axisC - Math.abs(lowerTick>0?lowerTick:uperTick)) * size * 2 / 3:-size/2 + (axisC - Math.abs(currentTick)) / (axisC - Math.abs(lowerTick>0?lowerTick:uperTick)) * size * 2 / 3
+  const positionLow = lowerTick>0?size/2 - (axisC - Math.abs(lowerTick)) / (axisC - Math.abs(lowerTick>0?lowerTick:uperTick)) * size * 2 / 3:-size/2 + (axisC - Math.abs(lowerTick)) / (axisC - Math.abs(lowerTick>0?lowerTick:uperTick)) * size * 2 / 3
+  const positionUpper = lowerTick>0?size/2 - (axisC - Math.abs(uperTick)) / (axisC - Math.abs(lowerTick>0?lowerTick:uperTick)) * size * 2 / 3:-size/2 + (axisC - Math.abs(uperTick)) / (axisC - Math.abs(lowerTick>0?lowerTick:uperTick)) * size * 2 / 3
   return (
     <group>
       <mesh position={[position, size / 2, 0]}>
