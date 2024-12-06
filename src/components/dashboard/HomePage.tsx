@@ -687,7 +687,7 @@ function Homepage() {
                     : ""} */}
                   <div className="flex items-center gap-1">
                     <div className="flex items-center">
-                      <p>{amount?amount:"0"} {selectedToken.symbol}</p>
+                      <p>{selectedTokenBalance?selectedTokenBalance:"0"} {selectedToken.symbol}</p>
                     </div>
                     <div
                       onClick={handleRangeClick} 
