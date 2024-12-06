@@ -206,7 +206,7 @@ function Homepage() {
       let address2 = GoddogTokenAddress; // Second address
       const [price1, price2] = await calculateTokenPrices(address1, address2);
       console.log("price1:", price1, " price2:", price2);
-      let currentPrice = Number(price1) / Number(price2);
+      let currentPrice = Number(price2) / Number(price1);
       if(!currentPrice) return;
       console.log("currentPrice:", currentPrice * 0.958);
       const lowerPrice = currentPrice * 0.958 * 1.0001;
