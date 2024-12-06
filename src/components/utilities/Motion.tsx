@@ -41,6 +41,7 @@ interface MainProps{
     delta: number
     currentTick: number
     lowerTick: number
+    uperTick: number
   }
   
 
@@ -63,7 +64,8 @@ const LiquidityPosition = React.memo<LiquidityPositionProps>(({ position, width,
 LiquidityPosition.displayName = 'LiquidityPosition'
 
 const AxisLabels = React.memo<AxisIndicators1Props>(({ size, axisC, delta, lowerTick }) => {
-  const ticks = useMemo(() => [axisC, axisC-delta, axisC-2*delta, axisC-3*delta], [])
+  const ticks = useMemo(() => [axisC, axisC-delta, axisC-2*delta, axisC-3*delta], [axisC, delta, lowerTick])
+  console.log("lower===============>", axisC, delta)
   return (
     <>
       {ticks.map((tick, index) => (
@@ -160,8 +162,10 @@ const FullRangeIndicator = React.memo<FullRangeIndicatorProps>(({ size }) => {
 
 FullRangeIndicator.displayName = 'FullRangeIndicator'
 
-const CurrentPricePlane = React.memo<CurrentPricePlaneProps>(({ size, currentTick, axisC, lowerTick }) => {
-  const position = -size/2 + (axisC - Math.abs(currentTick)) / (axisC - Math.abs(lowerTick)) * size * 2 / 3
+const CurrentPricePlane = React.memo<CurrentPricePlaneProps>(({ size, currentTick, axisC, lowerTick, uperTick }) => {
+  const position = -size/2 + (axisC - Math.abs(currentTick)) / (axisC - Math.abs(lowerTick>0?lowerTick:uperTick)) * size * 2 / 3
+  const positionLow = -size/2 + (axisC - Math.abs(lowerTick)) / (axisC - Math.abs(lowerTick>0?lowerTick:uperTick)) * size * 2 / 3
+  const positionUpper = -size/2 + (axisC - Math.abs(uperTick)) / (axisC - Math.abs(lowerTick>0?lowerTick:uperTick)) * size * 2 / 3
   return (
     <group>
       <mesh position={[position, size / 2, 0]}>
@@ -169,13 +173,31 @@ const CurrentPricePlane = React.memo<CurrentPricePlaneProps>(({ size, currentTic
         <meshBasicMaterial color="yellow" transparent opacity={0.5} />
       </mesh>
       <Text
-        position={[position, 0.5, size / 2 + 0.5]}
+        position={[position, 2, size / 2 + 0.5]}
         color="yellow"
         fontSize={0.9}
         anchorX="center"
         anchorY="bottom"
       >
         {`Current Price (Tick: ${currentTick})`}
+      </Text>
+      <Text
+        position={[positionLow, 0.5, size / 2 + 0.5]}
+        color="red"
+        fontSize={0.9}
+        anchorX="center"
+        anchorY="bottom"
+      >
+        {`Lower Price (Tick: ${lowerTick})`}
+      </Text>
+      <Text
+        position={[positionUpper, 0.5, size / 2 + 0.5]}
+        color="red"
+        fontSize={0.9}
+        anchorX="center"
+        anchorY="bottom"
+      >
+        {`Upper Price (Tick: ${uperTick})`}
       </Text>
     </group>
   )
@@ -194,10 +216,12 @@ export default function InteractiveLiquidityVisualization({currentTick, lowerTic
   const size = 40
 //   const currentTick = -259545
   useEffect(() => { 
-    setAxisC(Math.abs(lowerTick) + 2 * Math.abs(lowerTick - upperTick));
+    if(!currentTick) return;
+    if(lowerTick>0) setAxisC(Math.abs(lowerTick) + 2 * Math.abs(lowerTick - upperTick));
+    else setAxisC(Math.abs(lowerTick) + Math.abs(lowerTick - upperTick))
     setAxisDelta(Math.abs(lowerTick - upperTick));
     console.log("axios", lowerTick, upperTick)
-  }, [])
+  }, [lowerTick])
   const liquidityData = useMemo(() => {
     const limitOrder = {
       name: "Limit Order",
@@ -209,7 +233,7 @@ export default function InteractiveLiquidityVisualization({currentTick, lowerTic
     }
 
     return [limitOrder]
-  }, [fullRangeWeight, baseOrderWidth, limitOrderWidth, currentTick, limitOrderSide])
+  }, [fullRangeWeight, baseOrderWidth, limitOrderWidth, lowerTick, limitOrderSide])
 
   return (
     <div className="flex justify-center items-center my-4 h-[800px] overflow-hidden">
@@ -218,12 +242,11 @@ export default function InteractiveLiquidityVisualization({currentTick, lowerTic
               <ambientLight intensity={0.5} />
               <pointLight position={[10, 10, 10]} />
               <OrbitControls />
-
-              <AxisLabels size={size} axisC={axisC} delta = {axisDelta} lowerTick = {lowerTick} />
+              <AxisLabels size={size} axisC={axisC} delta = {axisDelta} lowerTick = {lowerTick}  />
               <AxisIndicators size={size} />
               <GridFloor />
               {/* <FullRangeIndicator size={size} /> */}
-              <CurrentPricePlane size={size} currentTick={currentTick} axisC={axisC} delta = {axisDelta} lowerTick = {lowerTick} />
+              <CurrentPricePlane size={size} currentTick={currentTick} axisC={axisC} delta = {axisDelta} lowerTick = {lowerTick} uperTick = {upperTick} />
 
               {liquidityData.map((data, index) => {
                 const width = size/3

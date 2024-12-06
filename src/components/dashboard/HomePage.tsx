@@ -200,10 +200,40 @@ function Homepage() {
       console.error("Error switching network:", error);
     }
   };
+  const fetchPrices = async() => {  
+      let address1 = selectedToken.address; // First address
+      let address2 = GoddogTokenAddress; // Second address
+      const [price1, price2] = await calculateTokenPrices(address1, address2);
+      console.log("price1:", price1, " price2:", price2);
+      let currentPrice = Number(price1) / Number(price2);
+      if(!currentPrice) return;
+      console.log("currentPrice:", currentPrice * 0.958);
+      const lowerPrice = currentPrice * 0.958 * 1.0001;
+      const upperPrice = currentPrice * 3;
+      console.log("lowerPrice: ", lowerPrice);
+      console.log("upperPrice: ", upperPrice);
+      const tickLower = getPriceToTick(lowerPrice);
+      const tickUpper = getPriceToTick(upperPrice);
+      let tempTickLower = Math.floor(tickLower / 100) * 100;
+      let tempTickUpper = Math.floor(tickUpper / 100) * 100;
+      if (tempTickLower % 200 != 0) {
+        tempTickLower += 100;
+      }
+      if (tempTickUpper % 200 != 0) {
+        tempTickUpper += 100;
+      }
+      console.log("HEEEE------------------------>", tempTickLower, tempTickUpper, getPriceToTick(currentPrice * 0.958))
+      setLowerTick(tempTickLower);
+      setUpperTick(tempTickUpper)
+      setCurrentTick(getPriceToTick(currentPrice * 0.958))
+  }
   useEffect(() => {
     // @ts-ignore
     handleNetworkSwitch(); // Call the inner async function
   }, [chain, primaryWallet]); // Add all dependencies
+  useEffect(() => {
+    fetchPrices();
+  },[selectedToken])
 // @ts-ignore
   const handleApprove = async () => {
     console.log("approve start");
