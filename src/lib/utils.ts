@@ -1,6 +1,6 @@
 import { twMerge } from "tailwind-merge";
 import React from "react";
-
+import { clsx, type ClassValue } from "clsx"
 /**
  * Clone React element.
  * The function clones React element and adds Tailwind CSS classnames to the cloned element
@@ -12,4 +12,10 @@ export function cloneElement(element: React.ReactElement, classNames: string) {
     return React.cloneElement(element, {
         className: twMerge(element.props.className, classNames)
     });
+}
+
+
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs))
 }
