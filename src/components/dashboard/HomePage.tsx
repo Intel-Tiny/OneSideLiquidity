@@ -209,20 +209,14 @@ function Homepage() {
       let currentPrice = Number(price2) / Number(price1);
       if(!currentPrice) return;
       console.log("currentPrice:", currentPrice * 0.958);
-      const lowerPrice = currentPrice * 0.958 * 1.0001;
+      const lowerPrice = currentPrice * 0.958;
       const upperPrice = currentPrice * 3;
       console.log("lowerPrice: ", lowerPrice);
       console.log("upperPrice: ", upperPrice);
-      const tickLower = getPriceToTick(lowerPrice);
-      const tickUpper = getPriceToTick(upperPrice);
-      let tempTickLower = Math.floor(tickLower / 100) * 100;
-      let tempTickUpper = Math.floor(tickUpper / 100) * 100;
-      if (tempTickLower % 200 != 0) {
-        tempTickLower += 100;
-      }
-      if (tempTickUpper % 200 != 0) {
-        tempTickUpper += 100;
-      }
+      const tickLower = Math.floor(Math.log(lowerPrice) / Math.log(1.0001));
+      const tickUpper = Math.floor(Math.log(upperPrice) / Math.log(1.0001));
+      const tempTickLower = Math.floor(tickLower / 200) * 200;
+      const tempTickUpper = Math.floor(tickUpper / 200) * 200;
       console.log("HEEEE------------------------>", tempTickLower, tempTickUpper, getPriceToTick(currentPrice * 0.958))
       setLowerTick(tempTickLower);
       setUpperTick(tempTickUpper)
