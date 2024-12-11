@@ -207,8 +207,8 @@ function Homepage() {
     console.log("price1:", price1, " price2:", price2);
     let currentPrice = Number(price1) / Number(price2);
     if (!currentPrice) return;
-    console.log("currentPrice:", currentPrice * 0.958);
-    const lowerPrice = currentPrice * 0.958;
+    console.log("currentPrice:", currentPrice / 0.958);
+    const lowerPrice = currentPrice / 0.958;
     const upperPrice = currentPrice * 3;
     console.log("lowerPrice: ", lowerPrice);
     console.log("upperPrice: ", upperPrice);
@@ -220,7 +220,7 @@ function Homepage() {
       "HEEEE------------------------>",
       tempTickLower,
       tempTickUpper,
-      getPriceToTick(currentPrice * 0.958)
+      getPriceToTick(currentPrice / 0.958)
     );
     setLowerTick(tempTickLower + 400);
     setUpperTick(tempTickUpper);
@@ -392,15 +392,15 @@ function Homepage() {
       const [price1, price2] = await calculateTokenPrices(token0, token1);
       console.log("price1:", price1, " price2:", price2);
       let currentPrice = Number(price1) / Number(price2);
-      console.log("currentPrice:", currentPrice * 0.958);
-      const sqrtPrice = calculateSqrtPriceX96(currentPrice * 0.958);
+      console.log("currentPrice:", currentPrice / 0.958);
+      const sqrtPrice = calculateSqrtPriceX96(currentPrice / 0.958);
       console.log("sqrtPrice: ", sqrtPrice);
       const iface = new ethers.Interface(abi);
       const params1 = [token0, token1, fee, BigInt(sqrtPrice)];
       console.log("params1:", params1);
       const data1 = iface.encodeFunctionData(createFunctionSignature, params1);
       console.log("data1", data1);
-      const lowerPrice = currentPrice * 0.958; //Slightly;
+      const lowerPrice = currentPrice / 0.958; //Slightly;
       const upperPrice = currentPrice * 3;
       console.log("lowerPrice: ", lowerPrice);
       console.log("upperPrice: ", upperPrice);
