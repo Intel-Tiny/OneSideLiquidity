@@ -21,7 +21,6 @@ import Loader from "../utilities/Loader";
 import { Toaster, toast } from "react-hot-toast";
 import InteractiveLiquidityVisualization from "../utilities/Motion";
 
-
 // import Background from '../utilities/Background'
 const Icon = [
   {
@@ -29,12 +28,14 @@ const Icon = [
     name: "Arbitrum",
     chainId: arbitrum.id,
     routerAddress: "0xC36442b4a4522E871399CD717aBDD847Ab11FE88",
+    factoryAddress: "0x1F98431c8aD98523631AE4a59f267346ea31F984",
   },
   {
     icon: BASE,
     name: "Base",
     chainId: base.id,
     routerAddress: "0x03a520b32C04BF3bEEf7BEb72E919cf822Ed34f1",
+    factoryAddress: "0x33128a8fC17869897dcE68Ed026d694621f6FDfD",
   },
 ];
 const GoddogTokenAddress = "0xDDf7d080C82b8048BAAe54e376a3406572429b4e";
@@ -94,14 +95,14 @@ function Homepage() {
   const getPriceToTick = (price: number) => {
     return Math.floor(Math.log(price) / Math.log(1.0001));
   };
-  const handleTick = (num:number) => {
+  const handleTick = (num: number) => {
     let tickCurrent = getPriceToTick(num);
     let tempCurrent = Math.floor(tickCurrent / 100) * 100;
     if (tempCurrent % 200 != 0) {
       tempCurrent += 100;
     }
     return tempCurrent;
-  }
+  };
   // @ts-ignore
   const [currentTick, setCurrentTick] = useState<number>(getPriceToTick(0.1));
   const [lowerTick, setLowerTick] = useState<number>(handleTick(0.09));
@@ -143,7 +144,7 @@ function Homepage() {
   }, [amount]);
 
   const handleRangeClick = () => {
-    console.log("henle", selectedTokenBalance)
+    console.log("henle", selectedTokenBalance);
     if (Number(selectedTokenBalance)) {
       // setRange(item);
       setAmount(String(Number(selectedTokenBalance)));
@@ -163,14 +164,6 @@ function Homepage() {
   useEffect(() => {
     setMyTokenList(Data.Tokens);
   }, []);
-  const updateBalance = async () => {
-    if (!primaryWallet) return;
-    primaryWallet?.getBalance().then((balance) => {
-      if (balance) {
-        // setWalletBalance(balance)
-      }
-    });
-  };
 
   const switchNetwork = async () => {
     try {
@@ -192,44 +185,55 @@ function Homepage() {
   const handleNetworkSwitch = async () => {
     try {
       if (!primaryWallet) {
-        // setWalletBalance('0')
         return;
       }
       await switchNetwork(); // Call the switchNetwork function
-      await updateBalance(); // Display the balance after switching networks
     } catch (error) {
       console.error("Error switching network:", error);
     }
   };
-  const fetchPrices = async() => {  
-      let address1 = selectedToken.address; // First address
-      let address2 = GoddogTokenAddress; // Second address
-      const [price1, price2] = await calculateTokenPrices(address1, address2);
-      console.log("price1:", price1, " price2:", price2);
-      let currentPrice = Number(price2) / Number(price1);
-      if(!currentPrice) return;
-      console.log("currentPrice:", currentPrice * 0.958);
-      const lowerPrice = currentPrice * 0.958;
-      const upperPrice = currentPrice * 3;
-      console.log("lowerPrice: ", lowerPrice);
-      console.log("upperPrice: ", upperPrice);
-      const tickLower = Math.floor(Math.log(lowerPrice) / Math.log(1.0001));
-      const tickUpper = Math.floor(Math.log(upperPrice) / Math.log(1.0001));
-      const tempTickLower = Math.floor(tickLower / 200) * 200;
-      const tempTickUpper = Math.floor(tickUpper / 200) * 200;
-      console.log("HEEEE------------------------>", tempTickLower, tempTickUpper, getPriceToTick(currentPrice * 0.958))
-      setLowerTick(tempTickLower);
-      setUpperTick(tempTickUpper)
-      setCurrentTick(getPriceToTick(currentPrice * 0.958))
-  }
+  const fetchPrices = async () => {
+    let address1 = selectedToken.address; // First address
+    let address2 = GoddogTokenAddress; // Second address
+    let token0: any, token1: any;
+    if (address1.toLowerCase() < address2.toLowerCase()) {
+      token0 = address1;
+      token1 = address2;
+    } else {
+      token0 = address2;
+      token1 = address1;
+    }
+    const [price1, price2] = await calculateTokenPrices(token0, token1);
+    console.log("price1:", price1, " price2:", price2);
+    let currentPrice = Number(price1) / Number(price2);
+    if (!currentPrice) return;
+    console.log("currentPrice:", currentPrice * 0.958);
+    const lowerPrice = currentPrice * 0.958;
+    const upperPrice = currentPrice * 3;
+    console.log("lowerPrice: ", lowerPrice);
+    console.log("upperPrice: ", upperPrice);
+    const tickLower = Math.floor(Math.log(lowerPrice) / Math.log(1.0001));
+    const tickUpper = Math.floor(Math.log(upperPrice) / Math.log(1.0001));
+    const tempTickLower = Math.floor(tickLower / 200) * 200;
+    const tempTickUpper = Math.floor(tickUpper / 200) * 200;
+    console.log(
+      "HEEEE------------------------>",
+      tempTickLower,
+      tempTickUpper,
+      getPriceToTick(currentPrice * 0.958)
+    );
+    setLowerTick(tempTickLower + 400);
+    setUpperTick(tempTickUpper);
+    setCurrentTick(tempTickLower);
+  };
   useEffect(() => {
     // @ts-ignore
     handleNetworkSwitch(); // Call the inner async function
   }, [chain, primaryWallet]); // Add all dependencies
   useEffect(() => {
     fetchPrices();
-  },[selectedToken])
-// @ts-ignore
+  }, [selectedToken]);
+  // @ts-ignore
   const handleApprove = async () => {
     console.log("approve start");
     setIsApprove(true);
@@ -328,8 +332,34 @@ function Homepage() {
     const Q96 = BigInt(2) ** BigInt(96);
     return BigInt(Math.floor(sqrt * Number(Q96)));
   };
+  const checkPoolExists = async (tokenA: string, tokenB: string, fee: number) => {
+    // Ensure tokenA is less than tokenB to maintain order
+    const [token0, token1] =
+      tokenA < tokenB ? [tokenA, tokenB] : [tokenB, tokenA];
+    const signer = await getSigner(primaryWallet as any);
+
+    const factoryContract = new ethers.Contract(
+      Icon[chain].factoryAddress,
+      Data.factoryABI,
+      signer
+    );
+
+    try {
+      const poolAddress = await factoryContract.getPool(token0, token1, fee);
+      console.log("poolAddress: ", poolAddress)
+      if (poolAddress === ethers.ZeroAddress) {
+        return false;
+      } else {
+        return true;
+      }
+    } catch (error) {
+      console.error("Error checking pool:", error);
+      return true;
+    }
+  };
   const handleAddLiquidity = async () => {
     setIsLoading(true);
+    
     try {
       const abi = Data.routerABI;
       const signer = await getSigner(primaryWallet as any);
@@ -344,32 +374,40 @@ function Homepage() {
       let address1 = selectedToken.address; // First address
       let address2 = GoddogTokenAddress; // Second address
       const fee = BigInt("10000"); // uint24 value
-      const [price1, price2] = await calculateTokenPrices(address1, address2);
+      const alreadyPoolExist = await checkPoolExists(address1, address2, Number(fee))
+      console.log("alreadyPoolExist: ", alreadyPoolExist)
+      if(alreadyPoolExist){
+        toast.error("The position already exist!");
+        setIsLoading(false);
+        return;
+      }
+      let token0: any, token1: any;
+      if (address1.toLowerCase() < address2.toLowerCase()) {
+        token0 = address1;
+        token1 = address2;
+      } else {
+        token0 = address2;
+        token1 = address1;
+      }
+      const [price1, price2] = await calculateTokenPrices(token0, token1);
       console.log("price1:", price1, " price2:", price2);
-      let currentPrice = Number(price2) / Number(price1);
+      let currentPrice = Number(price1) / Number(price2);
       console.log("currentPrice:", currentPrice * 0.958);
       const sqrtPrice = calculateSqrtPriceX96(currentPrice * 0.958);
       console.log("sqrtPrice: ", sqrtPrice);
-
       const iface = new ethers.Interface(abi);
-      const params1 = [address1, address2, fee, BigInt(sqrtPrice)];
+      const params1 = [token0, token1, fee, BigInt(sqrtPrice)];
       console.log("params1:", params1);
       const data1 = iface.encodeFunctionData(createFunctionSignature, params1);
       console.log("data1", data1);
-      const lowerPrice = currentPrice * 0.958 ; //Slightly;
+      const lowerPrice = currentPrice * 0.958; //Slightly;
       const upperPrice = currentPrice * 3;
       console.log("lowerPrice: ", lowerPrice);
       console.log("upperPrice: ", upperPrice);
       const tickLower = getPriceToTick(lowerPrice);
       const tickUpper = getPriceToTick(upperPrice);
-      let tempTickLower = Math.floor(tickLower / 100) * 100;
-      let tempTickUpper = Math.floor(tickUpper / 100) * 100;
-      if (tempTickLower % 200 != 0) {
-        tempTickLower += 100;
-      }
-      if (tempTickUpper % 200 != 0) {
-        tempTickUpper += 100;
-      }
+      const tempTickLower = Math.floor(tickLower / 200) * 200;
+      const tempTickUpper = Math.floor(tickUpper / 200) * 200;
       console.log("TICIC", currentPrice, tickLower, tickUpper);
       const tickLower1 = BigInt(tempTickLower);
       const tickUpper1 = BigInt(tempTickUpper);
@@ -380,16 +418,17 @@ function Homepage() {
       const desiredAmount = BigInt(
         Number(amount) * 10 ** selectedToken.decimals
       );
+      const same = token0 == address1;
       const params2 = [
         {
-          token0: address1,
-          token1: address2,
+          token0: token0,
+          token1: token1,
           fee: fee,
-          tickLower: tickLower1,
+          tickLower: tickLower1 + BigInt(400),
           tickUpper: tickUpper1,
-          amount0Desired: desiredAmount,
-          amount1Desired: 0,
-          amount0Min: desiredAmount,
+          amount0Desired: same ? desiredAmount : 0,
+          amount1Desired: !same ? desiredAmount : 0,
+          amount0Min: 0,
           amount1Min: 0,
           recipient: primaryWallet?.address,
           deadline: BigInt(Math.floor(Date.now() / 1000) + 1200),
@@ -410,106 +449,106 @@ function Homepage() {
       setIsLoading(false);
       return;
     } catch (err) {
-      try {
-        const abi = Data.routerABI;
-        const signer = await getSigner(primaryWallet as any);
-        const routerContract = new ethers.Contract(
-          Icon[chain].routerAddress,
-          abi,
-          signer
-        );
+      // try {
+      //   const abi = Data.routerABI;
+      //   const signer = await getSigner(primaryWallet as any);
+      //   const routerContract = new ethers.Contract(
+      //     Icon[chain].routerAddress,
+      //     abi,
+      //     signer
+      //   );
 
-        const createFunctionSignature =
-          "createAndInitializePoolIfNecessary(address,address,uint24,uint160)";
-        let address1 = selectedToken.address; // First address
-        let address2 = GoddogTokenAddress; // Second address
-        const fee = BigInt("10000"); // uint24 value
-        const [price1, price2] = await calculateTokenPrices(address1, address2);
-        console.log("price1:", price1, " price2:", price2);
-        let currentPrice = Number(price1) / Number(price2);
-        console.log("currentPrice:", currentPrice * 0.958);
-        const lowerPrice = currentPrice * 0.958 * 1.0001;
-        const upperPrice = currentPrice * 3;
-        currentPrice = currentPrice * 0.958;
-        currentPrice = 1.0 / currentPrice;
-        const sqrtPrice = calculateSqrtPriceX96(currentPrice);
-        console.log("sqrtPrice: ", sqrtPrice);
+      //   const createFunctionSignature =
+      //     "createAndInitializePoolIfNecessary(address,address,uint24,uint160)";
+      //   let address1 = selectedToken.address; // First address
+      //   let address2 = GoddogTokenAddress; // Second address
+      //   const fee = BigInt("10000"); // uint24 value
+      //   const [price1, price2] = await calculateTokenPrices(address1, address2);
+      //   console.log("price1:", price1, " price2:", price2);
+      //   let currentPrice = Number(price1) / Number(price2);
+      //   console.log("currentPrice:", currentPrice * 0.958);
+      //   const lowerPrice = currentPrice * 0.958 * 1.0001;
+      //   const upperPrice = currentPrice * 3;
+      //   currentPrice = currentPrice * 0.958;
+      //   currentPrice = 1.0 / currentPrice;
+      //   const sqrtPrice = calculateSqrtPriceX96(currentPrice);
+      //   console.log("sqrtPrice: ", sqrtPrice);
 
-        const iface = new ethers.Interface(abi);
-        const params1 = [address2, address1, fee, BigInt(sqrtPrice)];
-        console.log("params1:", params1);
-        const data1 = iface.encodeFunctionData(
-          createFunctionSignature,
-          params1
-        );
-        console.log("data1", data1);
+      //   const iface = new ethers.Interface(abi);
+      //   const params1 = [address2, address1, fee, BigInt(sqrtPrice)];
+      //   console.log("params1:", params1);
+      //   const data1 = iface.encodeFunctionData(
+      //     createFunctionSignature,
+      //     params1
+      //   );
+      //   console.log("data1", data1);
 
-        console.log("lowerPrice: ", lowerPrice);
-        console.log("upperPrice: ", upperPrice);
-        const tickLower = Math.floor(Math.log(lowerPrice));
-        const tickUpper = Math.floor(Math.log(upperPrice));
-        let tempTickLower = Math.floor(tickLower / 200) * 200;
-        let tempTickUpper = Math.floor(tickUpper / 200) * 200;
-        if (tempTickLower % 200 != 0) {
-          tempTickLower += 100;
-        }
-        if (tempTickUpper % 200 != 0) {
-          tempTickUpper += 100;
-        }
-        let tickCurrent = getPriceToTick(currentPrice);
-        let tempCurrent = Math.floor(tickCurrent / 100) * 100;
-        if (tempCurrent % 200 != 0) {
-          tempCurrent += 100;
-        }
-        setLowerTick(tempTickLower);
-        setUpperTick(tempTickUpper);
-        setCurrentTick(tempCurrent);
-        const tickLower1 = BigInt(tempTickLower);
-        const tickUpper1 = BigInt(tempTickUpper);
-        const mintFunctionSignature =
-          "mint((address,address,uint24,int24,int24,uint256,uint256,uint256,uint256,address,uint256))";
-        console.log("primaryWallet.address: ", primaryWallet?.address);
-        console.log("Date.now(): ", Date.now());
-        const desiredAmount = BigInt(
-          Number(amount) * 10 ** selectedToken.decimals
-        );
-        const params2 = [
-          {
-            token0: address2,
-            token1: address1,
-            fee: fee,
-            tickLower: -tickUpper1,
-            tickUpper: -tickLower1,
-            amount0Desired: 0,
-            amount1Desired: desiredAmount,
-            amount0Min: 0,
-            amount1Min: desiredAmount,
-            recipient: primaryWallet?.address,
-            deadline: BigInt(Math.floor(Date.now() / 1000) + 1200),
-          },
-        ];
-        console.log("params2: ", params2);
-        const data2 = iface.encodeFunctionData(mintFunctionSignature, params2);
-        console.log("data2", data2);
-        const txData = [data1, data2];
-        const tx = await routerContract.multicall(txData);
-        await tx.wait();
-        // const tx = await routerContract.multicall.estimateGas(txData);
-        // console.log("tx", tx);
-        setSelectedTokenBalance(
-          String(Number(selectedTokenBalance) - Number(amount))
-        );
-        toast.success("The position was successfully created!");
-        setIsLoading(false);
-        return;
-      } catch (error) {
-        setIsLoading(false);
-        toast.error("Transaction failed!");
-        return;
-      }
-      // //fasle
-      // toast.error("Transaction failed!");
-      // return;
+      //   console.log("lowerPrice: ", lowerPrice);
+      //   console.log("upperPrice: ", upperPrice);
+      //   const tickLower = Math.floor(Math.log(lowerPrice));
+      //   const tickUpper = Math.floor(Math.log(upperPrice));
+      //   let tempTickLower = Math.floor(tickLower / 200) * 200;
+      //   let tempTickUpper = Math.floor(tickUpper / 200) * 200;
+      //   if (tempTickLower % 200 != 0) {
+      //     tempTickLower += 100;
+      //   }
+      //   if (tempTickUpper % 200 != 0) {
+      //     tempTickUpper += 100;
+      //   }
+      //   let tickCurrent = getPriceToTick(currentPrice);
+      //   let tempCurrent = Math.floor(tickCurrent / 100) * 100;
+      //   if (tempCurrent % 200 != 0) {
+      //     tempCurrent += 100;
+      //   }
+      //   setLowerTick(tempTickLower);
+      //   setUpperTick(tempTickUpper);
+      //   setCurrentTick(tempCurrent);
+      //   const tickLower1 = BigInt(tempTickLower);
+      //   const tickUpper1 = BigInt(tempTickUpper);
+      //   const mintFunctionSignature =
+      //     "mint((address,address,uint24,int24,int24,uint256,uint256,uint256,uint256,address,uint256))";
+      //   console.log("primaryWallet.address: ", primaryWallet?.address);
+      //   console.log("Date.now(): ", Date.now());
+      //   const desiredAmount = BigInt(
+      //     Number(amount) * 10 ** selectedToken.decimals
+      //   );
+      //   const params2 = [
+      //     {
+      //       token0: address2,
+      //       token1: address1,
+      //       fee: fee,
+      //       tickLower: -tickUpper1,
+      //       tickUpper: -tickLower1,
+      //       amount0Desired: 0,
+      //       amount1Desired: desiredAmount,
+      //       amount0Min: 0,
+      //       amount1Min: desiredAmount,
+      //       recipient: primaryWallet?.address,
+      //       deadline: BigInt(Math.floor(Date.now() / 1000) + 1200),
+      //     },
+      //   ];
+      //   console.log("params2: ", params2);
+      //   const data2 = iface.encodeFunctionData(mintFunctionSignature, params2);
+      //   console.log("data2", data2);
+      //   const txData = [data1, data2];
+      //   const tx = await routerContract.multicall(txData);
+      //   await tx.wait();
+      //   // const tx = await routerContract.multicall.estimateGas(txData);
+      //   // console.log("tx", tx);
+      //   setSelectedTokenBalance(
+      //     String(Number(selectedTokenBalance) - Number(amount))
+      //   );
+      //   toast.success("The position was successfully created!");
+      //   setIsLoading(false);
+      //   return;
+      // } catch (error) {
+      //   setIsLoading(false);
+      //   toast.error("Transaction failed!");
+      //   return;
+      // }
+      //fasle
+      toast.error("Transaction failed!");
+      return;
     }
   };
   console.log("isLoading======>", isLoading);
@@ -626,9 +665,7 @@ function Homepage() {
         <div className="w-full pb-6 flex justify-center items-center">
           <Card className="max-w-lg bg-gray border-borderbg flex flex-col rounded-3xl gap-2">
             <div className="flex text-white  font-semibold flex-row items-center gap-1">
-              <p>
-                Deposit
-              </p>
+              <p>Deposit</p>
             </div>
             <div className="rounded-xl flex flex-col gap-1">
               <div className="flex flex-row justify-between items-center gap-3">
@@ -681,10 +718,15 @@ function Homepage() {
                     : ""} */}
                   <div className="flex items-center gap-1">
                     <div className="flex items-center">
-                      <p>{selectedTokenBalance!==""?selectedTokenBalance:"0"} {selectedToken.symbol}</p>
+                      <p>
+                        {selectedTokenBalance !== ""
+                          ? selectedTokenBalance
+                          : "0"}{" "}
+                        {selectedToken.symbol}
+                      </p>
                     </div>
                     <div
-                      onClick={handleRangeClick} 
+                      onClick={handleRangeClick}
                       className="text-[14px] flex text-black items-center font-normal px-2 py-0.5 bg-[#FFFF00] rounded-[0.5rem] cursor-pointer"
                     >
                       <p>Max</p>
@@ -715,9 +757,17 @@ function Homepage() {
             </div> */}
           </Card>
         </div>
-        {selectedToken?
-          (<div
-            className={`${isLoading || isApprove ?"bg-[#FFFF00] text-black": "text-white bg-[#43454D]"} flex cursor-pointer items-center py-2 font-semibold rounded-2xl  text-xl w-full`}
+        {selectedToken ? (
+          <div
+            className={`${
+              isLoading || isApprove
+                ? "bg-[#FFFF00] text-black"
+                : "text-white bg-[#43454D]"
+            } flex cursor-pointer items-center py-2 font-semibold rounded-2xl  text-xl w-full`}
+            onClick={() => {
+              if (!isLoading && !isApprove) handleApprove();
+              if (isApprove) setPreviewShow(true);
+            }}
           >
             <button
               className={`cursor-pointer mx-auto ${
@@ -725,9 +775,6 @@ function Homepage() {
               }`}
               //
               disabled={isButtonDisabled}
-              onClick={() => {
-                handleApprove();
-              }}
             >
               {parseFloat(amount) <= parseFloat(selectedTokenBalance)
                 ? parseFloat(amount) > 0
@@ -738,23 +785,15 @@ function Homepage() {
                 : "Deposit and Start Earning"}
             </button>
 
-            <button
-              className={
-                isApprove
-                  ? "cursor-pointer mx-auto"
-                  : "hidden"
-              }
-              onClick={() => setPreviewShow(true)}
-            >
+            <button className={isApprove ? "cursor-pointer mx-auto" : "hidden"}>
               {isLoading ? <Loader /> : "Preview"}
             </button>
-          </div>):
-          (<div
-            className="flex cursor-pointer items-center py-4 font-semibold rounded-3xl text-white text-2xl bg-mainbg w-full "
-          >
+          </div>
+        ) : (
+          <div className="flex cursor-pointer items-center py-4 font-semibold rounded-3xl text-white text-2xl bg-mainbg w-full ">
             <p className="mx-auto">Select a token</p>
-          </div>)
-}
+          </div>
+        )}
 
         {/* <div className="mx-auto w-full">
           <div className="text-gray-400 text-xl text-center">
@@ -764,12 +803,11 @@ function Homepage() {
             strategies and multi-layered security protocols.
           </div>
         </div> */}
-        
       </div>
       <InteractiveLiquidityVisualization
-        currentTick = {lowerTick-200}
-        lowerTick = {lowerTick}
-        upperTick = {upperTick}
+        currentTick={lowerTick - 200}
+        lowerTick={lowerTick}
+        upperTick={upperTick}
       />
     </div>
   );
