@@ -241,7 +241,7 @@ function Homepage() {
     if (!currentPrice) return;
     console.log("currentPrice:", currentPrice);
     console.log("modified currentPrice:", currentPrice * priceRange);
-    const lowerPrice = currentPrice * priceRange * 1.0001;
+    const lowerPrice = currentPrice * priceRange;
     const upperPrice = currentPrice * 3;
     console.log("lowerPrice: ", lowerPrice);
     console.log("upperPrice: ", upperPrice);
@@ -255,9 +255,9 @@ function Homepage() {
       tempTickUpper,
       getPriceToTick(currentPrice * priceRange)
     );
-    setLowerTick(tempTickLower);
+    setLowerTick(tempTickLower + 200);
     setUpperTick(tempTickUpper);
-    setCurrentTick(getPriceToTick(currentPrice * priceRange));
+    setCurrentTick(tempTickLower);
   };
   useEffect(() => {
     // @ts-ignore
@@ -409,7 +409,7 @@ function Homepage() {
       console.log("params1:", params1);
       const data1 = iface.encodeFunctionData(createFunctionSignature, params1);
       console.log("data1", data1);
-      const lowerPrice = currentPrice * priceRange * 1.0001; //Slightly;
+      const lowerPrice = currentPrice * priceRange; //Slightly;
       const upperPrice = currentPrice * 3;
       console.log("lowerPrice: ", lowerPrice);
       console.log("upperPrice: ", upperPrice);
@@ -418,7 +418,7 @@ function Homepage() {
       const tempTickLower = Math.floor(tickLower / 200) * 200;
       const tempTickUpper = Math.floor(tickUpper / 200) * 200;
       console.log("TICIC", currentPrice, tickLower, tickUpper);
-      const tickLower1 = BigInt(tempTickLower);
+      const tickLower1 = BigInt(tempTickLower + 200);
       const tickUpper1 = BigInt(tempTickUpper);
       const mintFunctionSignature =
         "mint((address,address,uint24,int24,int24,uint256,uint256,uint256,uint256,address,uint256))";
