@@ -107,6 +107,8 @@ function Homepage() {
   const [currentTick, setCurrentTick] = useState<number>(getPriceToTick(0.1));
   const [lowerTick, setLowerTick] = useState<number>(handleTick(0.09));
   const [upperTick, setUpperTick] = useState<number>(handleTick(0.29));
+  const priceRange = 0.958
+
   const setSelectedTokenInfo = (item: any) => {
     setSelectedToken(item);
     const tokenAddress = item.address; // Replace with your token address
@@ -192,9 +194,38 @@ function Homepage() {
       console.error("Error switching network:", error);
     }
   };
+  const checkPoolExists = async (tokenA: string, tokenB: string, fee: number) => {
+    // Ensure tokenA is less than tokenB to maintain order
+    const [token0, token1] =
+      tokenA < tokenB ? [tokenA, tokenB] : [tokenB, tokenA];
+    const signer = await getSigner(primaryWallet as any);
+
+    const factoryContract = new ethers.Contract(
+      Icon[chain].factoryAddress,
+      Data.factoryABI,
+      signer
+    );
+
+    try {
+      const poolAddress = await factoryContract.getPool(token0, token1, fee);
+      console.log("poolAddress: ", poolAddress)
+      if (poolAddress === ethers.ZeroAddress) {
+        return false;
+      } else {
+        return true;
+      }
+    } catch (error) {
+      console.error("Error checking pool:", error);
+      return true;
+    }
+  };
   const fetchPrices = async () => {
+    
     let address1 = selectedToken.address; // First address
     let address2 = GoddogTokenAddress; // Second address
+    const fee = BigInt("10000"); // uint24 value
+    const alreadyPoolExist = await checkPoolExists(address1, address2, Number(fee))
+    console.log("alreadyPoolExist: ", alreadyPoolExist)
     let token0: any, token1: any;
     if (address1.toLowerCase() < address2.toLowerCase()) {
       token0 = address1;
@@ -207,8 +238,9 @@ function Homepage() {
     console.log("price1:", price1, " price2:", price2);
     let currentPrice = Number(price1) / Number(price2);
     if (!currentPrice) return;
-    console.log("currentPrice:", currentPrice / 0.958);
-    const lowerPrice = currentPrice / 0.958;
+    console.log("currentPrice:", currentPrice);
+    console.log("modified currentPrice:", currentPrice * priceRange);
+    const lowerPrice = currentPrice * priceRange * 1.01;
     const upperPrice = currentPrice * 3;
     console.log("lowerPrice: ", lowerPrice);
     console.log("upperPrice: ", upperPrice);
@@ -220,11 +252,11 @@ function Homepage() {
       "HEEEE------------------------>",
       tempTickLower,
       tempTickUpper,
-      getPriceToTick(currentPrice / 0.958)
+      getPriceToTick(currentPrice * priceRange)
     );
-    setLowerTick(tempTickLower + 400);
+    setLowerTick(tempTickLower);
     setUpperTick(tempTickUpper);
-    setCurrentTick(tempTickLower);
+    setCurrentTick(getPriceToTick(currentPrice * priceRange));
   };
   useEffect(() => {
     // @ts-ignore
@@ -332,31 +364,7 @@ function Homepage() {
     const Q96 = BigInt(2) ** BigInt(96);
     return BigInt(Math.floor(sqrt * Number(Q96)));
   };
-  const checkPoolExists = async (tokenA: string, tokenB: string, fee: number) => {
-    // Ensure tokenA is less than tokenB to maintain order
-    const [token0, token1] =
-      tokenA < tokenB ? [tokenA, tokenB] : [tokenB, tokenA];
-    const signer = await getSigner(primaryWallet as any);
-
-    const factoryContract = new ethers.Contract(
-      Icon[chain].factoryAddress,
-      Data.factoryABI,
-      signer
-    );
-
-    try {
-      const poolAddress = await factoryContract.getPool(token0, token1, fee);
-      console.log("poolAddress: ", poolAddress)
-      if (poolAddress === ethers.ZeroAddress) {
-        return false;
-      } else {
-        return true;
-      }
-    } catch (error) {
-      console.error("Error checking pool:", error);
-      return true;
-    }
-  };
+  
   const handleAddLiquidity = async () => {
     setIsLoading(true);
     
@@ -392,15 +400,15 @@ function Homepage() {
       const [price1, price2] = await calculateTokenPrices(token0, token1);
       console.log("price1:", price1, " price2:", price2);
       let currentPrice = Number(price1) / Number(price2);
-      console.log("currentPrice:", currentPrice / 0.958);
-      const sqrtPrice = calculateSqrtPriceX96(currentPrice / 0.958);
+      console.log("currentPrice:", currentPrice * priceRange);
+      const sqrtPrice = calculateSqrtPriceX96(currentPrice * priceRange);
       console.log("sqrtPrice: ", sqrtPrice);
       const iface = new ethers.Interface(abi);
       const params1 = [token0, token1, fee, BigInt(sqrtPrice)];
       console.log("params1:", params1);
       const data1 = iface.encodeFunctionData(createFunctionSignature, params1);
       console.log("data1", data1);
-      const lowerPrice = currentPrice / 0.958; //Slightly;
+      const lowerPrice = currentPrice * priceRange * 1.01; //Slightly;
       const upperPrice = currentPrice * 3;
       console.log("lowerPrice: ", lowerPrice);
       console.log("upperPrice: ", upperPrice);
@@ -424,7 +432,7 @@ function Homepage() {
           token0: token0,
           token1: token1,
           fee: fee,
-          tickLower: tickLower1 + BigInt(400),
+          tickLower: tickLower1,
           tickUpper: tickUpper1,
           amount0Desired: same ? desiredAmount : 0,
           amount1Desired: !same ? desiredAmount : 0,
@@ -466,10 +474,10 @@ function Homepage() {
       //   const [price1, price2] = await calculateTokenPrices(address1, address2);
       //   console.log("price1:", price1, " price2:", price2);
       //   let currentPrice = Number(price1) / Number(price2);
-      //   console.log("currentPrice:", currentPrice * 0.958);
-      //   const lowerPrice = currentPrice * 0.958 * 1.0001;
+      //   console.log("currentPrice:", currentPrice * priceRange);
+      //   const lowerPrice = currentPrice * priceRange * 1.0001;
       //   const upperPrice = currentPrice * 3;
-      //   currentPrice = currentPrice * 0.958;
+      //   currentPrice = currentPrice * priceRange;
       //   currentPrice = 1.0 / currentPrice;
       //   const sqrtPrice = calculateSqrtPriceX96(currentPrice);
       //   console.log("sqrtPrice: ", sqrtPrice);
