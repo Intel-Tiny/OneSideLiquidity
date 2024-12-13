@@ -29,6 +29,7 @@ const Icon = [
     chainId: arbitrum.id,
     routerAddress: "0xC36442b4a4522E871399CD717aBDD847Ab11FE88",
     factoryAddress: "0x1F98431c8aD98523631AE4a59f267346ea31F984",
+    GoddogTokenAddress: "0x7E7b50649F7cf4bD85624f1664df78DB64d3C718"
   },
   {
     icon: BASE,
@@ -36,9 +37,9 @@ const Icon = [
     chainId: base.id,
     routerAddress: "0x03a520b32C04BF3bEEf7BEb72E919cf822Ed34f1",
     factoryAddress: "0x33128a8fC17869897dcE68Ed026d694621f6FDfD",
+    GoddogTokenAddress: "0xDDf7d080C82b8048BAAe54e376a3406572429b4e"
   },
 ];
-const GoddogTokenAddress = "0xDDf7d080C82b8048BAAe54e376a3406572429b4e";
 const BasicTokens = [
   ["WETH", "USDT", "USDC", "DAI"],
   ["ETH", "ARB", "WETH", "USDT", "USDC", "DAI", "MAIA", "HERMES"],
@@ -222,7 +223,7 @@ function Homepage() {
   const fetchPrices = async () => {
     
     let address1 = selectedToken.address; // First address
-    let address2 = GoddogTokenAddress; // Second address
+    let address2 = Icon[chain].GoddogTokenAddress; // Second address
     const fee = BigInt("10000"); // uint24 value
     const alreadyPoolExist = await checkPoolExists(address1, address2, Number(fee))
     console.log("alreadyPoolExist: ", alreadyPoolExist)
@@ -240,7 +241,7 @@ function Homepage() {
     if (!currentPrice) return;
     console.log("currentPrice:", currentPrice);
     console.log("modified currentPrice:", currentPrice * priceRange);
-    const lowerPrice = currentPrice * priceRange * 1.01;
+    const lowerPrice = currentPrice * priceRange * 1.0001;
     const upperPrice = currentPrice * 3;
     console.log("lowerPrice: ", lowerPrice);
     console.log("upperPrice: ", upperPrice);
@@ -380,7 +381,7 @@ function Homepage() {
       const createFunctionSignature =
         "createAndInitializePoolIfNecessary(address,address,uint24,uint160)";
       let address1 = selectedToken.address; // First address
-      let address2 = GoddogTokenAddress; // Second address
+      let address2 = Icon[chain].GoddogTokenAddress; // Second address
       const fee = BigInt("10000"); // uint24 value
       const alreadyPoolExist = await checkPoolExists(address1, address2, Number(fee))
       console.log("alreadyPoolExist: ", alreadyPoolExist)
@@ -408,7 +409,7 @@ function Homepage() {
       console.log("params1:", params1);
       const data1 = iface.encodeFunctionData(createFunctionSignature, params1);
       console.log("data1", data1);
-      const lowerPrice = currentPrice * priceRange * 1.01; //Slightly;
+      const lowerPrice = currentPrice * priceRange * 1.0001; //Slightly;
       const upperPrice = currentPrice * 3;
       console.log("lowerPrice: ", lowerPrice);
       console.log("upperPrice: ", upperPrice);
