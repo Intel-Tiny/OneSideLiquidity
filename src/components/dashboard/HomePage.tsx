@@ -255,7 +255,7 @@ function Homepage() {
       tempTickUpper,
       getPriceToTick(currentPrice * priceRange)
     );
-    setLowerTick(tempTickLower + 200);
+    setLowerTick(tempTickLower + 400);
     setUpperTick(tempTickUpper);
     setCurrentTick(tempTickLower);
   };
@@ -418,7 +418,7 @@ function Homepage() {
       const tempTickLower = Math.floor(tickLower / 200) * 200;
       const tempTickUpper = Math.floor(tickUpper / 200) * 200;
       console.log("TICIC", currentPrice, tickLower, tickUpper);
-      const tickLower1 = BigInt(tempTickLower + 200);
+      const tickLower1 = BigInt(tempTickLower + 400);
       const tickUpper1 = BigInt(tempTickUpper);
       const mintFunctionSignature =
         "mint((address,address,uint24,int24,int24,uint256,uint256,uint256,uint256,address,uint256))";
