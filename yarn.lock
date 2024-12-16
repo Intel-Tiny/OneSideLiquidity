@@ -3677,6 +3677,25 @@
   resolved "https://registry.npmjs.org/@tanstack/virtual-core/-/virtual-core-3.10.9.tgz"
   integrity sha512-kBknKOKzmeR7lN+vSadaKWXaLS0SZZG+oqpQ/k80Q6g9REn6zRHS/ZYdrIzHnpHgy/eWs00SujveUN/GJT2qTw==
 
+"@thanpolas/crypto-utils@^0.3.1":
+  version "0.3.1"
+  resolved "https://registry.npmjs.org/@thanpolas/crypto-utils/-/crypto-utils-0.3.1.tgz"
+  integrity sha512-qRtie9k4E3uLXS9lMXdKohL8P2pX1m7wNFnTl6B4b8BuhSbDHcW7GWs09KjyFSbKcSpfsyCeumD/ScQhK02/CQ==
+  dependencies:
+    decimal.js "^10.3.1"
+    invariant "^2.2.4"
+    jsbi "^3.1.6"
+    toformat "^2.0.0"
+
+"@thanpolas/univ3prices@^3.0.2":
+  version "3.0.2"
+  resolved "https://registry.npmjs.org/@thanpolas/univ3prices/-/univ3prices-3.0.2.tgz"
+  integrity sha512-ExjbTUAQpeD/e7zLUIkGNYd3bcVCdNrGMF4pJeqCVitKxzNHYfMqzawUWOewLmq7t80p+Xa+XwAsweGSG3lqNQ==
+  dependencies:
+    "@thanpolas/crypto-utils" "^0.3.1"
+    invariant "^2.2.4"
+    jsbi "^3.2.2"
+
 "@tsconfig/node10@^1.0.7":
   version "1.0.11"
   resolved "https://registry.npmjs.org/@tsconfig/node10/-/node10-1.0.11.tgz"
@@ -5598,6 +5617,11 @@ decimal.js-light@^2.4.1:
   resolved "https://registry.npmjs.org/decimal.js-light/-/decimal.js-light-2.5.1.tgz"
   integrity sha512-qIMFpTMZmny+MMIitAB6D7iVPEorVw6YQRWkvarTkT4tBeSLLiHzcwj6q0MmYSFCiVpiqPJTJEYIrpcPzVEIvg==
 
+decimal.js@^10.3.1:
+  version "10.4.3"
+  resolved "https://registry.npmjs.org/decimal.js/-/decimal.js-10.4.3.tgz"
+  integrity sha512-VBBaLc1MgL5XpzgIP7ny5Z6Nx3UrRkIViUkPUdtl9aya5amy3De1gsUUSB1g3+3sExYNjCAsAznmukyxCb1GRA==
+
 decode-uri-component@^0.2.2:
   version "0.2.2"
   resolved "https://registry.npmjs.org/decode-uri-component/-/decode-uri-component-0.2.2.tgz"
@@ -7288,6 +7312,11 @@ js-yaml@^4.1.0:
   integrity sha512-wpxZs9NoxZaJESJGIZTyDEaYpl0FKSA+FB9aJiyemKhMwkxQg63h4T1KJgUGHpTqPDNRcmmYLugrRjJlBtWvRA==
   dependencies:
     argparse "^2.0.1"
+
+jsbi@^3.1.6, jsbi@^3.2.2:
+  version "3.2.5"
+  resolved "https://registry.npmjs.org/jsbi/-/jsbi-3.2.5.tgz"
+  integrity sha512-aBE4n43IPvjaddScbvWRA2YlTzKEynHzu7MqOyTipdHucf/VxS63ViCjxYRg86M8Rxwbt/GfzHl1kKERkt45fQ==
 
 jsc-android@^250231.0.0:
   version "250231.0.0"
@@ -10215,6 +10244,11 @@ to-regex-range@^5.0.1:
   integrity sha512-65P7iz6X5yEr1cwcgvQxbbIw7Uk3gOy5dIdtZ4rDveLqhrdJP+Li/Hx6tyK0NEb+2GCyneCMJiGqrADCSNk8sQ==
   dependencies:
     is-number "^7.0.0"
+
+toformat@^2.0.0:
+  version "2.0.0"
+  resolved "https://registry.npmjs.org/toformat/-/toformat-2.0.0.tgz"
+  integrity sha512-03SWBVop6nU8bpyZCx7SodpYznbZF5R4ljwNLBcTQzKOD9xuihRo/psX58llS1BMFhhAI08H3luot5GoXJz2pQ==
 
 toidentifier@1.0.1:
   version "1.0.1"

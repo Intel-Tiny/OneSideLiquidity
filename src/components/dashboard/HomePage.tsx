@@ -20,6 +20,7 @@ import { IoSettingsSharp } from "react-icons/io5";
 import Loader from "../utilities/Loader";
 import { Toaster, toast } from "react-hot-toast";
 import InteractiveLiquidityVisualization from "../utilities/Motion";
+import univ3prices from "@thanpolas/univ3prices";
 
 // import Background from '../utilities/Background'
 const Icon = [
@@ -220,6 +221,14 @@ function Homepage() {
       return true;
     }
   };
+  const getPriceAndTickFromValues = (price: number) => {
+    const _tempPrice = Math.sqrt(2 ** 192 * price)
+    let _tick = univ3prices.tickMath.getTickAtSqrtRatio(_tempPrice)
+    _tick = _tick - (_tick % 200)
+    const _price = BigInt((univ3prices.tickMath.getSqrtRatioAtTick(_tick)).toString());
+    console.log("_price: ", _price)
+    return {tick: _tick, price: _price}
+  }
   const fetchPrices = async () => {
     
     let address1 = selectedToken.address; // First address
@@ -227,37 +236,31 @@ function Homepage() {
     const fee = BigInt("10000"); // uint24 value
     const alreadyPoolExist = await checkPoolExists(address1, address2, Number(fee))
     console.log("alreadyPoolExist: ", alreadyPoolExist)
-    let token0: any, token1: any;
-    if (address1.toLowerCase() < address2.toLowerCase()) {
-      token0 = address1;
-      token1 = address2;
-    } else {
-      token0 = address2;
-      token1 = address1;
-    }
-    const [price1, price2] = await calculateTokenPrices(token0, token1);
+    const [price1, price2] = await calculateTokenPrices(address1, address2);
     console.log("price1:", price1, " price2:", price2);
     let currentPrice = Number(price1) / Number(price2);
     if (!currentPrice) return;
     console.log("currentPrice:", currentPrice);
     console.log("modified currentPrice:", currentPrice * priceRange);
+    const sqrtPrice = calculateSqrtPriceX96(currentPrice * priceRange);
+    console.log("sqrtPrice: ", sqrtPrice);
+    
     const lowerPrice = currentPrice * priceRange;
     const upperPrice = currentPrice * 3;
-    console.log("lowerPrice: ", lowerPrice);
-    console.log("upperPrice: ", upperPrice);
-    const tickLower = Math.floor(Math.log(lowerPrice) / Math.log(1.0001));
-    const tickUpper = Math.floor(Math.log(upperPrice) / Math.log(1.0001));
-    const tempTickLower = Math.floor(tickLower / 200) * 200;
-    const tempTickUpper = Math.floor(tickUpper / 200) * 200;
+    const resLower = getPriceAndTickFromValues(lowerPrice)
+    console.log("resLower: ", resLower)
+    const resUpper = getPriceAndTickFromValues(upperPrice)
+    console.log("resUpper: ", resUpper)
+    const tickLower = resLower.tick;
+    const tickUpper = resUpper.tick;
     console.log(
       "HEEEE------------------------>",
-      tempTickLower,
-      tempTickUpper,
-      getPriceToTick(currentPrice * priceRange)
+      tickLower,
+      tickUpper,
     );
-    setLowerTick(tempTickLower + 400);
-    setUpperTick(tempTickUpper);
-    setCurrentTick(tempTickLower);
+    setLowerTick(tickLower + 200);
+    setUpperTick(tickUpper);
+    setCurrentTick(tickLower);
   };
   useEffect(() => {
     // @ts-ignore
@@ -398,28 +401,29 @@ function Homepage() {
         token0 = address2;
         token1 = address1;
       }
-      const [price1, price2] = await calculateTokenPrices(token0, token1);
+      const [price1, price2] = await calculateTokenPrices(address1, address2);
       console.log("price1:", price1, " price2:", price2);
       let currentPrice = Number(price1) / Number(price2);
       console.log("currentPrice:", currentPrice * priceRange);
-      const sqrtPrice = calculateSqrtPriceX96(currentPrice * priceRange);
+      const lowerPrice = currentPrice * priceRange;
+      const upperPrice = currentPrice * 3;
+      const resLower = getPriceAndTickFromValues(lowerPrice)
+      console.log("resLower: ", resLower)
+      const resUpper = getPriceAndTickFromValues(upperPrice)
+      console.log("resUpper: ", resUpper)
+      const state = token0 == address1
+      const tickLower = state? resLower.tick + 200 : -resUpper.tick;
+      const tickUpper = !state? -resLower.tick - 200 : resUpper.tick;
+      const sqrtPrice = calculateSqrtPriceX96(lowerPrice);
+      console.log("recalc price: ", (univ3prices.tickPrice([18, 18], String(resLower.tick))).toAuto())
       console.log("sqrtPrice: ", sqrtPrice);
       const iface = new ethers.Interface(abi);
       const params1 = [token0, token1, fee, BigInt(sqrtPrice)];
       console.log("params1:", params1);
       const data1 = iface.encodeFunctionData(createFunctionSignature, params1);
       console.log("data1", data1);
-      const lowerPrice = currentPrice * priceRange; //Slightly;
-      const upperPrice = currentPrice * 3;
       console.log("lowerPrice: ", lowerPrice);
       console.log("upperPrice: ", upperPrice);
-      const tickLower = getPriceToTick(lowerPrice);
-      const tickUpper = getPriceToTick(upperPrice);
-      const tempTickLower = Math.floor(tickLower / 200) * 200;
-      const tempTickUpper = Math.floor(tickUpper / 200) * 200;
-      console.log("TICIC", currentPrice, tickLower, tickUpper);
-      const tickLower1 = BigInt(tempTickLower + 400);
-      const tickUpper1 = BigInt(tempTickUpper);
       const mintFunctionSignature =
         "mint((address,address,uint24,int24,int24,uint256,uint256,uint256,uint256,address,uint256))";
       console.log("primaryWallet.address: ", primaryWallet?.address);
@@ -433,8 +437,8 @@ function Homepage() {
           token0: token0,
           token1: token1,
           fee: fee,
-          tickLower: tickLower1,
-          tickUpper: tickUpper1,
+          tickLower: tickLower,
+          tickUpper: tickUpper,
           amount0Desired: same ? desiredAmount : 0,
           amount1Desired: !same ? desiredAmount : 0,
           amount0Min: 0,
@@ -458,103 +462,6 @@ function Homepage() {
       setIsLoading(false);
       return;
     } catch (err) {
-      // try {
-      //   const abi = Data.routerABI;
-      //   const signer = await getSigner(primaryWallet as any);
-      //   const routerContract = new ethers.Contract(
-      //     Icon[chain].routerAddress,
-      //     abi,
-      //     signer
-      //   );
-
-      //   const createFunctionSignature =
-      //     "createAndInitializePoolIfNecessary(address,address,uint24,uint160)";
-      //   let address1 = selectedToken.address; // First address
-      //   let address2 = GoddogTokenAddress; // Second address
-      //   const fee = BigInt("10000"); // uint24 value
-      //   const [price1, price2] = await calculateTokenPrices(address1, address2);
-      //   console.log("price1:", price1, " price2:", price2);
-      //   let currentPrice = Number(price1) / Number(price2);
-      //   console.log("currentPrice:", currentPrice * priceRange);
-      //   const lowerPrice = currentPrice * priceRange * 1.0001;
-      //   const upperPrice = currentPrice * 3;
-      //   currentPrice = currentPrice * priceRange;
-      //   currentPrice = 1.0 / currentPrice;
-      //   const sqrtPrice = calculateSqrtPriceX96(currentPrice);
-      //   console.log("sqrtPrice: ", sqrtPrice);
-
-      //   const iface = new ethers.Interface(abi);
-      //   const params1 = [address2, address1, fee, BigInt(sqrtPrice)];
-      //   console.log("params1:", params1);
-      //   const data1 = iface.encodeFunctionData(
-      //     createFunctionSignature,
-      //     params1
-      //   );
-      //   console.log("data1", data1);
-
-      //   console.log("lowerPrice: ", lowerPrice);
-      //   console.log("upperPrice: ", upperPrice);
-      //   const tickLower = Math.floor(Math.log(lowerPrice));
-      //   const tickUpper = Math.floor(Math.log(upperPrice));
-      //   let tempTickLower = Math.floor(tickLower / 200) * 200;
-      //   let tempTickUpper = Math.floor(tickUpper / 200) * 200;
-      //   if (tempTickLower % 200 != 0) {
-      //     tempTickLower += 100;
-      //   }
-      //   if (tempTickUpper % 200 != 0) {
-      //     tempTickUpper += 100;
-      //   }
-      //   let tickCurrent = getPriceToTick(currentPrice);
-      //   let tempCurrent = Math.floor(tickCurrent / 100) * 100;
-      //   if (tempCurrent % 200 != 0) {
-      //     tempCurrent += 100;
-      //   }
-      //   setLowerTick(tempTickLower);
-      //   setUpperTick(tempTickUpper);
-      //   setCurrentTick(tempCurrent);
-      //   const tickLower1 = BigInt(tempTickLower);
-      //   const tickUpper1 = BigInt(tempTickUpper);
-      //   const mintFunctionSignature =
-      //     "mint((address,address,uint24,int24,int24,uint256,uint256,uint256,uint256,address,uint256))";
-      //   console.log("primaryWallet.address: ", primaryWallet?.address);
-      //   console.log("Date.now(): ", Date.now());
-      //   const desiredAmount = BigInt(
-      //     Number(amount) * 10 ** selectedToken.decimals
-      //   );
-      //   const params2 = [
-      //     {
-      //       token0: address2,
-      //       token1: address1,
-      //       fee: fee,
-      //       tickLower: -tickUpper1,
-      //       tickUpper: -tickLower1,
-      //       amount0Desired: 0,
-      //       amount1Desired: desiredAmount,
-      //       amount0Min: 0,
-      //       amount1Min: desiredAmount,
-      //       recipient: primaryWallet?.address,
-      //       deadline: BigInt(Math.floor(Date.now() / 1000) + 1200),
-      //     },
-      //   ];
-      //   console.log("params2: ", params2);
-      //   const data2 = iface.encodeFunctionData(mintFunctionSignature, params2);
-      //   console.log("data2", data2);
-      //   const txData = [data1, data2];
-      //   const tx = await routerContract.multicall(txData);
-      //   await tx.wait();
-      //   // const tx = await routerContract.multicall.estimateGas(txData);
-      //   // console.log("tx", tx);
-      //   setSelectedTokenBalance(
-      //     String(Number(selectedTokenBalance) - Number(amount))
-      //   );
-      //   toast.success("The position was successfully created!");
-      //   setIsLoading(false);
-      //   return;
-      // } catch (error) {
-      //   setIsLoading(false);
-      //   toast.error("Transaction failed!");
-      //   return;
-      // }
       //fasle
       toast.error("Transaction failed!");
       return;

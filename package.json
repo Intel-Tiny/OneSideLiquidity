@@ -33,6 +33,7 @@
     "@react-three/fiber": "^8.17.10",
     "@reduxjs/toolkit": "^2.3.0",
     "@tailus/themer": "^0.1.8",
+    "@thanpolas/univ3prices": "^3.0.2",
     "@types/three": "^0.170.0",
     "@uniswap/token-lists": "^1.0.0-beta.34",
     "alchemy-sdk": "^3.5.0",
