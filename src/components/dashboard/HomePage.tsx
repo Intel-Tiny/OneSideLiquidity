@@ -30,7 +30,7 @@ const Icon = [
     chainId: arbitrum.id,
     routerAddress: "0xC36442b4a4522E871399CD717aBDD847Ab11FE88",
     factoryAddress: "0x1F98431c8aD98523631AE4a59f267346ea31F984",
-    GoddogTokenAddress: "0x7E7b50649F7cf4bD85624f1664df78DB64d3C718"
+    GoddogTokenAddress: "0xDDf7d080C82b8048BAAe54e376a3406572429b4e"
   },
   {
     icon: BASE,
