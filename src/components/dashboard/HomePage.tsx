@@ -109,7 +109,7 @@ function Homepage() {
   const [currentTick, setCurrentTick] = useState<number>(getPriceToTick(0.1));
   const [lowerTick, setLowerTick] = useState<number>(handleTick(0.09));
   const [upperTick, setUpperTick] = useState<number>(handleTick(0.29));
-  const priceRange = 0.958
+  const [lowRange, highRange] = [0.958, 3.0]
 
   const setSelectedTokenInfo = (item: any) => {
     setSelectedToken(item);
@@ -224,10 +224,12 @@ function Homepage() {
   const getPriceAndTickFromValues = (price: number) => {
     const _tempPrice = Math.sqrt(2 ** 192 * price)
     let _tick = univ3prices.tickMath.getTickAtSqrtRatio(_tempPrice)
+    const initialTick = _tick
     _tick = _tick - (_tick % 200)
     const _price = BigInt((univ3prices.tickMath.getSqrtRatioAtTick(_tick)).toString());
+    const initialPrice = BigInt((univ3prices.tickMath.getSqrtRatioAtTick(initialTick)).toString());
     console.log("_price: ", _price)
-    return {tick: _tick, price: _price}
+    return {tick: _tick, price: _price, initialTick: initialTick, initialPrice:initialPrice}
   }
   const fetchPrices = async () => {
     
@@ -236,31 +238,32 @@ function Homepage() {
     const fee = BigInt("10000"); // uint24 value
     const alreadyPoolExist = await checkPoolExists(address1, address2, Number(fee))
     console.log("alreadyPoolExist: ", alreadyPoolExist)
-    const [price1, price2] = await calculateTokenPrices(address1, address2);
-    console.log("price1:", price1, " price2:", price2);
-    let currentPrice = Number(price1) / Number(price2);
-    if (!currentPrice) return;
-    console.log("currentPrice:", currentPrice);
-    console.log("modified currentPrice:", currentPrice * priceRange);
-    const sqrtPrice = calculateSqrtPriceX96(currentPrice * priceRange);
-    console.log("sqrtPrice: ", sqrtPrice);
-    
-    const lowerPrice = currentPrice * priceRange;
-    const upperPrice = currentPrice * 3;
-    const resLower = getPriceAndTickFromValues(lowerPrice)
-    console.log("resLower: ", resLower)
-    const resUpper = getPriceAndTickFromValues(upperPrice)
-    console.log("resUpper: ", resUpper)
-    const tickLower = resLower.tick;
-    const tickUpper = resUpper.tick;
-    console.log(
-      "HEEEE------------------------>",
-      tickLower,
-      tickUpper,
-    );
-    setLowerTick(tickLower + 200);
+    let token0: any, token1: any;
+      if (address1.toLowerCase() < address2.toLowerCase()) {
+        token0 = address1;
+        token1 = address2;
+      } else {
+        token0 = address2;
+        token1 = address1;
+      }
+      const [price1, price2] = await calculateTokenPrices(token0, token1);
+      console.log("price1:", price1, " price2:", price2);
+      let currentPrice = Number(price1) / Number(price2);
+      const state = token0 == address1
+      console.log("currentPrice:", currentPrice * lowRange);
+      const lowerPrice = state ? currentPrice * lowRange: currentPrice / lowRange;
+      const upperPrice = state ? currentPrice * highRange : currentPrice / highRange;
+      const resLower = getPriceAndTickFromValues(lowerPrice)
+      console.log("resLower: ", resLower.tick)
+      const resUpper = getPriceAndTickFromValues(upperPrice)
+      console.log("resUpper: ", resUpper.tick)
+      const tickLower = state ? resLower.tick + 200 : resUpper.tick;
+      const tickUpper = state ? resUpper.tick : resLower.tick - 200;
+      const sqrtPrice = resLower.price;
+      console.log("sqrtPrice: ", sqrtPrice);
+    setLowerTick(tickLower);
     setUpperTick(tickUpper);
-    setCurrentTick(tickLower);
+    setCurrentTick(resLower.tick);
   };
   useEffect(() => {
     // @ts-ignore
@@ -363,11 +366,11 @@ function Homepage() {
     }
   }, [selectedToken]);
 
-  const calculateSqrtPriceX96 = (price: number) => {
-    const sqrt = Math.sqrt(price);
-    const Q96 = BigInt(2) ** BigInt(96);
-    return BigInt(Math.floor(sqrt * Number(Q96)));
-  };
+  // const calculateSqrtPriceX96 = (price: number) => {
+  //   const sqrt = Math.sqrt(price);
+  //   const Q96 = BigInt(2) ** BigInt(96);
+  //   return BigInt(Math.floor(sqrt * Number(Q96)));
+  // };
   
   const handleAddLiquidity = async () => {
     setIsLoading(true);
@@ -401,29 +404,28 @@ function Homepage() {
         token0 = address2;
         token1 = address1;
       }
-      const [price1, price2] = await calculateTokenPrices(address1, address2);
+      const [price1, price2] = await calculateTokenPrices(token0, token1);
       console.log("price1:", price1, " price2:", price2);
       let currentPrice = Number(price1) / Number(price2);
-      console.log("currentPrice:", currentPrice * priceRange);
-      const lowerPrice = currentPrice * priceRange;
-      const upperPrice = currentPrice * 3;
-      const resLower = getPriceAndTickFromValues(lowerPrice)
-      console.log("resLower: ", resLower)
-      const resUpper = getPriceAndTickFromValues(upperPrice)
-      console.log("resUpper: ", resUpper)
       const state = token0 == address1
-      const tickLower = state? resLower.tick + 200 : -resUpper.tick;
-      const tickUpper = !state? -resLower.tick - 200 : resUpper.tick;
-      const sqrtPrice = calculateSqrtPriceX96(lowerPrice);
-      console.log("recalc price: ", (univ3prices.tickPrice([18, 18], String(resLower.tick))).toAuto())
+      const lowerPrice = state ? currentPrice * lowRange: currentPrice / lowRange;
+      const upperPrice = state ? currentPrice * highRange : currentPrice / highRange;
+      console.log("lowerPrice: ", lowerPrice);
+      console.log("upperPrice: ", upperPrice);
+      const resLower = getPriceAndTickFromValues(lowerPrice)
+      console.log("resLower: ", resLower.tick)
+      const resUpper = getPriceAndTickFromValues(upperPrice)
+      console.log("resUpper: ", resUpper.tick)
+      const tickLower = state ? resLower.tick + 200 : resUpper.tick;
+      const tickUpper = state ? resUpper.tick : resLower.tick - 200;
+      const sqrtPrice = resLower.price
       console.log("sqrtPrice: ", sqrtPrice);
       const iface = new ethers.Interface(abi);
       const params1 = [token0, token1, fee, BigInt(sqrtPrice)];
       console.log("params1:", params1);
       const data1 = iface.encodeFunctionData(createFunctionSignature, params1);
       console.log("data1", data1);
-      console.log("lowerPrice: ", lowerPrice);
-      console.log("upperPrice: ", upperPrice);
+
       const mintFunctionSignature =
         "mint((address,address,uint24,int24,int24,uint256,uint256,uint256,uint256,address,uint256))";
       console.log("primaryWallet.address: ", primaryWallet?.address);
@@ -721,7 +723,7 @@ function Homepage() {
         </div> */}
       </div>
       <InteractiveLiquidityVisualization
-        currentTick={lowerTick - 200}
+        currentTick={currentTick}
         lowerTick={lowerTick}
         upperTick={upperTick}
       />
