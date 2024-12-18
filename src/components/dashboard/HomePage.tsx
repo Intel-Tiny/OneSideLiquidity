@@ -224,12 +224,9 @@ function Homepage() {
   const getPriceAndTickFromValues = (price: number) => {
     const _tempPrice = Math.sqrt(2 ** 192 * price)
     let _tick = univ3prices.tickMath.getTickAtSqrtRatio(_tempPrice)
-    const initialTick = _tick
     _tick = _tick - (_tick % 200)
     const _price = BigInt((univ3prices.tickMath.getSqrtRatioAtTick(_tick)).toString());
-    const initialPrice = BigInt((univ3prices.tickMath.getSqrtRatioAtTick(initialTick)).toString());
-    console.log("_price: ", _price)
-    return {tick: _tick, price: _price, initialTick: initialTick, initialPrice:initialPrice}
+    return {tick: _tick, price: _price}
   }
   const fetchPrices = async () => {
     
