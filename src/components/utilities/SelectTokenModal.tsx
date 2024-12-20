@@ -25,6 +25,17 @@ type selectedTokenType = {
   decimals: number;
 };
 
+interface SelectTokenModalProps {
+  open: boolean;
+  onClose: () => void;
+  chain: number;
+  AllTokenData: any;
+  BasicTokens: string[][];
+  selectedToken: selectedTokenType | null;
+  setSelectedToken: (token: selectedTokenType) => void;
+  setSelectedTokenBalance: (balance: string) => void;
+}
+
 const SelectTokenModal = ({
   open,
   onClose,
@@ -34,16 +45,7 @@ const SelectTokenModal = ({
   selectedToken,
   setSelectedToken,
   setSelectedTokenBalance,
-}: {
-  open: boolean;
-  onClose: () => void;
-  AllTokenData: any;
-  chain: number;
-  BasicTokens: any;
-  selectedToken: selectedTokenType;
-  setSelectedToken: (token: any) => void;
-  setSelectedTokenBalance: (balance: string) => void;
-}) => {
+}: SelectTokenModalProps) => {
   const { primaryWallet } = useDynamicContext();
   const [filterTokens, setFilterTokens] = useState([]);
   const [searchTokens, setSearchTokens] = useState<any>([]);
@@ -317,7 +319,7 @@ const SelectTokenModal = ({
                             <div
                               key={key}
                               className={`flex gap-2 p-2 pr-4 justify-between items-center cursor-pointer  hover:rounded-md ${
-                                selectedToken.name == item.name
+                                selectedToken?.name == item.name
                                   ? "bg-[#484839] rounded-md hover:bg-[#484839]"
                                   : "hover:bg-[#3B3E47]"
                               }`}
@@ -373,7 +375,7 @@ const SelectTokenModal = ({
                                   item.address,
                                   Number(item.decimals)
                                 )}
-                                {selectedToken.name == item.name && <Check />}
+                                {selectedToken?.name == item.name && <Check />}
                               </div>
                             </div>
                           );

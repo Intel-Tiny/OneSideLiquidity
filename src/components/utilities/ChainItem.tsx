@@ -1,20 +1,43 @@
 import { Check } from 'lucide-react'
+
 interface ChainItemProps {
-  item: any
-  onClick: () => void
-  isActive: Boolean
+  show: boolean;
+  onClose: () => void;
+  chains: {
+    icon: string;
+    name: string;
+    chainId: number;
+    routerAddress: string;
+    factoryAddress: string;
+    GoddogTokenAddress: string;
+  }[];
+  selectedChain: number;
+  onChainSelect: (chain: number) => void;
 }
-const ChainItem: React.FC<ChainItemProps> = ({ item, isActive, onClick }) => {
+
+const ChainItem: React.FC<ChainItemProps> = ({ show, onClose, chains, selectedChain, onChainSelect }) => {
+  if (!show) return null;
+
   return (
-    <div
-      className="flex flex-row gap-3 justify-between px-1 py-2 items-center hover:cursor-pointer hover:bg-[#43454D] hover:rounded-lg text-gray-100"
-      onClick={onClick}
-    >
-      <div className="flex justify-center items-center gap-2">
-        <img src={item.icon} alt="icon" className="w-8 h-8"></img>
-        <span className="mr-12">{item.name}</span>
+    <div className="absolute top-full mt-1 right-0 w-48 bg-[#1B1B1B] rounded-lg shadow-lg border border-gray-800 overflow-hidden">
+      <div className="py-1">
+        {chains.map((chain, index) => (
+          <div
+            key={chain.chainId}
+            className="flex items-center justify-between px-4 py-2 hover:bg-[#2D2D2D] cursor-pointer"
+            onClick={() => {
+              onChainSelect(index);
+              onClose();
+            }}
+          >
+            <div className="flex items-center gap-2">
+              <img src={chain.icon} alt="icon" className="w-6 h-6 rounded-full" />
+              <span className="text-white">{chain.name}</span>
+            </div>
+            {selectedChain === index && <Check className="w-4 h-4 text-blue-500" />}
+          </div>
+        ))}
       </div>
-      <div>{isActive && <Check className="w-4 h-4" />}</div>
     </div>
   );
 }

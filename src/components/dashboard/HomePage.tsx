@@ -1,26 +1,25 @@
 /* eslint-disable */
-import Card from "../tailus-ui/Card";
 import { useEffect } from "react";
 import { ChevronDown } from "lucide-react";
 import BASE from "/Base.svg";
 import ARBITRUM from "/arbitrum.svg";
 import LOGO from "/Goddog.svg";
-import Uniswap_LOGO from "/uniswap.webp";
 import { useState, ChangeEvent } from "react";
 import Data from "../data";
 import { DynamicWidget, useDynamicContext } from "@dynamic-labs/sdk-react-core";
-import ChainItem from "../utilities/ChainItem";
 import SelectTokenModal from "../utilities/SelectTokenModal";
 import PreviewModal from "../utilities/PreviewModal";
 import { base, arbitrum } from "viem/chains";
 import axios from "axios";
 import { getSigner } from "@dynamic-labs/ethers-v6";
 import { ethers } from "ethers";
-import { IoSettingsSharp } from "react-icons/io5";
 import Loader from "../utilities/Loader";
 import { Toaster, toast } from "react-hot-toast";
 import InteractiveLiquidityVisualization from "../utilities/Motion";
 import univ3prices from "@thanpolas/univ3prices";
+import { Tooltip } from 'react-tooltip';
+import Uniswap_LOGO from "/uniswap.webp";
+import ChainSelector from "../utilities/ChainSelector";
 
 
 // import Background from '../utilities/Background'
@@ -43,8 +42,26 @@ const Icon = [
   },
 ];
 const BasicTokens = [
-  ["WETH", "USDT", "USDC", "DAI"],
-  ["ETH", "ARB", "WETH", "USDT", "USDC", "DAI", "MAIA", "HERMES"],
+  [
+    "WETH",
+    "USDT",
+    "USDC",
+    "DAI",
+    "ARB",
+    "GMX",
+    "MAGIC",
+    "RDNT",
+    "LINK",
+    "UNI"
+  ],
+  [
+    "WETH",
+    "USDT",
+    "USDC",
+    "DAI",
+    "TOSHI",
+    "AERO"
+  ],
 ];
 type selectedTokenType = {
   name: string;
@@ -81,7 +98,7 @@ function Homepage() {
   const [chain, setChain] = useState(0);
   // const [walletBalance, setWalletBalance] = useState('0')
   const [myTokenList, setMyTokenList] = useState<any>(null);
-  const [selectedToken, setSelectedToken] = useState<selectedTokenType>(ARB);
+  const [selectedToken, setSelectedToken] = useState<selectedTokenType | null>(null);
   const [selectedTokenBalance, setSelectedTokenBalance] = useState("");
   const [show, setShow] = useState(false);
   const [previewShow, setPreviewShow] = useState(false);
@@ -112,9 +129,9 @@ function Homepage() {
   const [upperTick, setUpperTick] = useState<number>(handleTick(0.29));
   const [lowRange, highRange] = [0.958, 3.0]
 
-  const setSelectedTokenInfo = (item: any) => {
+  const setSelectedTokenInfo = (item: selectedTokenType) => {
     setSelectedToken(item);
-    const tokenAddress = item.address; // Replace with your token address
+    const tokenAddress = item.address;
     const url = `https://api.dexscreener.com/latest/dex/tokens/${tokenAddress}`;
 
     fetch(url)
@@ -230,7 +247,7 @@ function Homepage() {
     return {tick: _tick, price: _price}
   }
   const fetchPrices = async () => {
-    
+    if (!selectedToken) return;
     let address1 = selectedToken.address; // First address
     let address2 = Icon[chain].GoddogTokenAddress; // Second address
     const fee = BigInt("10000"); // uint24 value
@@ -272,6 +289,7 @@ function Homepage() {
   }, [selectedToken]);
   // @ts-ignore
   const handleApprove = async () => {
+    if (!selectedToken) return;
     console.log("approve start");
     setIsApprove(true);
     setIsLoading(true);
@@ -325,6 +343,7 @@ function Homepage() {
     return [price1, price2];
   };
   const getApprovedAmountOfSelectedToken = async () => {
+    if (!selectedToken) return;
     try {
       const signer = await getSigner(primaryWallet as any);
       console.log("signer: ", signer);
@@ -371,6 +390,7 @@ function Homepage() {
   // };
   
   const handleAddLiquidity = async () => {
+    if (!selectedToken) return;
     setIsLoading(true);
     
     try {
@@ -468,263 +488,278 @@ function Homepage() {
     }
   };
   console.log("isLoading======>", isLoading);
+
+
+  const calculateImpermanentLoss = (priceRatio: number) => {
+    // Standard IL formula
+    const sqrtRatio = Math.sqrt(priceRatio);
+    const IL = 2 * sqrtRatio / (1 + priceRatio) - 1;
+    return Math.abs(IL);
+  };
+
+
+
+  const calculateAPR = () => {
+    try {
+      const upperPrice = Math.pow(1.0001, upperTick);
+      const lowerPrice = Math.pow(1.0001, lowerTick);
+      const priceRatio = upperPrice / lowerPrice;
+      
+      // Position size in USD
+      const positionSize = parseFloat(amount || '0') * tokenPrice;
+      if (positionSize === 0) return "0%";
+
+      // Calculate minimum volume needed for full conversion over 1 year
+      // We need enough volume to convert the entire position
+      const minimumYearlyVolume = positionSize * 2; // Need to trade position size both ways
+      const minimumDailyVolume = minimumYearlyVolume / 365;
+      
+      // Fee earnings from minimum required volume
+      const feeTier = 0.01; // 1%
+      const dailyFeeEarnings = minimumDailyVolume * feeTier;
+      const yearlyFeeEarnings = dailyFeeEarnings * 365;
+      
+      // Calculate fee APR based on minimum volume
+      const feeAPR = (yearlyFeeEarnings / positionSize) * 100;
+
+      // Price movement return over 1 year
+      // If price moves from lower to upper bound
+      const priceReturn = (priceRatio - 1) * 100;
+      
+      // Impermanent loss at full conversion
+      const impLoss = calculateImpermanentLoss(priceRatio) * 100;
+      
+      // Total minimum APR (fees + price movement - IL)
+      const apr = feeAPR + priceReturn - impLoss;
+      const result = Math.min(Math.max(0, apr), 999.99);
+      
+      console.log({
+        positionSize,
+        minimumYearlyVolume,
+        feeAPR,
+        priceReturn,
+        impLoss,
+        apr,
+        result
+      });
+      
+      return `${result.toFixed(1)}%`;
+    } catch (error) {
+      console.error("APR calculation error:", error);
+      return "0%";
+    }
+  };
+
   return (
-    <div className="w-full h-full flex flex-col justify-between bg-mainbg bg-center bg-cover">
+    <div className="w-full min-h-screen bg-[#1B1B1B] text-white">
       <Toaster />
-      {myTokenList && (
+      
+      {/* Token Selector Modal */}
+      {show && (
         <SelectTokenModal
           open={show}
           onClose={() => setShow(false)}
+          chain={chain}
           AllTokenData={myTokenList}
-          chain={Icon[chain].chainId}
-          BasicTokens={BasicTokens[chain]}
+          BasicTokens={BasicTokens}
+          selectedToken={selectedToken}
           setSelectedToken={setSelectedTokenInfo}
           setSelectedTokenBalance={setSelectedTokenBalance}
-          selectedToken={selectedToken}
         />
       )}
-      {/* {myTokenList && ( */}
-      <PreviewModal
-        open={previewShow}
-        onClose={() => setPreviewShow(false)}
-        selectToken={selectedToken}
-        symbol={Icon[chain].icon}
-        tokenAmount={amount}
-        isLoading={isLoading}
-        onApprove={async () => {
-          setIsLoading(true);
-          await handleAddLiquidity();
-          setIsLoading(false);
-          setIsApprove(false);
-          setPreviewShow(false);
-          setAmount("");
-        }}
-        // AllTokenData={myTokenList}
-        // chain={Icon[chain].chainId}
-        // BasicTokens={BasicTokens[chain]}
-      />
-      <div className="sticky top-0 border border-borderbg py-4 z-50">
-        <div className="mx-auto flex max-w-full items-center justify-end px-2 gap-2">
-          <div className=" absolute left-4">
-            <img
-              src={LOGO}
-              alt="LOGO"
-              className="rounded-full w-12 h-12 border-0 border-white"
-            />
+
+      {/* Preview Modal */}
+      {previewShow && selectedToken && (
+        <PreviewModal
+          open={previewShow}
+          onClose={() => setPreviewShow(false)}
+          onApprove={handleAddLiquidity}
+          selectToken={selectedToken}
+          symbol={selectedToken.symbol}
+          tokenAmount={amount}
+          isLoading={isLoading}
+        />
+      )}
+
+      {/* Header */}
+      <div className="sticky top-0 z-50 bg-[#1B1B1B] border-b border-gray-800">
+        <div className="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+          <div className="flex items-center gap-2">
+            <img src={LOGO} alt="Logo" className="h-8 w-8" />
+            <span className="text-xl font-medium">GODDOG</span>
           </div>
-          <div className="relative">
-            <div
-              className="bg-[#43454D] rounded-md flex flex-row justify-between text-gray-500 p-1 gap-1 px-2 py-1 items-center hover:cursor-pointer"
-              onClick={() => setSelectChain(!isSelectChain)}
-            >
-              <div>
-                <img
-                  src={Icon[chain].icon}
-                  alt="icon"
-                  className="w-8 h-8 rounded-full"
-                ></img>
-              </div>
-              <ChevronDown />
-            </div>
-            {isSelectChain && (
-              <div className="absolute z-50 right-0 mt-7 bg-cardbg  rounded-lg w-52 p-2">
-                {Icon.map((item, index) => {
-                  return (
-                    <ChainItem
-                      key={index}
-                      item={item}
-                      onClick={() => {
-                        setChain(index);
-                        setSelectChain(false);
-                        if (index == 0) setSelectedToken(ARB);
-                        else setSelectedToken(USDC);
-                      }}
-                      isActive={chain === index}
-                    />
-                  );
-                })}
-              </div>
-            )}
+          <div className="flex items-center gap-4">
+            <DynamicWidget variant="modal" />
           </div>
-          <DynamicWidget variant="modal" />
         </div>
       </div>
-      <div
-        className={
-          "relative flex flex-1 flex-col justify-start items-center mx-auto"
-        }
-      >
-        <div className="mx-auto pt-20">
-          {/* <div className="text-white text-center text-4xl ">
-            Cerberus by GODDOG
-          </div> */}
-          {/* <div className='text-gray-400 text-xl text-center'>
-            Secure, innovative, and high-yield opportunities in the
-          </div> */}
-          {/* <div className='text-gray-400 text-xl text-center items-center'>
-            decentralized finance landscape
-          </div> */}
-        </div>
-        <div className="flex justify-between w-full pl-2 pr-2">
-          <div className="text-white text-xl font-semibold flex gap-1 items-center">
-            <img
-              src={Uniswap_LOGO}
-              alt="ETH"
-              className="w-12 h-12 rounded-full"
-            ></img>
-            <div>Powered by Uniswap V3</div>
-          </div>
-          <div className="text-white flex gap-2 items-center">
-            <IoSettingsSharp className="w-6 h-6 cursor-pointer" />
-          </div>
-        </div>
-        <div className="w-full pb-6 flex justify-center items-center">
-          <Card className="max-w-lg bg-gray border-borderbg flex flex-col rounded-3xl gap-2">
-            <div className="flex text-white  font-semibold flex-row items-center gap-1">
-              <p>Deposit</p>
+
+      {/* Main Content */}
+      <div className="max-w-3xl mx-auto px-4 py-8">
+        <div className="bg-[#111111] rounded-2xl border border-gray-800">
+          {/* Uniswap V3 Branding */}
+          <div className="p-4 border-b border-gray-800">
+            <div className="flex items-center gap-2">
+              <img src={Uniswap_LOGO} alt="Uniswap" className="h-5 w-5" />
+              <span className="text-sm text-gray-400">Powered by Uniswap V3</span>
             </div>
-            <div className="rounded-xl flex flex-col gap-1">
-              <div className="flex flex-row justify-between items-center gap-3">
+          </div>
+
+          {/* Chain Selector */}
+          <div className="p-4 border-b border-gray-800">
+            <div className="flex items-center justify-between">
+              <span className="text-gray-400">Chain</span>
+              <div className="relative">
+                <ChainSelector
+                  chain={chain}
+                  isOpen={isSelectChain}
+                  setIsOpen={setSelectChain}
+                  chains={Icon}
+                  onChainSelect={setChain}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Token Input */}
+          <div className="p-4">
+            <div className="mb-2 text-gray-400">You sell</div>
+            <div className="bg-[#1B1B1B] rounded-xl p-4">
+              <div className="flex items-center justify-between">
                 <input
-                  className="text-5xl outline-none text-white w-full gap-2 bg-transparent"
+                  type="text"
+                  className="w-full text-3xl bg-transparent outline-none"
                   placeholder="0"
                   value={amount}
                   onChange={handleInputChange}
-                ></input>
-                <div>
-                  <img
-                    src={
-                      selectedToken?.logoURI
-                        ? selectedToken?.logoURI
-                        : Icon[chain].icon
-                    }
-                    alt="ETH"
-                    className="w-20 rounded-full"
-                  ></img>
-                </div>
+                />
                 <div
-                  className="rounded-md flex flex-row text-gray-500 gap-3 items-center hover:cursor-pointer hover:bg-hoverbg"
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg bg-[#2D2D2D] cursor-pointer hover:bg-[#3D3D3D]"
                   onClick={() => setShow(true)}
                 >
-                  {/* <div className=" relative w-10 h-10 flex flex-row items-end">
-                    <div className="w-5 h-5 absolute bottom  right-0 rounded-sm">
-                      <img src={Icon[chain].icon} alt="ETH"></img>
-                    </div>
-                  </div> */}
-                  <div className="flex flex-col justify-end">
-                    <div className="flex flex-row text-2xl text-white">
-                      <div>{selectedToken.symbol}</div>
-                      <div className="flex items-center">
-                        <ChevronDown />
-                      </div>
-                    </div>
-                    {/* <div className="text-gray-500">{Icon[chain].name}</div> */}
-                  </div>
+                  {selectedToken ? (
+                    <>
+                      <img
+                        src={selectedToken.logoURI}
+                        alt="token"
+                        className="h-6 w-6 rounded-full"
+                      />
+                      <span>{selectedToken.symbol}</span>
+                    </>
+                  ) : (
+                    <span className="whitespace-nowrap">Select Token</span>
+                  )}
+                  <ChevronDown className="h-4 w-4 text-gray-400" />
                 </div>
               </div>
-              <div className="flex flex-row justify-between items-baseline">
-                <div className="text-gray-400 text-xl ">
-                  {parseFloat(amount) > 0
-                    ? "$" + (parseFloat(amount) * tokenPrice).toFixed(3)
-                    : "$0"}
-                </div>
-                <div className="text-gray-500 text-md hover:text-white font-semibold">
-                  {/* {selectedTokenBalance !== ""
-                    ? "Balance: " + selectedTokenBalance
-                    : ""} */}
-                  <div className="flex items-center gap-1">
-                    <div className="flex items-center">
-                      <p>
-                        {selectedTokenBalance !== ""
-                          ? selectedTokenBalance
-                          : "0"}{" "}
-                        {selectedToken.symbol}
-                      </p>
-                    </div>
-                    <div
-                      onClick={handleRangeClick}
-                      className="text-[14px] flex text-black items-center font-normal px-2 py-0.5 bg-[#FFFF00] rounded-[0.5rem] cursor-pointer"
-                    >
-                      <p>Max</p>
-                    </div>
-                  </div>
+              <div className="flex justify-between mt-2 text-sm text-gray-400">
+                <span>~${(parseFloat(amount || '0') * tokenPrice).toFixed(2)}</span>
+                <div className="flex items-center gap-2">
+                  <span>Balance: {selectedTokenBalance}</span>
+                  <button
+                    onClick={handleRangeClick}
+                    className="px-2 py-0.5 text-xs bg-blue-500 text-white rounded hover:bg-blue-600"
+                  >
+                    Max
+                  </button>
                 </div>
               </div>
             </div>
+          </div>
 
-            {/* <div className="w-full">
-              <div className="flex row justify-between items-center gap-1">
-                {Data.Range.map((item, index) => {
-                  return (
-                    <button
-                      key={index}
-                      className={`w-full bg-hoverbg border-hoverbg rounded-md border  ${
-                        index === range
-                          ? "border-[#5C5E65] bg-[#5C5E65] text-white font-bold"
-                          : "border-borderbg"
-                      } hover:border-[#5C5E65] hover:bg-[#5C5E65] hover:text-white py-2 text-gray-500 flex flex-row justify-center gap-2`}
-                      onClick={() => handleRangeClick(index)}
-                    >
-                      {item}
-                    </button>
-                  );
-                })}
+          {/* Liquidity Visualization */}
+          <div className="p-4 border-t border-gray-800">
+            <InteractiveLiquidityVisualization
+              currentTick={currentTick}
+              lowerTick={lowerTick}
+              upperTick={upperTick}
+            />
+          </div>
+
+          {/* Position Parameters */}
+          <div className="p-4 border-t border-gray-800">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <div className="text-sm text-gray-400 mb-1">Size</div>
+                <div className="text-lg">
+                  {Math.abs(upperTick - lowerTick)} ticks
+                  <div className="text-xs text-gray-500">
+                    {Math.abs(upperTick - lowerTick) / 200} × 200 tick spacing
+                  </div>
+                </div>
               </div>
-            </div> */}
-          </Card>
-        </div>
-        {selectedToken ? (
-          <div
-            className={`${
-              isLoading || isApprove
-                ? "bg-[#FFFF00] text-black"
-                : "text-white bg-[#43454D]"
-            } flex cursor-pointer items-center py-2 font-semibold rounded-2xl  text-xl w-full`}
-            onClick={() => {
-              if (!isLoading && !isApprove) handleApprove();
-              if (isApprove) setPreviewShow(true);
-            }}
-          >
+              <div>
+                <div className="text-sm text-gray-400 mb-1">Min APR</div>
+                <div className="text-lg text-blue-500">
+                  {selectedToken ? calculateAPR() : '0%'}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Action Button */}
+          <div className="p-4 border-t border-gray-800">
             <button
-              className={`cursor-pointer mx-auto ${
-                isLoading ? "hidden" : isApprove ? "hidden" : "block"
+              className={`w-full py-3 rounded-xl font-medium ${
+                !selectedToken
+                  ? 'bg-[#2D2D2D] text-gray-400'
+                  : isLoading || isApprove
+                  ? 'bg-blue-500 text-white hover:bg-blue-600'
+                  : 'bg-[#2D2D2D] text-gray-400 hover:bg-[#3D3D3D]'
               }`}
-              //
-              disabled={isButtonDisabled}
+              onClick={() => {
+                if (!selectedToken) {
+                  setShow(true);
+                } else if (!isLoading && !isApprove) {
+                  handleApprove();
+                } else if (isApprove) {
+                  setPreviewShow(true);
+                }
+              }}
+              disabled={isButtonDisabled || !selectedToken}
             >
-              {parseFloat(amount) <= parseFloat(selectedTokenBalance)
-                ? parseFloat(amount) > 0
-                  ? "Start Approve"
-                  : "Deposit and Start Earning"
-                : amount != ""
-                ? "Insufficient Balance"
-                : "Deposit and Start Earning"}
-            </button>
-
-            <button className={isApprove ? "cursor-pointer mx-auto" : "hidden"}>
-              {isLoading ? <Loader /> : "Preview"}
+              {!selectedToken 
+                ? "Select Token" 
+                : isLoading 
+                ? <Loader /> 
+                : isApprove 
+                ? "Preview" 
+                : "Approve"}
             </button>
           </div>
-        ) : (
-          <div className="flex cursor-pointer items-center py-4 font-semibold rounded-3xl text-white text-2xl bg-mainbg w-full ">
-            <p className="mx-auto">Select a token</p>
-          </div>
-        )}
-
-        {/* <div className="mx-auto w-full">
-          <div className="text-gray-400 text-xl text-center">
-            Cerberus Inu: Guarding your assets with cutting-edge DeFi
-          </div>
-          <div className="text-gray-400 text-xl text-center">
-            strategies and multi-layered security protocols.
-          </div>
-        </div> */}
+        </div>
       </div>
-      <InteractiveLiquidityVisualization
-        currentTick={currentTick}
-        lowerTick={lowerTick}
-        upperTick={upperTick}
-      />
+
+      {/* Add tooltips */}
+      <Tooltip id="fee-tooltip" className="max-w-xs">
+        <div className="p-2">
+          <p className="font-semibold mb-1">Fee Tier: 1%</p>
+          <p>You earn 1% of all trading volume that occurs within your price range.</p>
+        </div>
+      </Tooltip>
+
+      <Tooltip id="range-tooltip" className="max-w-xs">
+        <div className="p-2">
+          <p className="font-semibold mb-1">Price Range</p>
+          <p>The price range in which your liquidity is active. You earn fees when trades happen within this range.</p>
+          <p className="mt-1">Lower tick: {lowerTick}</p>
+          <p>Upper tick: {upperTick}</p>
+        </div>
+      </Tooltip>
+
+      <Tooltip id="apr-tooltip" className="max-w-xs">
+        <div className="p-2">
+          <p className="font-semibold mb-1">Minimum APR Calculation</p>
+          <p>Annual rate based on:</p>
+          <ul className="list-disc pl-4 mt-1">
+            <li>Minimum trading volume needed for full position conversion</li>
+            <li>1% fee on all trades</li>
+            <li>Price movement from {lowerTick} to {upperTick}</li>
+            <li>Subtracts maximum impermanent loss</li>
+          </ul>
+          <p className="mt-1 text-sm">This is a conservative estimate assuming only minimum required trading volume.</p>
+        </div>
+      </Tooltip>
     </div>
   );
 }
