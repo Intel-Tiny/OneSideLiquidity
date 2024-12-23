@@ -1,15 +1,15 @@
 /* eslint-disable */
-import React, { useState, useMemo, useEffect, Suspense } from 'react'
+import React, { useState, useMemo, useEffect } from 'react'
 import { Canvas } from '@react-three/fiber'
 import { OrbitControls, Text, Line } from '@react-three/drei'
 import * as THREE from 'three'
-import { fetchLiquidityConcentration } from '../../utils/graphQueries';
-import {
-  DEFAULT_CAMERA_POSITION as CAMERA_POSITION,
-  calculateAxisValues as computeAxisValues,
-  calculateLiquidityHeight as computeLiquidityHeight,
-  calculateTickFromSlider as computeTickFromSlider
-} from '../../utils/visualizationUtils';
+// import { fetchLiquidityConcentration } from '../../utils/graphQueries';
+// import {
+//   DEFAULT_CAMERA_POSITION as CAMERA_POSITION,
+//   calculateAxisValues as computeAxisValues,
+//   calculateLiquidityHeight as computeLiquidityHeight,
+//   calculateTickFromSlider as computeTickFromSlider
+// } from '../../utils/visualizationUtils';
 
 // Constants
 const MAX_TICK = 887272;
@@ -332,7 +332,7 @@ class ErrorBoundary extends React.Component<
 
 // Export the main visualization component
 export default function InteractiveLiquidityVisualization(props: MainProps) {
-  const { currentTick, lowerTick, upperTick, amount, calculatedAPR, initialUsdValue, selectedToken, chainId, v2PairAddress } = props;
+  const { currentTick, lowerTick, upperTick, amount, calculatedAPR, initialUsdValue, selectedToken } = props;
   const [mounted, setMounted] = useState(false);
   const [simulatedTick, setSimulatedTick] = useState(lowerTick);
   const [tokenRatios, setTokenRatios] = useState({ depositedToken: 100, hermes: 0 });

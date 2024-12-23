@@ -6,7 +6,7 @@ import ARBITRUM from "/arbitrum.svg";
 const LOGO = "https://ivory-accurate-pig-375.mypinata.cloud/ipfs/QmNxKrGR1ZJ3bKYdyYXf8tuTtKF3zaDShmmFdFABfXFdJQ?pinataGatewayToken=Yn-z4l06l9aFDk0xk-gQmyfHbcCrqKcsqSbuEqjtGUOHqRX5DEWFe-t-7SxbqmMf";
 import { useState, ChangeEvent } from "react";
 import { TokenList } from "../../utils/tokenList";
-import { routerABI, factoryABI, nonfungiblePositionManagerABI } from "../../utils/constants";
+import { factoryABI, nonfungiblePositionManagerABI } from "../../utils/constants";
 import { DynamicWidget, useDynamicContext } from "@dynamic-labs/sdk-react-core";
 import SelectTokenModal from "../utilities/SelectTokenModal";
 import PreviewModal from "../utilities/PreviewModal";
@@ -359,42 +359,42 @@ function Homepage() {
     return { tick: _tick, price: _price };
   };
 
-  const fetchPrices = async () => {
-    if (!selectedToken || chain === undefined) return;
-    let address1 = selectedToken.address;
-    let address2 = Icon[chain].GoddogTokenAddress;
-    const fee = BigInt("10000");
-    const alreadyPoolExist = await checkPoolExists(address1, address2, Number(fee));
-    if (alreadyPoolExist) {
-      toast.error("The position already exists!");
-      setIsLoading(false);
-      return;
-    }
+  // const fetchPrices = async () => {
+  //   if (!selectedToken || chain === undefined) return;
+  //   let address1 = selectedToken.address;
+  //   let address2 = Icon[chain].GoddogTokenAddress;
+  //   const fee = BigInt("10000");
+  //   const alreadyPoolExist = await checkPoolExists(address1, address2, Number(fee));
+  //   if (alreadyPoolExist) {
+  //     toast.error("The position already exists!");
+  //     setIsLoading(false);
+  //     return;
+  //   }
 
-    let token0: any, token1: any;
-    if (address1.toLowerCase() < address2.toLowerCase()) {
-      token0 = address1;
-      token1 = address2;
-    } else {
-      token0 = address2;
-      token1 = address1;
-    }
+  //   let token0: any, token1: any;
+  //   if (address1.toLowerCase() < address2.toLowerCase()) {
+  //     token0 = address1;
+  //     token1 = address2;
+  //   } else {
+  //     token0 = address2;
+  //     token1 = address1;
+  //   }
 
-    const [price1, price2] = await calculateTokenPrices(token0, token1);
-    let currentPrice = Number(price1) / Number(price2);
-    const state = token0 == address1;
-    const lowerPrice = state ? currentPrice * lowRange : currentPrice / lowRange;
-    const upperPrice = state ? currentPrice * highRange : currentPrice / highRange;
+  //   const [price1, price2] = await calculateTokenPrices(token0, token1);
+  //   let currentPrice = Number(price1) / Number(price2);
+  //   const state = token0 == address1;
+  //   const lowerPrice = state ? currentPrice * lowRange : currentPrice / lowRange;
+  //   const upperPrice = state ? currentPrice * highRange : currentPrice / highRange;
 
-    const resLower = getPriceAndTickFromValues(lowerPrice);
-    const resUpper = getPriceAndTickFromValues(upperPrice);
-    const tickLower = state ? resLower.tick + 200 : resUpper.tick;
-    const tickUpper = state ? resUpper.tick : resLower.tick - 200;
+  //   const resLower = getPriceAndTickFromValues(lowerPrice);
+  //   const resUpper = getPriceAndTickFromValues(upperPrice);
+  //   const tickLower = state ? resLower.tick + 200 : resUpper.tick;
+  //   const tickUpper = state ? resUpper.tick : resLower.tick - 200;
 
-    setLowerTick(tickLower);
-    setUpperTick(tickUpper);
-    setCurrentTick(resLower.tick);
-  };
+  //   setLowerTick(tickLower);
+  //   setUpperTick(tickUpper);
+  //   setCurrentTick(resLower.tick);
+  // };
 
   const handleApprove = async () => {
     if (!selectedToken || chain === undefined) return;
