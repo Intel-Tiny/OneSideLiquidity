@@ -449,7 +449,7 @@ export default function InteractiveLiquidityVisualization(props: MainProps) {
           <div className="flex items-baseline justify-center mt-3">
             <span className="text-3xl sm:text-lg font-bold text-green-400 leading-none">
               {calculatedAPR}
-            </span>
+            </span>  
             <span className="text-xl sm:text-xs font-bold text-green-400 leading-none ml-1">%</span>
           </div>
         </div>
