@@ -1,7 +1,7 @@
 import { ChevronDown, Check } from "lucide-react";
 
 interface ChainSelectorProps {
-  chain: number;
+  chain: number | undefined;
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
   chains: any[];
@@ -12,29 +12,37 @@ const ChainSelector = ({ chain, isOpen, setIsOpen, chains, onChainSelect }: Chai
   return (
     <div className="relative">
       <div
-        className="flex items-center gap-2 px-3 py-2 rounded-lg bg-[#1B1B1B] cursor-pointer hover:bg-[#2D2D2D]"
+        className={`flex items-center gap-2 px-3 py-2 rounded-xl cursor-pointer transition-all duration-200 ${
+          chain === undefined ? 'bg-[#FFE804] text-black font-medium hover:bg-[#FFE804]/90' : 'bg-[#0A0A0A] hover:bg-[#1B1B1B]'
+        }`}
         onClick={() => setIsOpen(!isOpen)}
       >
-        <img src={chains[chain].icon} alt="chain" className="h-5 w-5 rounded-full" />
-        <span>{chains[chain].name}</span>
-        <ChevronDown className="h-4 w-4 text-gray-400" />
+        {chain !== undefined ? (
+          <>
+            <img src={chains[chain].icon} alt="chain" className="h-5 w-5 rounded-full" />
+            <span className="text-sm font-medium">{chains[chain].name}</span>
+          </>
+        ) : (
+          <span className="text-sm font-medium">Select Chain</span>
+        )}
+        <ChevronDown className={`h-4 w-4 ${chain === undefined ? 'text-black' : 'text-gray-400'} ml-1`} />
       </div>
       
       {isOpen && (
-        <div className="absolute top-full mt-1 right-0 w-48 bg-[#1B1B1B] rounded-lg shadow-lg border border-gray-800 overflow-hidden">
-          <div className="py-1">
+        <div className="absolute top-full mt-1.5 right-0 w-48 bg-[#111111] rounded-xl shadow-xl border border-gray-800/30 backdrop-blur-sm">
+          <div className="py-1.5">
             {chains.map((chainItem, index) => (
               <div
                 key={chainItem.chainId}
-                className="flex items-center justify-between px-4 py-2 hover:bg-[#2D2D2D] cursor-pointer"
+                className="flex items-center justify-between px-3 py-2 hover:bg-[#1B1B1B] cursor-pointer transition-colors"
                 onClick={() => {
                   onChainSelect(index);
                   setIsOpen(false);
                 }}
               >
                 <div className="flex items-center gap-2">
-                  <img src={chainItem.icon} alt="icon" className="w-6 h-6 rounded-full" />
-                  <span className="text-white">{chainItem.name}</span>
+                  <img src={chainItem.icon} alt="icon" className="w-5 h-5 rounded-full" />
+                  <span className="text-white text-sm font-medium">{chainItem.name}</span>
                 </div>
                 {chain === index && <Check className="w-4 h-4 text-blue-500" />}
               </div>

@@ -1,116 +1,130 @@
-import { Fragment } from 'react'
-import {
-  Dialog,
-  DialogPanel,
-  Transition,
-  TransitionChild
-} from '@headlessui/react'
-import { X } from 'lucide-react'
+import React from "react";
+import { X, ExternalLink } from "lucide-react";
+import Loader from "./Loader";
+import FALLBACK_TOKEN from "/token-placeholder.svg";
 
-// import Separator from '../tailus-ui/Separator'
-// import { useDynamicContext } from '@dynamic-labs/sdk-react-core'
-// import { ethers, Log } from 'ethers'
-// // import Moralis from "moralis";
-// import { Network, Alchemy } from 'alchemy-sdk'
-// import BASE from '/Base.svg'
-// import ARBITRUM from '/arbitrum.svg'
-// import { Check } from 'lucide-react'
-import Loader from './Loader'
+interface PreviewModalProps {
+  open: boolean;
+  onClose: () => void;
+  onApprove: () => void;
+  selectToken: {
+    name: string;
+    symbol: string;
+    logoURI: string;
+  };
+  tokenAmount: string;
+  isLoading: boolean;
+  isSuccess?: boolean;
+  chainId?: number;
+  positionId?: string;
+}
 
-// type PreviewType = {
-//   name: string
-//   symbol: string
-//   logoURI: string
-//   address: string
-//   decimals: number
-// }
+const handleImageError = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
+  event.currentTarget.src = FALLBACK_TOKEN;
+};
 
 const PreviewModal = ({
   open,
   onClose,
   onApprove,
   selectToken,
-  symbol,
   tokenAmount,
-  isLoading
-}: // AllTokenData,
-// chain,
-// BasicTokens
-{
-  open: boolean
-  onClose: () => void
-  onApprove: () => void
-  selectToken: any
-  symbol: any
-  tokenAmount: string
-  isLoading: boolean
-  // AllTokenData: any
-  // chain: number
-  // BasicTokens: any
-}) => {
+  isLoading,
+  isSuccess,
+  chainId,
+  positionId
+}: PreviewModalProps) => {
+  if (!open) return null;
+
+  const getUniswapUrl = () => {
+    const network = chainId === 8453 ? 'base' : 'arbitrum';
+    return `https://app.uniswap.org/pools/${positionId}?chain=${network}`;
+  };
+
   return (
-    <>
-      <Transition appear show={open} as={Fragment}>
-        <Dialog as="div" className="relative" onClose={onClose}>
-          <div className="fixed inset-0 bg-black/65 z-40" />
-          <div className="fixed inset-0 py-10 overflow-y-auto z-40">
-            <div className="flex min-h-full items-center justify-center text-center">
-              <TransitionChild
-                as={Fragment}
-                enter="ease-out duration-300"
-                enterFrom="opacity-0 scale-95"
-                enterTo="opacity-100 scale-100"
-                leave="ease-in duration-200"
-                leaveFrom="opacity-100 scale-100"
-                leaveTo="opacity-0 scale-95"
-              >
-                <DialogPanel className="max-w-sm w-full flex flex-col rounded-2xl bg-[#33363F] text-left align-middle shadow-xl transition-all  border-[#33363F] border-2 min-h-[200px] justify-center">
-                  <div className="w-full flex flex-col gap-2">
-                    <div className="flex justify-between p-3">
-                      <div className="text-gray-300 text-xl text-center">
-                        Add liquidity
-                      </div>
-                      <X
-                        className="text-xl text-gray-300 cursor-pointer"
-                        onClick={onClose}
-                      />
-                    </div>
-                    <div className="flex flex-row gap-2 justify-between p-5 rounded-lg m-3">
-                      <div className=" relative w-10 h-10 flex flex-row items-end">
-                        <img
-                          src={selectToken?.logoURI}
-                          alt="ETH"
-                          className="w-10 h-10 rounded-full"
-                        ></img>
-                        <div className="bg-blue-950 w-5 h-5 absolute bottom  right-0 border-2 rounded-sm border-blue-950">
-                          <img src={symbol} alt="ETH"></img>
-                        </div>
-                        <div className="text-gray-300 text-3xl ml-2">
-                          {selectToken.symbol}
-                        </div>
-                      </div>
-                      <div className="text-gray-300 text-2xl text-center">
-                        {tokenAmount}
-                      </div>
-                    </div>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+      <div className="relative w-full max-w-md bg-[#1B1B1B] rounded-2xl shadow-xl">
+        {/* Header */}
+        <div className="flex items-center justify-between p-4 border-b border-gray-800">
+          <h2 className="text-lg font-semibold text-white">
+            {isSuccess ? "Position Created!" : "Add liquidity"}
+          </h2>
+          <button
+            onClick={onClose}
+            className="p-1 hover:bg-gray-800 rounded-lg transition-colors"
+          >
+            <X className="h-5 w-5 text-gray-400" />
+          </button>
+        </div>
 
-                    <div className="flex flex-col gap-2 p-3">
-                      <button
-                        className="bg-[#FFE804]  text-black  border-[#FFE804] hover:bg-[#E7D206] border cursor-pointer p-2 rounded-lg"
-                        onClick={onApprove}
-                      >
-                        {isLoading ? <Loader /> : "Add"}
-                      </button>
-                    </div>
-                  </div>
-                </DialogPanel>
-              </TransitionChild>
+        {/* Content */}
+        <div className="p-4 space-y-4">
+          {isSuccess ? (
+            <div className="text-center space-y-4">
+              <div className="w-16 h-16 mx-auto bg-green-500/10 rounded-full flex items-center justify-center">
+                <svg className="w-8 h-8 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <p className="text-gray-300">Your liquidity position has been created successfully!</p>
             </div>
-          </div>
-        </Dialog>
-      </Transition>
-    </>
-  );
-}
+          ) : (
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-[#2D2D2D] flex items-center justify-center overflow-hidden">
+                <img
+                  src={selectToken.logoURI || FALLBACK_TOKEN}
+                  alt={selectToken.name}
+                  className="w-full h-full object-cover"
+                  onError={handleImageError}
+                />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="text-lg font-medium text-white truncate">
+                    {tokenAmount}
+                  </span>
+                  <span className="text-lg font-medium text-white">
+                    {selectToken.symbol}
+                  </span>
+                </div>
+                <p className="text-sm text-gray-400 truncate">{selectToken.name}</p>
+              </div>
+            </div>
+          )}
+        </div>
 
-export default PreviewModal
+        {/* Footer */}
+        <div className="p-4 border-t border-gray-800">
+          {isSuccess ? (
+            <div className="space-y-3">
+              <a
+                href={getUniswapUrl()}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full py-3 bg-[#FFE804] text-black font-medium rounded-xl hover:bg-[#FFE804]/90 transition-colors flex items-center justify-center gap-2"
+              >
+                View on Uniswap <ExternalLink className="h-4 w-4" />
+              </a>
+              <button
+                onClick={onClose}
+                className="w-full py-3 bg-[#2D2D2D] text-white font-medium rounded-xl hover:bg-[#3D3D3D] transition-colors"
+              >
+                Return to Home
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={onApprove}
+              disabled={isLoading}
+              className="w-full py-3 bg-[#FFE804] text-black font-medium rounded-xl hover:bg-[#FFE804]/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isLoading ? <Loader /> : "Add"}
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default PreviewModal;

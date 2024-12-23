@@ -44,7 +44,7 @@ function App() {
         secondary: "#1D4ED8",
       },
     },
-    siweStatement: `Welcome to Cerberus by Goddog. Signing is the only way we can truly know that you are the owner of the wallet you are connecting. Signing is a safe, gas-less transaction that does not in any way give permission to perform any transactions with your wallet.`,
+    siweStatement: `Welcome to Cerberus by GODDOG. Signing is the only way we can truly know that you are the owner of the wallet you are connecting. Signing is a safe, gas-less transaction that does not in any way give permission to perform any transactions with your wallet.`,
   };
 
   return (

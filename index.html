@@ -1,18 +1,22 @@
 <!DOCTYPE html>
-<html lang="en" data-shade="900" data-rounded="large">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link
-      rel="icon"
-      type="image/svg+xml"
-      href="/Goddog.svg"
-      media="(prefers-color-scheme: light)"
-    />
+    <link rel="icon" type="image/svg+xml" href="/Goddog.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Cerberus by GODDOG</title>
+    <title>One-Side Liquidity</title>
+    <script src="https://script.supademo.com/script.js"></script>
   </head>
-  <body class="bg-mainbg dark:bg-gray-950 overflow-auto">
-    <div id="root" class=""></div>
+  <body>
+    <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    <script>
+      Supademo("852f2e7068a92f4cedae7d91db46cb745ae0c27967bdccc07e81067346d40d6d", {
+        variables: {
+          email: "", // optional user email
+          name: ""   // optional user name
+        }
+      });
+    </script>
   </body>
 </html>
