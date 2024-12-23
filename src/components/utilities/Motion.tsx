@@ -416,52 +416,52 @@ export default function InteractiveLiquidityVisualization(props: MainProps) {
   return (
     <div className="relative flex flex-col gap-4 bg-[#1B1B1B] rounded-lg p-6">
       {/* Position Info Display */}
-      <div className="flex justify-between items-stretch p-4 bg-[#1F1F1F] rounded-lg">
-        <div className="text-center flex-1 min-w-[160px] px-2">
-          <div className="text-xs text-gray-500 uppercase tracking-wider mb-2">
+      <div className="flex  justify-between items-stretch p-4 bg-[#1F1F1F] rounded-lg">
+        <div className="text-center flex-1 px-2 sm:px-[0px]">
+          <div className="text-xs sm:text-[10px] text-gray-500 uppercase tracking-wider mb-2">
             LIQUIDITY DETAILS
           </div>
           <div className="flex flex-col gap-1">
-            <div className="text-2xl font-medium text-gray-200 truncate">
+            <div className="text-2xl sm:text-lg font-medium text-gray-200 truncate">
               {liquidityRange.toFixed(0)}%
-              <span className="text-sm text-gray-400 ml-1">Range</span>
+              <span className="text-sm sm:text-xs text-gray-400 ml-1">Range</span>
             </div>
-            <div className="text-2xl font-medium text-gray-200 truncate">
+            <div className="text-2xl sm:text-lg sm:p-2 font-medium text-gray-200 truncate">
               {Math.abs(upperTick - lowerTick).toLocaleString()}
-              <span className="text-sm text-gray-400 ml-1">Ticks</span>
+              <span className="text-sm sm:text-xs text-gray-400 ml-1">Ticks</span>
             </div>
           </div>
         </div>
-        <div className="h-20 w-px bg-gray-800 mx-2"></div>
-        <div className="text-center flex-1 min-w-[160px] px-2">
-          <div className="text-xs text-gray-500 uppercase tracking-wider mb-2">
+        <div className="h-20 w-[1px] bg-gray-800 mx-2 sm:mx-1"></div>
+        <div className="text-center flex-1 px-2">
+          <div className="text-xs sm:text-[10px] text-gray-500 uppercase tracking-wider mb-2">
             POSITION VALUE
           </div>
-          <div className="text-3xl font-medium text-gray-200 truncate mt-3">
+          <div className="text-3xl sm:text-lg font-medium text-gray-200 truncate mt-3">
             {positionValue}
           </div>
         </div>
-        <div className="h-20 w-px bg-gray-800 mx-2"></div>
-        <div className="text-center flex-1 min-w-[160px] px-2">
-          <div className="text-xs text-gray-500 uppercase tracking-wider mb-2">
+        <div className="h-20 w-[1px] bg-gray-800 mx-2 sm:mx-1"></div>
+        <div className="text-center flex-1 px-2 sm:px-[0px]">
+          <div className="text-xs sm:text-[10px] text-gray-500 uppercase tracking-wider mb-2">
             ESTIMATED APR
           </div>
           <div className="flex items-baseline justify-center mt-3">
-            <span className="text-3xl font-bold text-green-400 leading-none">
+            <span className="text-3xl sm:text-lg font-bold text-green-400 leading-none">
               {calculatedAPR}
             </span>
-            <span className="text-xl font-bold text-green-400 leading-none ml-1">%</span>
+            <span className="text-xl sm:text-xs font-bold text-green-400 leading-none ml-1">%</span>
           </div>
         </div>
       </div>
 
       {/* Token Ratio Display */}
-      <div className="flex justify-center items-center gap-4 p-4 bg-[#1F1F1F] rounded-lg relative">
+      <div className="flex justify-center items-center gap-4 p-4 sm:p-1 bg-[#1F1F1F] rounded-lg relative">
         <div className="text-xs text-gray-500 uppercase tracking-wider absolute -top-2 left-1/2 -translate-x-1/2 bg-[#1B1B1B] px-2">
           TOKEN RATIO
         </div>
-        <div className="flex-1 text-center pt-4">
-          <div className="text-5xl font-bold text-blue-400 leading-tight">
+        <div className="flex-1 text-center pt-4 sm:pt-0">
+          <div className="text-5xl sm:text-2xl font-bold text-blue-400 leading-tight">
             {simulatedTick === lowerTick ? "100" : tokenRatios.depositedToken}%
           </div>
           <div className="text-sm text-blue-400 uppercase tracking-wider mt-2">
@@ -469,8 +469,8 @@ export default function InteractiveLiquidityVisualization(props: MainProps) {
           </div>
         </div>
         <div className="h-24 w-px bg-gray-800"></div>
-        <div className="flex-1 text-center pt-4">
-          <div className="text-5xl font-bold text-yellow-400 leading-tight">
+        <div className="flex-1 text-center pt-4 sm:pt-0">
+          <div className="text-5xl sm:text-2xl font-bold text-yellow-400 leading-tight">
             {simulatedTick === lowerTick ? "0" : tokenRatios.hermes}%
           </div>
           <div className="text-sm text-yellow-400 uppercase tracking-wider mt-2">
@@ -480,7 +480,7 @@ export default function InteractiveLiquidityVisualization(props: MainProps) {
       </div>
 
       {/* 3D Visualization */}
-      <div className="h-[500px] w-full relative bg-[#111111] rounded-lg overflow-hidden">
+      <div className="aspect-[1] w-full relative bg-[#111111] rounded-lg overflow-hidden">
         <ErrorBoundary>
           <Canvas
             gl={{ antialias: true, alpha: true }}

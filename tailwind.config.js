@@ -36,6 +36,10 @@ export default {
         hoverbg: "#3B3E47",
         buttonbg: "#5a0000",
       },
+      screens:{
+        sm: {raw: "(max-width: 450px)"}, // Example for small screens
+        xxs: {raw: "(max-width: 350px)"}, // Example for small screens
+      },
       backgroundImage: (theme) => ({
         "main-bgcolor": "linear-gradient(to bottom, black, #1a0000)",
       }),

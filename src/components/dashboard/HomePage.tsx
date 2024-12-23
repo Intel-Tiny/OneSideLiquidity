@@ -727,7 +727,7 @@ function Homepage() {
   };
 
   return (
-    <div className="w-full h-screen overflow-hidden bg-[#0A0A0A] text-white">
+    <div className="w-full h-screen overflow-auto hide-scrollbar bg-[#0A0A0A] text-white">
       <Toaster />
       
       {/* Title Section with Logo and Wallet */}
@@ -743,7 +743,7 @@ function Homepage() {
       </div>
 
       {/* Main Content */}
-      <div className="h-[calc(100vh-53px)] flex items-center justify-center">
+      <div className="mt-4 flex items-center justify-center">
         <div className="w-full max-w-2xl mx-auto px-6">
           {createdPosition ? (
             <AnalyticsDashboard
