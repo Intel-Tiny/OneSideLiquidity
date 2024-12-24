@@ -259,13 +259,18 @@ function Homepage() {
     setSelectedTokenBalance(balance);
   };
   useEffect(() => {
+    console.log("this is load");
     axios
-      .get(`${URL}/load/uniswap`)
+      .get(`${URL}/load/uniswap`,{
+        headers: {
+          "ngrok-skip-browser-warning": "true", // or any value you prefer
+        },
+      })
       .then(response => {
         if(response.data.state === "success") {
+          console.log("poolPair", response.data);
           setPoolPair(response.data.pool);
           setVaultPair(response.data.vault);
-          console.log("poolPair", response.data);
         }
         else {
           console.log("error", response.data.state);
