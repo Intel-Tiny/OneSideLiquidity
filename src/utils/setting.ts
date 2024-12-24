@@ -1,4 +1,4 @@
-export const URL = "http://localhost:5050/api"
+export const URL = " https://rational-killdeer-thoroughly.ngrok-free.app/api"
 
 
 const truncateMiddle = (str: string, maxLength: number = 16): string => {

@@ -932,7 +932,7 @@ function Homepage() {
               {/* Header with Uniswap branding and chain selector */}
               <div className="p-3 border-b border-gray-800/30 flex justify-between items-center">
                 <div className="flex items-center gap-2"
-                  onClick={() => testPool()}
+                  // onClick={() => testPool()}
                 >
                   <img src={Uniswap_LOGO} alt="Uniswap" className="h-5 w-5" />
                   <span className="text-xs text-gray-400">Powered by Uniswap V3</span>

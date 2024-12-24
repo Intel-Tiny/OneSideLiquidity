@@ -121,6 +121,7 @@ const calculatePositionValue = (
 
     // Calculate value based on position in range
     const maxValue = initialUsdValue * 1.5; // 50% potential increase
+    console.log("Currency:");
     const currency = formatCurrency(initialUsdValue, maxValue, rangeProgress);
     return currency;
   } catch (error) {
