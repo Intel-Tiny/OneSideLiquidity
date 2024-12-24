@@ -834,16 +834,15 @@ function Homepage() {
 
   const testPool = () => {
     handlePool({
-      poolAddress: "0x39725f119cBcB18dcEa35D35E36d6b31a5D536bC",
-      positionId: "positionId",
-      token0: "0x45940000009600102A1c002F0097C4A500fa00AB",
-      token1: "0xf97f4df75117a78c1A5a0DBb814Af92458539FB4",
-      fee: 12,
-      tickLower:12,
-      tickUpper:121,
-      amount: 12,
-      recipient: primaryWallet?.address,
-      sqrtPrice: 12,
+      poolAddress: '0x2B8A4530030021026622e6FaF9265F0aEDa19AC7',
+      positionId: '4038558',
+      token0: '0x45940000009600102a1c002f0097c4a500fa00ab',
+      token1: '0xAB8EBCC9eecc20Bd30c7b75c7b4e8fcCcFBf01aB',
+      fee: 10000,
+      sqrtPrice: 8.164089682635616e+28,
+      tickLower: -10600,
+      tickUpper: 400,
+      amount: 50,
     })
   }
 
@@ -937,7 +936,7 @@ function Homepage() {
               {/* Header with Uniswap branding and chain selector */}
               <div className="p-3 border-b border-gray-800/30 flex justify-between items-center">
                 <div className="flex items-center gap-2"
-                  // onClick={() => testPool()}
+                  onClick={() => testPool()}
                 >
                   <img src={Uniswap_LOGO} alt="Uniswap" className="h-5 w-5" />
                   <span className="text-xs text-gray-400">Powered by Uniswap V3</span>

@@ -106,6 +106,13 @@ const calculatePositionValue = (
   upperTick: number,
   initialUsdValue: number
 ): string => {
+  console.log("Calculating position value...", {
+    initialAmount,
+    currentTick,
+    lowerTick,
+    upperTick,
+    initialUsdValue,
+  });
   try {
     if (!initialAmount || initialUsdValue <= 0) return '$0.00';
 
