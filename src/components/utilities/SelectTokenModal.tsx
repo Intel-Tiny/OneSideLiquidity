@@ -45,6 +45,7 @@ interface SelectTokenModalProps {
   vaultPair: Array<VaultType>;
   tokenSymbols: any;
   setDepositdress: (address: string) => void;
+  setIsDeposit: (isDeposit: boolean) => void;
 }
 
 interface TokenInfo {
@@ -72,6 +73,7 @@ const SelectTokenModal: React.FC<SelectTokenModalProps> = ({
   vaultPair,
   tokenSymbols,
   setDepositdress,
+  setIsDeposit,
 }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [tokens, setTokens] = useState<TokenInfo[]>([]);
@@ -236,6 +238,7 @@ const SelectTokenModal: React.FC<SelectTokenModalProps> = ({
     console.log("tokenWithLogo: ", tokenWithLogo);
     setSelectedToken(tokenWithLogo);
     setSelectedTokenBalance("0");
+    setIsDeposit(false)
     onClose();
   };
 

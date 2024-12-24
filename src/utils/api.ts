@@ -72,7 +72,7 @@ export const getTokenMoreInfo = async (tokenAddress: string) => {
         symbol: data.pairs[0].baseToken.symbol,
         logoURI: data.pairs[0].info?.imageUrl ?? FALLBACK_TOKEN,
         address: data.pairs[0].baseToken.address,
-        decimals: 6,
+        decimals: 18,
       } as BaseTokenType
     };
   }

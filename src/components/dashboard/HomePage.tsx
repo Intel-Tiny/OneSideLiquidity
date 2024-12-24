@@ -52,10 +52,15 @@ const Icon = [
     routerAddress: "0x03a520b32C04BF3bEEf7BEb72E919cf822Ed34f1",
     factoryAddress: "0x33128a8fC17869897dcE68Ed026d694621f6FDfD",
     GoddogTokenAddress: "0xDDf7d080C82b8048BAAe54e376a3406572429b4e",
+    HeremusTokenAddress:"0x45940000009600102a1c002f0097c4a500fa00ab",
     vaultFactoryAddress: "0x5B7B8b487D05F77977b7ABEec5F922925B9b2aFa",
   },
 ];
 
+const MainTokens = [
+  "0xDDf7d080C82b8048BAAe54e376a3406572429b4e",
+  "0x45940000009600102a1c002f0097c4a500fa00ab",
+]
 const BasicTokens = [
   [
     "WETH",
@@ -141,6 +146,7 @@ function Homepage() {
   const [highRange] = useState(3.0);
   const [poolPair, setPoolPair] = useState<Array<PoolType>>([]);
   const [vaultPair, setVaultPair] = useState<Array<VaultType>>([]);
+  const [isDepost, setIsDeposit] = useState<boolean>(false);
   const [tokenSymbols, setTokenSymbols] = useState<{ [key: string]: string }>(
     {}
   );
@@ -149,6 +155,7 @@ function Homepage() {
   const managerAddress: string = "0xB05Cf01231cF2fF99499682E64D3780d57c80FdD";
   const maxTotalSupply: string =
     "115792089237316195423570985008687907853269984665640564039457584007913129639935";
+
   useEffect(() => {
     console.log("chaind");
     const vault = vaultPair.find(
@@ -161,16 +168,25 @@ function Homepage() {
   }, [depositAddress]);
 
   const SetToken = async (vault: VaultType) => {
-    const TokenData = await getTokenMoreInfo(vault.token1);
+    let TokenData: any = null;
+    if(MainTokens.includes(vault.token0)){
+      TokenData = await getTokenMoreInfo(vault.token1);
+    }
+    else {
+      TokenData = await getTokenMoreInfo(vault.token0);
+    }
+    setIsDeposit(true);
     console.log("TokenData", TokenData);
     if (TokenData) {
-      setSelectedToken({
+      let tokenData = {
         name: TokenData.baseToken.name,
         symbol: TokenData.baseToken.symbol,
         logoURI: TokenData.baseToken.logoURI,
         address: TokenData.baseToken.address,
         decimals: TokenData.baseToken.decimals,
-      });
+      };
+      setSelectedToken(tokenData);
+      setSelectedTokenInfo(tokenData);
     }
   };
   const selectPoolFromPair = (poolAddress: string) => {
@@ -327,6 +343,7 @@ function Homepage() {
     setSelectedTokenBalance(balance);
   };
   useEffect(() => {
+    console.log("this is load");
     axios
       .get(`${URL}/load/uniswap`, {
         headers: {
@@ -658,6 +675,10 @@ function Homepage() {
     }
   }, [selectedToken]);
 
+  const handleDeposit = async () => {
+    if (!selectedToken || chain === undefined) return;
+
+  }
   const handleAddLiquidity = async () => {
     if (!selectedToken || chain === undefined) return;
     setIsLoading(true);
@@ -1149,6 +1170,7 @@ function Homepage() {
           poolPair={poolPair}
           vaultPair={vaultPair}
           tokenSymbols={tokenSymbols}
+          setIsDeposit={setIsDeposit}
           setDepositdress={setDepositAddress}
         />
       )}
@@ -1164,7 +1186,7 @@ function Homepage() {
               // Reset other necessary states if needed
             }
           }}
-          onApprove={handleAddLiquidity}
+          onApprove={isDepost?handleDeposit:handleAddLiquidity}
           selectToken={selectedToken}
           tokenAmount={amount}
           isLoading={isLoading}
