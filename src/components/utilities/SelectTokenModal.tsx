@@ -4,7 +4,7 @@ import { Search, X } from "lucide-react";
 import axios from "axios";
 import Uniswap_LOGO from "/uniswap.webp";
 import utils from "../../utils/setting";
-import { getTokenInfo } from "../../utils/api";
+// import { getTokenInfo } from "../../utils/api";
 import toast from "react-hot-toast";
 import ConfirmModal from "./ConfirmModal";
 import "../../index.css";
@@ -39,12 +39,11 @@ interface SelectTokenModalProps {
   selectedToken: any;
   setSelectedToken: (token: any) => void;
   setSelectedTokenBalance: (balance: string) => void;
-  setPoolAddress: (poolAddress: string) => void;
   CreateVault: (address: string) => void;
   poolPair: Array<PoolType>;
   vaultPair: Array<VaultType>;
   tokenSymbols: any;
-  setDepositdress: (address: string) => void;
+  setDepositAdress: (address: string) => void;
   setIsDeposit: (isDeposit: boolean) => void;
 }
 
@@ -68,11 +67,10 @@ const SelectTokenModal: React.FC<SelectTokenModalProps> = ({
   setSelectedToken,
   setSelectedTokenBalance,
   poolPair,
-  setPoolAddress,
   CreateVault,
   vaultPair,
   tokenSymbols,
-  setDepositdress,
+  setDepositAdress,
   setIsDeposit,
 }) => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -253,7 +251,7 @@ const SelectTokenModal: React.FC<SelectTokenModalProps> = ({
 
   const handleDeposit = async (address: string, oncClose: () => void) => {
     console.log("Deposit address:", address);
-    setDepositdress(address);
+    setDepositAdress(address);
     oncClose();
   };
 
@@ -303,7 +301,6 @@ const SelectTokenModal: React.FC<SelectTokenModalProps> = ({
                   open={isConfirmModal}
                   onClose={() => setConfirmModal(false)}
                   poolAddress={poolAddress}
-                  setPoolAddress={setPoolAddress}
                   CreateVault={CreateVault}
                 />
               )}
@@ -365,7 +362,7 @@ const SelectTokenModal: React.FC<SelectTokenModalProps> = ({
                 {modalTab === "vault" && (
                   <div id="vault">
                     {
-                      
+
                     }
                     {poolPair?.map((pool: PoolType, index: number) => {
                       return (
@@ -409,7 +406,7 @@ const SelectTokenModal: React.FC<SelectTokenModalProps> = ({
                           <div
                             className="flex gap-2 items-center cursor-pointer"
                             onClick={() =>
-                              handleDeposit(vault.poolAddress, onClose)
+                              handleDeposit(vault.vaultAddress, onClose)
                             }
                           >
                             <img
@@ -423,10 +420,10 @@ const SelectTokenModal: React.FC<SelectTokenModalProps> = ({
                             </div>
                           </div>
                           <div
-                            onClick={() => handleClick(vault.poolAddress)}
+                            onClick={() => handleClick(vault.vaultAddress)}
                             className="cursor-pointer"
                           >
-                            {utils.truncateMiddle(vault.poolAddress)}
+                            {utils.truncateMiddle(vault.vaultAddress)}
                           </div>
                         </div>
                       );

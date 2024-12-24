@@ -11,6 +11,7 @@ import {
   factoryABI,
   nonfungiblePositionManagerABI,
   vaultFactoryABI,
+  vaultABI,
 } from "../../utils/constants";
 import { DynamicWidget, useDynamicContext } from "@dynamic-labs/sdk-react-core";
 import SelectTokenModal from "../utilities/SelectTokenModal";
@@ -52,7 +53,7 @@ const Icon = [
     routerAddress: "0x03a520b32C04BF3bEEf7BEb72E919cf822Ed34f1",
     factoryAddress: "0x33128a8fC17869897dcE68Ed026d694621f6FDfD",
     GoddogTokenAddress: "0xDDf7d080C82b8048BAAe54e376a3406572429b4e",
-    HeremusTokenAddress:"0x45940000009600102a1c002f0097c4a500fa00ab",
+    HeremusTokenAddress: "0x45940000009600102a1c002f0097c4a500fa00ab",
     vaultFactoryAddress: "0x5B7B8b487D05F77977b7ABEec5F922925B9b2aFa",
   },
 ];
@@ -60,7 +61,7 @@ const Icon = [
 const MainTokens = [
   "0xDDf7d080C82b8048BAAe54e376a3406572429b4e",
   "0x45940000009600102a1c002f0097c4a500fa00ab",
-]
+];
 const BasicTokens = [
   [
     "WETH",
@@ -112,6 +113,7 @@ const tokenABI = [
   // Only include the approve function
   "function approve(address spender, uint256 amount) public returns (bool)",
   "function allowance(address owner, address spender) public view returns (uint256)",
+  "function decimals() public view returns (uint256)",
 ];
 
 const handleImageError = (
@@ -146,12 +148,12 @@ function Homepage() {
   const [highRange] = useState(3.0);
   const [poolPair, setPoolPair] = useState<Array<PoolType>>([]);
   const [vaultPair, setVaultPair] = useState<Array<VaultType>>([]);
-  const [isDepost, setIsDeposit] = useState<boolean>(false);
+  const [isDeposit, setIsDeposit] = useState<boolean>(false);
   const [tokenSymbols, setTokenSymbols] = useState<{ [key: string]: string }>(
     {}
   );
-  const [poolAddress, setPoolAddress] = useState<string>("");
   const [depositAddress, setDepositAddress] = useState<string>("");
+
   const managerAddress: string = "0xB05Cf01231cF2fF99499682E64D3780d57c80FdD";
   const maxTotalSupply: string =
     "115792089237316195423570985008687907853269984665640564039457584007913129639935";
@@ -159,7 +161,7 @@ function Homepage() {
   useEffect(() => {
     console.log("chaind");
     const vault = vaultPair.find(
-      (vault) => vault.poolAddress === depositAddress
+      (vault) => vault.vaultAddress === depositAddress
     );
     console.log("vault", vault, "depositAddress", depositAddress);
     if (vault) {
@@ -169,13 +171,13 @@ function Homepage() {
 
   const SetToken = async (vault: VaultType) => {
     let TokenData: any = null;
-    if(MainTokens.includes(vault.token0)){
+    if (MainTokens.includes(vault.token0)) {
       TokenData = await getTokenMoreInfo(vault.token1);
-    }
-    else {
+    } else {
       TokenData = await getTokenMoreInfo(vault.token0);
     }
     setIsDeposit(true);
+
     console.log("TokenData", TokenData);
     if (TokenData) {
       let tokenData = {
@@ -233,25 +235,43 @@ function Homepage() {
       };
       console.log("param: ", param);
       const tx = await vaultFactoryContract.createVault(param);
-      await tx.wait();
-
-
-      
+      const receipt = await tx.wait();
+      console.log("receipt: ", receipt);
+      console.log("receipt.logs: ", receipt.logs);
+      let vaultAddress = "";
+      const VaultLog = receipt.logs.find(
+        (log: { topics: string[]; Data: any }) =>
+          log.topics[0] === ethers.id("NewVault(address)")
+      );
+      console.log("VaultLog: ", VaultLog);
+      vaultAddress = VaultLog.data;
       const pool = selectPoolFromPair(address);
+      if (!pool) {
+        return;
+      }
+      const selectedTokenContract = new ethers.Contract(
+        pool.token0 === Icon[chain].GoddogTokenAddress
+          ? pool?.token1
+          : pool?.token0,
+        tokenABI,
+        signer
+      );
+      const _decimal = await selectedTokenContract.decimals();
+      const _amount = ethers.parseUnits(String(pool?.amount), _decimal);
       handleVault({
         poolAddress: pool?.poolAddress || "",
-        vaultAddress: address,
+        vaultAddress: String("0x" + vaultAddress.slice(-40)),
         token0: pool?.token0 || "",
         token1: pool?.token1 || "",
-        depositAmount: pool?.amount || 0,
+        depositAmount: Number(_amount),
       });
-    return true;
-
+      toast.success("Successfully created new vault!");
+      return true;
     } catch (error) {
+      toast.error("failed!");
       console.log(error);
       return false;
     }
-    
   };
 
   const handleVault = async (vault: VaultType) => {
@@ -296,7 +316,7 @@ function Homepage() {
   const [maxClicked, setMaxClicked] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
 
-  const getTokenBalance = async (tokenAddress: string, decimals: number) => {
+  const getTokenBalance = async (tokenAddress: string) => {
     if (!primaryWallet?.address) return "0";
     try {
       const signer = await getSigner(primaryWallet as any);
@@ -338,7 +358,7 @@ function Homepage() {
         console.log("price error", error);
       });
     console.log("item: ", item);
-    const balance = await getTokenBalance(item.address, item.decimals);
+    const balance = await getTokenBalance(item.address);
     console.log("balance: ", balance);
     setSelectedTokenBalance(balance);
   };
@@ -373,10 +393,7 @@ function Homepage() {
   useEffect(() => {
     const updateBalance = async () => {
       if (selectedToken) {
-        const balance = await getTokenBalance(
-          selectedToken.address,
-          selectedToken.decimals
-        );
+        const balance = await getTokenBalance(selectedToken.address);
         setSelectedTokenBalance(balance);
       }
     };
@@ -400,6 +417,7 @@ function Homepage() {
   };
 
   useEffect(() => {
+    console.log("approvedAmount: ", approvedAmount);
     if (approvedAmount >= Number(amount) && amount != "") {
       setIsApprove(true);
     } else {
@@ -605,8 +623,12 @@ function Homepage() {
           signer
         );
         const _decimal = await selectedTokenContract.decimals();
+        let targetAddress = Icon[chain].routerAddress;
+        console.log("targetAddress: ", targetAddress);
+        if (isDeposit) targetAddress = depositAddress;
+        console.log("targetAddress: ", targetAddress);
         const tx = await selectedTokenContract.approve(
-          Icon[chain].routerAddress,
+          targetAddress,
           ethers.parseUnits(amount, _decimal)
         );
         await tx.wait();
@@ -651,16 +673,15 @@ function Homepage() {
         tokenABI,
         signer
       );
-
+      let targetAddress = Icon[chain].routerAddress;
+      if (isDeposit) targetAddress = depositAddress;
       const approvedAmount0 = await selectedTokenContract.allowance(
         primaryWallet?.address,
-        Icon[chain].routerAddress
+        targetAddress
       );
+      const _decimal = await selectedTokenContract.decimals();
 
-      const approvedAmount1 = ethers.formatUnits(
-        approvedAmount0,
-        selectedToken.decimals
-      );
+      const approvedAmount1 = ethers.formatUnits(approvedAmount0, _decimal);
 
       setApprovedAmount(Number(approvedAmount1));
     } catch (error) {
@@ -677,8 +698,60 @@ function Homepage() {
 
   const handleDeposit = async () => {
     if (!selectedToken || chain === undefined) return;
+    try {
+      setIsLoading(true);
+      const signer = await getSigner(primaryWallet as any);
+      if (!signer) {
+        toast.error("No signer available");
+        return;
+      }
+      console.log("depositAddress: ", depositAddress);
+      const vaultContract = new ethers.Contract(
+        depositAddress,
+        vaultABI,
+        signer
+      );
+      const token0 = await vaultContract.token0();
+      const same = String(token0) == selectedToken.address;
+      const selectedTokenContract = new ethers.Contract(
+        selectedToken.address,
+        tokenABI,
+        signer
+      );
+      const _decimal = await selectedTokenContract.decimals();
+      const _amount = ethers.parseUnits(amount, _decimal);
+      const tx = await vaultContract.deposit(
+        same ? _amount : 0,
+        !same ? _amount : 0,
+        0,
+        0,
+        primaryWallet?.address
+      );
+      await tx.wait();
 
-  }
+      axios
+        .post(`${URL}/update/deposit`, {
+          vaultAddress: depositAddress,
+          depositAmount: Number(_amount),
+        })
+        .then((response) => {
+          if (response.data.state === "success") {
+            toast.success("Successfully deposited");
+          } else {
+            toast.error("Error updating deposit");
+          }
+        })
+        .catch((error) => {
+          console.error("Error updating deposit:", error);
+          toast.error("Error updating deposit");
+        });
+      setIsLoading(false);
+      setPreviewShow(false);
+    } catch (error) {
+      console.log(error);
+      setIsLoading(false);
+    }
+  };
   const handleAddLiquidity = async () => {
     if (!selectedToken || chain === undefined) return;
     setIsLoading(true);
@@ -726,13 +799,13 @@ function Homepage() {
         [
           "function balanceOf(address) view returns (uint256)",
           "function allowance(address,address) view returns (uint256)",
-          "function decimals() view returns (uint256)"
+          "function decimals() view returns (uint256)",
         ],
         signer
       );
 
       // Calculate desired amount with proper decimal handling
-      const _decimal = await tokenContract.decimals()
+      const _decimal = await tokenContract.decimals();
       const desiredAmount = ethers.parseUnits(amount, _decimal);
 
       const balance = await tokenContract.balanceOf(primaryWallet?.address);
@@ -1165,13 +1238,12 @@ function Homepage() {
           selectedToken={selectedToken}
           setSelectedToken={setSelectedTokenInfo}
           setSelectedTokenBalance={setSelectedTokenBalance}
-          setPoolAddress={setPoolAddress}
           CreateVault={CreateVault}
           poolPair={poolPair}
           vaultPair={vaultPair}
           tokenSymbols={tokenSymbols}
           setIsDeposit={setIsDeposit}
-          setDepositdress={setDepositAddress}
+          setDepositAdress={setDepositAddress}
         />
       )}
 
@@ -1186,13 +1258,14 @@ function Homepage() {
               // Reset other necessary states if needed
             }
           }}
-          onApprove={isDepost?handleDeposit:handleAddLiquidity}
+          onApprove={isDeposit ? handleDeposit : handleAddLiquidity}
           selectToken={selectedToken}
           tokenAmount={amount}
           isLoading={isLoading}
           isSuccess={isSuccess}
           chainId={chain}
           positionId={createdPosition?.positionId}
+          isDeposit={isDeposit}
         />
       )}
 

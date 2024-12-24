@@ -1,14 +1,13 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { Dialog } from '@headlessui/react';
-import {  X } from 'lucide-react';
-import utils from '../../utils/setting';
-import toast from 'react-hot-toast';
+import React, { useState, useEffect } from "react";
+import { Dialog } from "@headlessui/react";
+import { X } from "lucide-react";
+import utils from "../../utils/setting";
+import Loader from "./Loader";
 
 interface ConfirmModalProps {
   open: boolean;
   onClose: () => void;
   poolAddress: string;
-  setPoolAddress: (poolAddress: string) => void;
   CreateVault: (poolAddress: string) => void;
 }
 
@@ -16,13 +15,12 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
   open,
   onClose,
   poolAddress,
-  setPoolAddress,
   CreateVault,
 }) => {
-
-    useEffect(() => {
-        console.log("ConfirmModal open:", open);
-    }, [])
+  useEffect(() => {
+    console.log("ConfirmModal open:", open);
+  }, []);
+  const [isLoading, setIsLoading] = useState(false);
 
   return (
     <Dialog open={open} onClose={onClose} className="relative z-100">
@@ -32,11 +30,13 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
             <div className="p-6">
               <div className="flex justify-between items-center mb-3">
                 <div>
-                    <Dialog.Title className="text-md text-yellow-400 font-medium text-white">Create Vault</Dialog.Title>
+                  <Dialog.Title className="text-md text-yellow-400 font-medium">
+                    Create Vault
+                  </Dialog.Title>
                 </div>
-                <div className='text-white'>
-                        {utils.truncateMiddle(poolAddress)}
-                    </div>
+                <div className="text-white">
+                  {utils.truncateMiddle(poolAddress)}
+                </div>
                 <button
                   onClick={onClose}
                   className="p-1 rounded-lg hover:bg-[#1B1B1B] transition-colors"
@@ -44,21 +44,26 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
                   <X className="h-6 w-6 text-gray-400" />
                 </button>
               </div>
-              <div 
-                    className='flex gap-4 cursor-pointer'
-                    onClick={async () => {
-                        console.log("Confirming...", poolAddress);
-                        setPoolAddress(poolAddress);
-                        await CreateVault(poolAddress);
-                        onClose();
-                    }}
+              <div
+                className="flex gap-4 cursor-pointer"
+                onClick={async () => {
+                  console.log("Confirming...", poolAddress);
+                  setIsLoading(true);
+                  await CreateVault(poolAddress);
+                  setIsLoading(false);
+                  onClose();
+                }}
+              >
+                <button
+                  className={`hover:border-yellow-400 hover:text-white cursor-pointer mx-auto p-2 border-[1px] border-white rounded-lg w-full text-yellow-400 ${
+                    isLoading && "bg-blue-500/90 text-white hover:bg-blue-500"
+                  }`}
                 >
-                    <button className='hover:border-yellow-400 hover:text-white cursor-pointer mx-auto p-2 border-[1px] border-white rounded-lg text-yellow-400'>
-                        Create Valut
-                    </button>
-                </div>
+                  {isLoading ? <Loader /> : "Create Valut"}
+                </button>
+              </div>
+            </div>
           </div>
-        </div>
         </div>
       </div>
     </Dialog>

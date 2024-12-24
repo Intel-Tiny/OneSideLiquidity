@@ -17,6 +17,7 @@ interface PreviewModalProps {
   isSuccess?: boolean;
   chainId?: number;
   positionId?: string;
+  isDeposit: boolean;
 }
 
 const handleImageError = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
@@ -32,7 +33,8 @@ const PreviewModal = ({
   isLoading,
   isSuccess,
   chainId,
-  positionId
+  positionId,
+  isDeposit,
 }: PreviewModalProps) => {
   if (!open) return null;
 
@@ -47,7 +49,7 @@ const PreviewModal = ({
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-800">
           <h2 className="text-lg font-semibold text-white">
-            {isSuccess ? "Position Created!" : "Add liquidity"}
+            {isSuccess ? "Position Created!" : !isDeposit?  "Add liquidity" : "Deposit"}
           </h2>
           <button
             onClick={onClose}
