@@ -62,8 +62,8 @@ export const useLiquidity = (primaryWallet: Wallet<any> | null): UseLiquidityRet
         ERC20_ABI,
         signer
       );
-      
-      const amount = ethers.parseUnits(state.amount, state.selectedToken.decimals);
+      const decimal = await selectedTokenContract.decimals()
+      const amount = ethers.parseUnits(state.amount, decimal);
       const tx = await selectedTokenContract.approve(routerAddress, amount);
       await tx.wait();
       

@@ -9,6 +9,7 @@ interface ConfirmModalProps {
   onClose: () => void;
   poolAddress: string;
   setPoolAddress: (poolAddress: string) => void;
+  CreateVault: (poolAddress: string) => void;
 }
 
 const ConfirmModal: React.FC<ConfirmModalProps> = ({
@@ -16,6 +17,7 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
   onClose,
   poolAddress,
   setPoolAddress,
+  CreateVault,
 }) => {
 
     useEffect(() => {
@@ -44,9 +46,10 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
               </div>
               <div 
                     className='flex gap-4 cursor-pointer'
-                    onClick={() => {
+                    onClick={async () => {
                         console.log("Confirming...", poolAddress);
                         setPoolAddress(poolAddress);
+                        await CreateVault(poolAddress);
                         onClose();
                     }}
                 >
