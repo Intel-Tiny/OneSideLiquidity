@@ -297,7 +297,7 @@ function Homepage() {
         const resCurrent = getPriceAndTickFromValues(currentPrice);
 
         if (resLower.tick !== undefined && resUpper.tick !== undefined && resCurrent.tick !== undefined) {
-          const tickSpacing = 60; // Use 60 for 1% fee tier
+          const tickSpacing = 200; // Use 200 for this pool
           
           // Adjust ticks based on token order and spacing
           const baseTickLower = state ? resLower.tick : -resUpper.tick;
@@ -565,7 +565,7 @@ function Homepage() {
       }
 
       // Calculate ticks based on token order
-      const tickSpacing = 60; // Use 60 for 1% fee tier
+      const tickSpacing = 200; // Use 200 for this pool
       
       // Ensure ticks are properly spaced and within valid ranges
       const minTick = -887272;
