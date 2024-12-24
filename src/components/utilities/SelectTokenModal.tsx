@@ -2,6 +2,33 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Dialog } from '@headlessui/react';
 import { Search, X } from 'lucide-react';
 import axios from 'axios';
+import Uniswap_LOGO from "/uniswap.webp";
+import utils from '../../utils/setting';
+import { getTokenInfo } from '../../utils/api';
+import toast from 'react-hot-toast';
+import ConfirmModal from './ConfirmModal';
+import '../../index.css';
+
+interface PoolType {
+  poolAddress: string;
+  positionId: string;
+  token0: string;
+  token1: string;
+  fee: number;
+  lowerTick: number;
+  upperTick: number;
+  amount: number;
+  sqrtPrice: number;
+  recipient: string;
+}
+
+interface VaultType {
+  poolAddress: string;
+  vaultAddress: string;
+  token0: string;
+  token1: string;
+  depositAmount: number;
+}
 
 interface SelectTokenModalProps {
   open: boolean;
@@ -12,6 +39,11 @@ interface SelectTokenModalProps {
   selectedToken: any;
   setSelectedToken: (token: any) => void;
   setSelectedTokenBalance: (balance: string) => void;
+  setPoolAddress: (poolAddress: string) => void;
+  poolPair: Array<PoolType>;
+  vaultPair: Array<VaultType>;
+  tokenSymbols: any;
+  setDepositdress: (address: string) => void;
 }
 
 interface TokenInfo {
@@ -32,15 +64,27 @@ const SelectTokenModal: React.FC<SelectTokenModalProps> = ({
   BasicTokens,
   selectedToken,
   setSelectedToken,
-  setSelectedTokenBalance
+  setSelectedTokenBalance,
+  poolPair,
+  setPoolAddress,
+  vaultPair,
+  tokenSymbols,
+  setDepositdress,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [tokens, setTokens] = useState<TokenInfo[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState<'popular' | 'search'>('popular');
-
+  const [modalTab, setModalTab] = useState<"pool" | "vault" | "deposit">("pool");
+  const [isConfirmModal, setConfirmModal] = useState<boolean>(false);
+  const [poolAddress, setAddress] = useState<string>("");
   // Popular tokens based on the current chain
+
+  const handleVault = (address: string) => {
+    setAddress(address);
+    setConfirmModal(true);
+  }
   const popularTokens = useMemo(() => {
     if (chain === undefined || !BasicTokens[chain]) return [];
     return BasicTokens[chain].map(symbol => ({
@@ -180,6 +224,21 @@ const SelectTokenModal: React.FC<SelectTokenModalProps> = ({
     onClose();
   };
 
+  const handleClick = async (address: string): Promise<void> => {
+    try {
+      await navigator.clipboard.writeText(address);
+      toast.success('Pool address copied to clipboard!');
+    } catch (err) {
+      console.error('Failed to copy: ', err);
+    }
+  };
+
+  const handleDeposit = async (address: string, oncClose: () => void) => {
+    console.log("Deposit address:", address);
+    setDepositdress(address);
+    oncClose();
+  }
+
   return (
     <Dialog open={open} onClose={onClose} className="relative z-50">
       <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50">
@@ -187,9 +246,26 @@ const SelectTokenModal: React.FC<SelectTokenModalProps> = ({
           <div className="bg-[#111111] w-full max-w-md rounded-2xl border border-gray-800/30 shadow-xl">
             <div className="p-4">
               <div className="flex justify-between items-center mb-3">
-                <Dialog.Title className="text-sm font-medium text-yellow-400">
-                  Select Token
-                </Dialog.Title>
+                <div className='grid  grid-cols-3 gap-4'>
+                  <Dialog.Title 
+                    className={`text-sm cursor-pointer font-medium ${modalTab==="pool"?" text-yellow-400":"text-white"}`}
+                    onClick={() => setModalTab("pool")}
+                  >
+                    Select Token
+                  </Dialog.Title>
+                  <Dialog.Title 
+                    className={`text-sm cursor-pointer font-medium ${modalTab==="vault"?" text-yellow-400":"text-white"}`}
+                    onClick={() => setModalTab("vault")}
+                  >
+                    Create Vault
+                  </Dialog.Title>
+                  <Dialog.Title
+                    className={`text-sm cursor-pointer font-medium ${modalTab==="deposit"?" text-yellow-400":"text-white"}`}
+                    onClick={() => setModalTab("deposit")}
+                  >
+                    Deposit
+                  </Dialog.Title>
+                </div>
                 <button
                   onClick={onClose}
                   className="p-1 rounded-lg hover:bg-[#1B1B1B] transition-colors"
@@ -198,123 +274,175 @@ const SelectTokenModal: React.FC<SelectTokenModalProps> = ({
                 </button>
               </div>
 
-              {/* Search Bar */}
-              <div className="relative mb-3">
-                <input
-                  type="text"
-                  placeholder="Search name or paste address"
-                  value={searchQuery}
-                  onChange={(e) => {
-                    setSearchQuery(e.target.value);
-                    setActiveTab('search');
-                  }}
-                  className="w-full bg-[#0A0A0A] rounded-xl px-4 py-2.5 pl-9 text-sm text-white placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-yellow-400"
+              {isConfirmModal && (
+                <ConfirmModal
+                  open = {isConfirmModal}
+                  onClose={() => setConfirmModal(false)}
+                  poolAddress={poolAddress}
+                  setPoolAddress={setPoolAddress}
                 />
-                <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-              </div>
-
-              {/* Tabs */}
-              <div className="flex gap-2 mb-3">
-                <button
-                  onClick={() => setActiveTab('popular')}
-                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                    activeTab === 'popular'
-                      ? 'bg-yellow-400 text-black'
-                      : 'text-gray-400 hover:bg-[#1B1B1B]'
-                  }`}
-                >
-                  Popular
-                </button>
-                <button
-                  onClick={() => setActiveTab('search')}
-                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                    activeTab === 'search'
-                      ? 'bg-yellow-400 text-black'
-                      : 'text-gray-400 hover:bg-[#1B1B1B]'
-                  }`}
-                >
-                  Search Results
-                </button>
-              </div>
-
-              {isLoading && (
-                <div className="text-center text-gray-400 py-2 text-sm">
-                  Searching...
-                </div>
               )}
-
-              {error && (
-                <div className="text-center text-red-500 py-2 text-sm">
-                  {error}
-                </div>
-              )}
-            </div>
-
-            <div className="max-h-[300px] overflow-y-auto">
-              <div className="py-1.5">
-                {activeTab === 'popular' ? (
-                  popularTokens.map((token: TokenInfo, index: number) => (
-                    <button
-                      key={token.address + index}
-                      className={`w-full px-4 py-2.5 flex items-center gap-3 hover:bg-[#1B1B1B] transition-colors
-                        ${selectedToken?.address === token.address ? 'bg-[#1B1B1B]' : ''}`}
-                      onClick={() => handleTokenSelect(token)}
-                    >
-                      <img
-                        src={getTokenLogo(token.address, token.logoURI)}
-                        alt={token.symbol}
-                        className="w-8 h-8 rounded-full bg-gray-800"
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          target.src = 'https://raw.githubusercontent.com/feathericons/feather/master/icons/help-circle.svg';
+              <div className='min-h-[300px] max-h-[300px] overflow-auto scrollbar-hide '>
+                {/* Search Bar */}
+                {modalTab === "pool" && (
+                  <div id='pool'>
+                    <div className="relative mb-3">
+                      <input
+                        type="text"
+                        placeholder="Search name or paste address"
+                        value={searchQuery}
+                        onChange={(e) => {
+                          setSearchQuery(e.target.value);
+                          setActiveTab('search');
                         }}
+                        className="w-full bg-[#0A0A0A] rounded-xl px-4 py-2.5 pl-9 text-sm text-white placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-yellow-400"
                       />
-                      <div className="flex flex-col items-start min-w-0 flex-1">
-                        <span className="font-medium text-white text-base truncate w-full">{token.symbol}</span>
-                        <span className="text-sm text-gray-400 truncate w-full">{token.name}</span>
+                      <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                    </div>
+
+                    {/* Tabs */}
+                    <div className="flex gap-2 mb-3">
+                      <button
+                        onClick={() => setActiveTab('popular')}
+                        className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                          activeTab === 'popular'
+                            ? 'bg-yellow-400 text-black'
+                            : 'text-gray-400 hover:bg-[#1B1B1B]'
+                        }`}
+                      >
+                        Popular
+                      </button>
+                      <button
+                        onClick={() => setActiveTab('search')}
+                        className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                          activeTab === 'search'
+                            ? 'bg-yellow-400 text-black'
+                            : 'text-gray-400 hover:bg-[#1B1B1B]'
+                        }`}
+                      >
+                        Search Results
+                      </button>
+                    </div>
+
+                    {isLoading && (
+                      <div className="text-center text-gray-400 py-2 text-sm">
+                        Searching...
                       </div>
-                      <div className="text-right ml-2 flex-shrink-0">
-                        <div className="text-white text-sm">-</div>
-                        <div className="text-xs text-gray-400">
-                          Vol: -
-                        </div>
+                    )}
+
+                    {error && (
+                      <div className="text-center text-red-500 py-2 text-sm">
+                        {error}
                       </div>
-                    </button>
-                  ))
-                ) : (
-                  tokens.map((token: TokenInfo, index: number) => (
-                    <button
-                      key={token.address + index}
-                      className={`w-full px-4 py-2.5 flex items-center gap-3 hover:bg-[#1B1B1B] transition-colors
-                        ${selectedToken?.address === token.address ? 'bg-[#1B1B1B]' : ''}`}
-                      onClick={() => handleTokenSelect(token)}
-                    >
-                      <img
-                        src={getTokenLogo(token.address, token.logoURI)}
-                        alt={token.symbol}
-                        className="w-8 h-8 rounded-full bg-gray-800"
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          target.src = 'https://raw.githubusercontent.com/feathericons/feather/master/icons/help-circle.svg';
-                        }}
-                      />
-                      <div className="flex flex-col items-start min-w-0 flex-1">
-                        <span className="font-medium text-white text-base truncate w-full">{token.symbol}</span>
-                        <span className="text-sm text-gray-400 truncate w-full">{token.name}</span>
-                      </div>
-                      <div className="text-right ml-2 flex-shrink-0">
-                        <div className="text-white text-sm">
-                          {token.priceUsd ? `$${parseFloat(token.priceUsd).toFixed(6)}` : '-'}
-                        </div>
-                        <div className="text-xs text-gray-400">
-                          Vol: {token.volume24h ? `$${parseFloat(token.volume24h).toLocaleString()}` : '-'}
-                        </div>
-                      </div>
-                    </button>
-                  ))
+                    )}
+                  </div>
                 )}
+                {modalTab === "vault" && (
+                  <div id='vault'>
+                    {poolPair?.map((pool:PoolType, index:number) => {
+                      console.log(pool);
+                      return (
+                        <div key={index} className='flex gap-2 justify-between text-white items-center mb-2'>
+                          <div 
+                            className='flex gap-2 items-center cursor-pointer'
+                            onClick={() => handleVault(pool.poolAddress)}
+                          >
+                            <img src={Uniswap_LOGO} alt='uniswap_logo' className='w-10 h-10' />
+                            <div>{tokenSymbols[pool.token0]}/{tokenSymbols[pool.token1]}</div>
+                          </div>
+                          <div onClick={() => handleClick(pool.poolAddress)} className='cursor-pointer'>{utils.truncateMiddle(pool.poolAddress)}</div>
+                        </div>
+                      )
+                    } )}
+                  </div>
+                )}
+                {modalTab === "deposit" && (
+                  <div id='deposit'>
+                    {vaultPair?.map((vault:VaultType, index:number) => {
+                      return (
+                        <div key={index} className='flex gap-2 justify-between text-white items-center mb-2'>
+                          <div 
+                            className='flex gap-2 items-center cursor-pointer'
+                            onClick={() => handleDeposit(vault.poolAddress, onClose)}
+                          >
+                            <img src={Uniswap_LOGO} alt='uniswap_logo' className='w-10 h-10' />
+                            <div>{tokenSymbols[vault.token0]}/{tokenSymbols[vault.token1]}</div>
+                          </div>
+                          <div onClick={() => handleClick(vault.poolAddress)} className='cursor-pointer'>{utils.truncateMiddle(vault.poolAddress)}</div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
+
+                <div className="max-h-[300px] overflow-y-auto">
+                  <div className="py-1.5">
+                    {activeTab === 'popular' ? (
+                      popularTokens.map((token: TokenInfo, index: number) => (
+                        <button
+                          key={token.address + index}
+                          className={`w-full px-4 py-2.5 flex items-center gap-3 hover:bg-[#1B1B1B] transition-colors
+                            ${selectedToken?.address === token.address ? 'bg-[#1B1B1B]' : ''}`}
+                          onClick={() => handleTokenSelect(token)}
+                        >
+                          <img
+                            src={getTokenLogo(token.address, token.logoURI)}
+                            alt={token.symbol}
+                            className="w-8 h-8 rounded-full bg-gray-800"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.src = 'https://raw.githubusercontent.com/feathericons/feather/master/icons/help-circle.svg';
+                            }}
+                          />
+                          <div className="flex flex-col items-start min-w-0 flex-1">
+                            <span className="font-medium text-white text-base truncate w-full">{token.symbol}</span>
+                            <span className="text-sm text-gray-400 truncate w-full">{token.name}</span>
+                          </div>
+                          <div className="text-right ml-2 flex-shrink-0">
+                            <div className="text-white text-sm">-</div>
+                            <div className="text-xs text-gray-400">
+                              Vol: -
+                            </div>
+                          </div>
+                        </button>
+                      ))
+                    ) : (
+                      tokens.map((token: TokenInfo, index: number) => (
+                        <button
+                          key={token.address + index}
+                          className={`w-full px-4 py-2.5 flex items-center gap-3 hover:bg-[#1B1B1B] transition-colors
+                            ${selectedToken?.address === token.address ? 'bg-[#1B1B1B]' : ''}`}
+                          onClick={() => handleTokenSelect(token)}
+                        >
+                          <img
+                            src={getTokenLogo(token.address, token.logoURI)}
+                            alt={token.symbol}
+                            className="w-8 h-8 rounded-full bg-gray-800"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.src = 'https://raw.githubusercontent.com/feathericons/feather/master/icons/help-circle.svg';
+                            }}
+                          />
+                          <div className="flex flex-col items-start min-w-0 flex-1">
+                            <span className="font-medium text-white text-base truncate w-full">{token.symbol}</span>
+                            <span className="text-sm text-gray-400 truncate w-full">{token.name}</span>
+                          </div>
+                          <div className="text-right ml-2 flex-shrink-0">
+                            <div className="text-white text-sm">
+                              {token.priceUsd ? `$${parseFloat(token.priceUsd).toFixed(6)}` : '-'}
+                            </div>
+                            <div className="text-xs text-gray-400">
+                              Vol: {token.volume24h ? `$${parseFloat(token.volume24h).toLocaleString()}` : '-'}
+                            </div>
+                          </div>
+                        </button>
+                      ))
+                    )}
+                  </div>
+                </div>
+
               </div>
-            </div>
+              </div>
           </div>
         </div>
       </div>

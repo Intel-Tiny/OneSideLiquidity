@@ -25,6 +25,8 @@ import { Wallet } from "@dynamic-labs/sdk-react-core";
 import AnalyticsDashboard from '../analytics/AnalyticsDashboard';
 import { computeV2PairAddress } from "../../utils/graphQueries";
 import FALLBACK_TOKEN from "/token-placeholder.svg";
+import { URL } from "../../utils/setting";
+import { getTokenInfo, getTokenMoreInfo } from "../../utils/api";
 
 type DynamicWallet = Wallet<any>;
 
@@ -79,6 +81,27 @@ interface SelectedTokenType {
   decimals: number;
 }
 
+interface PoolType {
+  poolAddress: string;
+  positionId: string;
+  token0: string;
+  token1: string;
+  fee: number;
+  lowerTick: number;
+  upperTick: number;
+  amount: number;
+  sqrtPrice: number;
+  recipient: string;
+}
+
+interface VaultType {
+  poolAddress: string;
+  vaultAddress: string;
+  token0: string;
+  token1: string;
+  depositAmount: number;
+}
+
 const tokenABI = [
   // Only include the approve function
   "function approve(address spender, uint256 amount) public returns (bool)",
@@ -109,6 +132,86 @@ function Homepage() {
   const [upperTick, setUpperTick] = useState<number>(0);
   const [lowRange] = useState(0.958);
   const [highRange] = useState(3.0);
+  const [poolPair, setPoolPair] = useState<Array<PoolType>>([]);
+  const [vaultPair, setVaultPair] = useState<Array<VaultType>>([]);
+  const [tokenSymbols, setTokenSymbols] = useState<{[key: string]: string}>({});
+  const [poolAddress, setPoolAddress] = useState<string>("");
+  const [depositAddress, setDepositAddress] = useState<string>("");
+
+  useEffect(() => {
+    console.log("chaind");
+    const vault = vaultPair.find(vault => vault.poolAddress === depositAddress);
+    console.log("vault", vault, "depositAddress", depositAddress);
+    if (vault) {
+      SetToken(vault);
+    }
+  }, [depositAddress])
+  
+  const SetToken = async (vault: VaultType) => {
+    const TokenData = await getTokenMoreInfo(vault.token1);
+    console.log("TokenData", TokenData);
+    if (TokenData) {
+      setSelectedToken({
+        name: TokenData.baseToken.name,
+        symbol: TokenData.baseToken.symbol,
+        logoURI: TokenData.baseToken.logoURI,
+        address: TokenData.baseToken.address,
+        decimals: TokenData.baseToken.decimals,
+      });
+    }
+  }
+  const selectPoolFromPair = (poolAddress: string) => {
+    const selectedPool = poolPair.find(pool => pool.poolAddress === poolAddress);
+    return selectedPool;
+  }
+  
+  const CreateVault = async (address: string) => {
+    console.log("Creating vault for address:", address);
+    const pool = selectPoolFromPair(address);
+    handleVault({
+      poolAddress: pool?.poolAddress || "",
+      vaultAddress: address,
+      token0: pool?.token0 || "",
+      token1: pool?.token1 || "",
+      depositAmount: pool?.amount || 0,
+    });
+  }
+
+  const handleVault = async (vault:VaultType) => {
+    axios
+      .post(`${URL}/update/vault`, {vault})
+      .then((response) => {
+        console.log("Vault created successfully:", response.data);
+        if(response.data.state === "success") {
+          toast.success("Vault created successfully", response.data.vault);
+          setVaultPair(prevVaultPair => [...prevVaultPair, response.data.vault]);
+          setPoolPair(prevPoolPair => prevPoolPair.filter(pool => pool.poolAddress !== response.data.vault.poolAddress));
+        }
+      })
+      .catch((err) => {
+        console.log(err)
+      })
+  }
+
+  useEffect(() => {
+    console.log("chain", poolAddress);
+    if(poolAddress) {
+      CreateVault(poolAddress);
+    }
+  }, [poolAddress])
+
+  const fetchTokenSymbols = async () => {
+    const symbols: {[key: string]: string} = {};
+    for (const pool of poolPair) {
+      symbols[pool.token0] = await getTokenInfo(pool.token0);
+      symbols[pool.token1] = await getTokenInfo(pool.token1);
+    }
+    for (const vault of vaultPair) {
+      symbols[vault.token0] = await getTokenInfo(vault.token0);
+      symbols[vault.token1] = await getTokenInfo(vault.token1);
+    }
+    setTokenSymbols(symbols);
+  };
   const [createdPosition, setCreatedPosition] = useState<{
     poolAddress: string;
     positionId: string;
@@ -155,6 +258,29 @@ function Homepage() {
     const balance = await getTokenBalance(item.address, item.decimals);
     setSelectedTokenBalance(balance);
   };
+  useEffect(() => {
+    axios
+      .get(`${URL}/load/uniswap`)
+      .then(response => {
+        if(response.data.state === "success") {
+          setPoolPair(response.data.pool);
+          setVaultPair(response.data.vault);
+          console.log("poolPair", response.data);
+        }
+        else {
+          console.log("error", response.data.state);
+        }
+      })
+      .catch(error => {
+        console.log("error", error);
+      })
+  }, [])
+
+  useEffect(() => {
+    if(poolPair) {
+      fetchTokenSymbols();
+    }
+  }, [poolPair])
 
   useEffect(() => {
     const updateBalance = async () => {
@@ -545,10 +671,11 @@ function Homepage() {
 
       // Check if pool exists and initialize if needed
       const poolExists = await checkPoolExists(token0, token1, Number(fee));
+      let sqrtPriceX96: BigInt = BigInt(0);
       if (!poolExists) {
         // Calculate initial sqrt price based on current price
         const currentPrice = tokenPrice;
-        const sqrtPriceX96 = BigInt(
+        sqrtPriceX96 = BigInt(
           Math.floor(Math.sqrt(currentPrice) * 2 ** 96)
         );
 
@@ -562,6 +689,7 @@ function Homepage() {
           { gasLimit: 5000000 }
         );
         await tx.wait();
+
       }
 
       // Calculate ticks based on token order
@@ -667,6 +795,19 @@ function Homepage() {
         positionId: positionId || ""
       });
 
+      handlePool({
+        poolAddress: poolAddress,
+        positionId: positionId || "",
+        token0: token0,
+        token1: token1,
+        fee: fee,
+        lowerTick:finalLowerTick,
+        upperTick:finalUpperTick,
+        amount: amount,
+        recipient: primaryWallet?.address,
+        sqrtPrice: sqrtPriceX96,
+      })
+
       toast.success("Position created successfully!");
       setSelectedTokenBalance(
         String(Number(selectedTokenBalance) - Number(amount))
@@ -685,6 +826,40 @@ function Homepage() {
       setIsLoading(false);
     }
   };
+
+  const testPool = () => {
+    handlePool({
+      poolAddress: "0x39725f119cBcB18dcEa35D35E36d6b31a5D536bC",
+      positionId: "positionId",
+      token0: "0x45940000009600102A1c002F0097C4A500fa00AB",
+      token1: "0xf97f4df75117a78c1A5a0DBb814Af92458539FB4",
+      fee: 12,
+      tickLower:12,
+      tickUpper:121,
+      amount: 12,
+      recipient: primaryWallet?.address,
+      sqrtPrice: 12,
+    })
+  }
+
+  const handlePool = (pool: object) => {
+    axios
+    .post(`${URL}/update/pool`,{
+      pool
+    })
+    .then((response) => {
+      if(response.data.state === "success"){
+        setPoolPair(prePair => [...prePair, response.data.pool])
+      }
+      else {
+        toast.error("Error creating position");
+      }
+    })
+    .catch((error) => {
+      console.error("Error creating position:", error);
+      toast.error("Error creating position");
+    });
+  }
 
   const calculateImpermanentLoss = (priceRatio: number) => {
     const sqrtRatio = Math.sqrt(priceRatio);
@@ -756,7 +931,9 @@ function Homepage() {
             <div className="bg-[#111111] rounded-2xl border border-gray-800/30 shadow-xl">
               {/* Header with Uniswap branding and chain selector */}
               <div className="p-3 border-b border-gray-800/30 flex justify-between items-center">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2"
+                  onClick={() => testPool()}
+                >
                   <img src={Uniswap_LOGO} alt="Uniswap" className="h-5 w-5" />
                   <span className="text-xs text-gray-400">Powered by Uniswap V3</span>
                 </div>
@@ -910,6 +1087,11 @@ function Homepage() {
           selectedToken={selectedToken}
           setSelectedToken={setSelectedTokenInfo}
           setSelectedTokenBalance={setSelectedTokenBalance}
+          setPoolAddress={setPoolAddress}
+          poolPair={poolPair}
+          vaultPair={vaultPair}
+          tokenSymbols= {tokenSymbols}
+          setDepositdress={setDepositAddress}
         />
       )}
 

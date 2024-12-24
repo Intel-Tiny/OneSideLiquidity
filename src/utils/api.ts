@@ -1,8 +1,17 @@
 import axios from 'axios';
+import FALLBACK_TOKEN from "/token-placeholder.svg";
 
 // Simple in-memory cache
 const cache: { [key: string]: { data: any; timestamp: number } } = {};
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
+interface BaseTokenType {
+  name: string;
+  symbol: string;
+  logoURI: string;
+  address: string;
+  decimals: number;
+}
 
 export const clearCache = () => {
   Object.keys(cache).forEach(key => {
@@ -41,6 +50,39 @@ export const getTokenPrice = async (tokenAddress: string): Promise<number> => {
     return 0;
   }
 };
+
+export const getTokenInfo = async (tokenAddress: string) => {
+  try {
+    const data = await fetchWithCache(`https://api.dexscreener.com/latest/dex/tokens/${tokenAddress}`);
+    console.log('Token Info:', data);
+    return data?.pairs?.[0].baseToken.symbol || '';
+  }
+    catch{
+      console.log('Failed to fetch token info:');
+      return '';
+    }
+}
+export const getTokenMoreInfo = async (tokenAddress: string) => {
+  try {
+    const data = await fetchWithCache(`https://api.dexscreener.com/latest/dex/tokens/${tokenAddress}`);
+    console.log('Token Info:', data);
+    return {
+      baseToken: {
+        name: data.pairs[0].baseToken.name,
+        symbol: data.pairs[0].baseToken.symbol,
+        logoURI: data.pairs[0].info?.imageUrl ?? FALLBACK_TOKEN,
+        address: data.pairs[0].baseToken.address,
+        decimals: 6,
+      } as BaseTokenType
+    };
+  }
+    catch{
+      console.log('Failed to fetch token info:');
+      return '';
+    }
+}
+
+
 
 export const searchTokens = async (query: string, chain?: number) => {
   try {
