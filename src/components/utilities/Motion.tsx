@@ -3,6 +3,7 @@ import React, { useState, useMemo, useEffect } from 'react'
 import { Canvas } from '@react-three/fiber'
 import { OrbitControls, Text, Line } from '@react-three/drei'
 import * as THREE from 'three'
+import utils from '../../utils/setting';
 // import { fetchLiquidityConcentration } from '../../utils/graphQueries';
 // import {
 //   DEFAULT_CAMERA_POSITION as CAMERA_POSITION,
@@ -66,6 +67,38 @@ const calculateLiquidityRange = (lowerTick: number, upperTick: number): number =
   }
 };
 
+const formatCurrency = (
+  initialUsdValue: number,
+  maxValue: number,
+  rangeProgress: number
+): string => {
+  const currentValue = initialUsdValue + (maxValue - initialUsdValue) * rangeProgress;
+
+  // Determine the formatted value with suffixes
+  let formattedValue: string;
+
+  if (currentValue >= 1_000_000) {
+    formattedValue = (currentValue / 1_000_000).toLocaleString('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    }) + 'M'; // Millions
+  } else if (currentValue >= 1_000) {
+    formattedValue = (currentValue / 1_000).toLocaleString('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    }) + 'K'; // Thousands
+  } else {
+    formattedValue = currentValue.toLocaleString('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+  }
+
+  return formattedValue;
+}
+
 const calculatePositionValue = (
   initialAmount: string,
   currentTick: number,
@@ -88,14 +121,9 @@ const calculatePositionValue = (
 
     // Calculate value based on position in range
     const maxValue = initialUsdValue * 1.5; // 50% potential increase
-    const currentValue = initialUsdValue + (maxValue - initialUsdValue) * rangeProgress;
-
-    return currentValue.toLocaleString('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    });
+    console.log("Currency:");
+    const currency = formatCurrency(initialUsdValue, maxValue, rangeProgress);
+    return currency;
   } catch (error) {
     console.error('Error calculating position value:', error);
     return '$0.00';
