@@ -33,7 +33,6 @@ import { computeV2PairAddress } from "../../utils/graphQueries";
 import FALLBACK_TOKEN from "/token-placeholder.svg";
 import { URL } from "../../utils/setting";
 import { getTokenInfo, getTokenMoreInfo } from "../../utils/api";
-import HERMES from '/Hermes.webp';
 
 type DynamicWallet = Wallet<any>;
 
@@ -967,20 +966,20 @@ function Homepage() {
     }
   };
 
-  const testPool = () => {
-    handlePool({
-      poolAddress: "0x2B8A4530030021026622e6FaF9265F0aEDa19AC7",
-      positionId: "4038558",
-      token0: "0x45940000009600102a1c002f0097c4a500fa00ab",
-      token1: "0xAB8EBCC9eecc20Bd30c7b75c7b4e8fcCcFBf01aB",
-      fee: 10000,
-      tickLower: -10600,
-      tickUpper: 400,
-      amount: 50,
-      recipient: primaryWallet?.address,
-      sqrtPrice: 10000,
-    });
-  };
+  // const testPool = () => {
+  //   handlePool({
+  //     poolAddress: "0x2B8A4530030021026622e6FaF9265F0aEDa19AC7",
+  //     positionId: "4038558",
+  //     token0: "0x45940000009600102a1c002f0097c4a500fa00ab",
+  //     token1: "0xAB8EBCC9eecc20Bd30c7b75c7b4e8fcCcFBf01aB",
+  //     fee: 10000,
+  //     tickLower: -10600,
+  //     tickUpper: 400,
+  //     amount: 50,
+  //     recipient: primaryWallet?.address,
+  //     sqrtPrice: 10000,
+  //   });
+  // };
 
   const handlePool = (pool: object) => {
     axios
