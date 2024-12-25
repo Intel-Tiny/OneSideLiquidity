@@ -241,15 +241,13 @@ const SelectTokenModal: React.FC<SelectTokenModalProps> = ({
       toast.error("Please select chain!");
       return;
     }
-    for (const token1 of MainTokens) {
-      let isPool = await checkPoolExists(token0, token1, 10000);
-      if (!isPool) {
+      let isPool = await checkPoolExists(token0, MainTokens[meme], 10000);
+      if (isPool === true) {
         toast.error("Pool Already Exists! Check Here!");
         setModalTab("vault");
         console.log("chain", chain);
         return; // Exit the loop if the pool exists
       }
-    }
 
     // Update token with enhanced logo handling
     const tokenWithLogo = {

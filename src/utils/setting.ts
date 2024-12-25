@@ -1,8 +1,8 @@
 export const URL = "https://enjoyed-dragon-golden.ngrok-free.app/api"
 
 export const MainTokens = [
-  "0xDDf7d080C82b8048BAAe54e376a3406572429b4e",
   "0x45940000009600102a1c002f0097c4a500fa00ab",
+  "0xDDf7d080C82b8048BAAe54e376a3406572429b4e",
 ];
 
 export const MAINSYMBOLS = [

@@ -611,6 +611,7 @@ function Homepage() {
     fee: number
   ) => {
     if (chain === undefined) return false;
+
     const signer = await getSigner(primaryWallet as any);
 
     const factoryContract = new ethers.Contract(
@@ -1088,7 +1089,7 @@ function Homepage() {
               {/* Header with Uniswap branding and chain selector */}
               <div
                 className="flex mx-4 mt-4 items-center gap-2"
-                onClick={() => testPool()}
+                // onClick={() => testPool()}
               >
                 <img src={Uniswap_LOGO} alt="Uniswap" className="h-5 w-5" />
                 <span className="text-xs text-gray-400">
