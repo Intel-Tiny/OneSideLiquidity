@@ -59,6 +59,11 @@ const Icon = [
   },
 ];
 
+const MEMETOKENADDRESS = [
+  "0x45940000009600102a1c002f0097c4a500fa00ab",
+  "0xDDf7d080C82b8048BAAe54e376a3406572429b4e",
+]
+
 const MEME = [
   {
     icon: HERMES,
@@ -799,8 +804,13 @@ function Homepage() {
       );
 
       // Validate token order
+      if(meme === undefined) {
+        toast.error("Please select a meme");
+        setIsLoading(false);
+        return;
+      }
       let address1 = selectedToken.address;
-      let address2 = Icon[chain].GoddogTokenAddress;
+      let address2 = MEMETOKENADDRESS[meme];
       const fee = BigInt("10000");
 
       let token0: string, token1: string;
