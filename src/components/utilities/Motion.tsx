@@ -3,6 +3,7 @@ import React, { useState, useMemo, useEffect } from 'react'
 import { Canvas } from '@react-three/fiber'
 import { OrbitControls, Text, Line } from '@react-three/drei'
 import * as THREE from 'three'
+import { MAINSYMBOLS } from '../../utils/setting';
 // import utils from '../../utils/setting';
 // import { fetchLiquidityConcentration } from '../../utils/graphQueries';
 // import {
@@ -509,7 +510,7 @@ export default function InteractiveLiquidityVisualization(props: MainProps) {
             {simulatedTick === lowerTick ? "0" : tokenRatios.hermes}%
           </div>
           <div className="text-sm text-yellow-400 uppercase tracking-wider mt-2">
-            GODDOG
+            {MAINSYMBOLS[props.chainId]}
           </div>
         </div>
       </div>

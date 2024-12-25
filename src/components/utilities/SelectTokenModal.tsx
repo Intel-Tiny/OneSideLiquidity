@@ -38,7 +38,6 @@ interface SelectTokenModalProps {
   open: boolean;
   onClose: () => void;
   chain: number;
-  meme: number;
   AllTokenData: any;
   BasicTokens: string[][];
   selectedToken: any;
@@ -67,7 +66,6 @@ const SelectTokenModal: React.FC<SelectTokenModalProps> = ({
   open,
   onClose,
   chain,
-  meme,
   AllTokenData,
   BasicTokens,
   selectedToken,
@@ -241,7 +239,7 @@ const SelectTokenModal: React.FC<SelectTokenModalProps> = ({
       toast.error("Please select chain!");
       return;
     }
-      let isPool = await checkPoolExists(token0, MainTokens[meme], 10000);
+      let isPool = await checkPoolExists(token0, MainTokens[chain], 10000);
       if (isPool === true) {
         toast.error("Pool Already Exists! Check Here!");
         setModalTab("vault");
@@ -384,10 +382,10 @@ const SelectTokenModal: React.FC<SelectTokenModalProps> = ({
                   <div id="vault">
                     {
                     <div className="text-yellow-400 mb-2">
-                      {chainNames[chain]} / {MAINSYMBOLS[meme]}
+                      {chainNames[chain]} - {MAINSYMBOLS[chain]}
                     </div>
                     }
-                    {poolPair?.filter(pool=> {return pool.chain === chain && pool.mainToken === MAINSYMBOLS[meme] }).map((pool: PoolType, index: number) => {
+                    {poolPair?.filter(pool=> {return pool.chain === chain && pool.mainToken === MAINSYMBOLS[chain] }).map((pool: PoolType, index: number) => {
                       return (
                         <div
                           key={index}
@@ -427,9 +425,9 @@ const SelectTokenModal: React.FC<SelectTokenModalProps> = ({
                 {modalTab === "deposit" && (
                   <div id="deposit">
                     <div className="text-yellow-400 mb-2">
-                      {chainNames[chain]} / {MAINSYMBOLS[meme]}
+                      {chainNames[chain]} - {MAINSYMBOLS[chain]}
                     </div>
-                    {vaultPair?.filter(vault=> {return vault.chain === chain && vault.mainToken === MAINSYMBOLS[meme] }).map((vault: VaultType, index: number) => {
+                    {vaultPair?.filter(vault=> {return vault.chain === chain && vault.mainToken === MAINSYMBOLS[chain] }).map((vault: VaultType, index: number) => {
                       return (
                         <div
                           key={index}
