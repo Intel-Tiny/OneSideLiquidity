@@ -15,6 +15,21 @@ export const chainNames =[
   "Base",
 ]
 
+export const changeColors = [
+  "text-purple-400",
+  "text-yellow-400",
+]
+
+export const changeBg = [
+  "bg-purple-400",
+  "bg-yellow-400",
+]
+
+export const changeBorder = [
+  "hover:border-purple-400",
+  "hover:border-yellow-400",
+]
+
 const truncateMiddle = (str: string, maxLength: number = 16): string => {
     if (str.length <= maxLength) return str;
     

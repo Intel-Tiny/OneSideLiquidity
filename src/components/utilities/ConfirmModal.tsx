@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { Dialog } from "@headlessui/react";
 import { X } from "lucide-react";
-import utils from "../../utils/setting";
+import utils, { changeBorder, changeColors } from "../../utils/setting";
 import Loader from "./Loader";
 
 interface ConfirmModalProps {
   open: boolean;
   onClose: () => void;
   poolAddress: string;
+  chain: number;
   CreateVault: (poolAddress: string) => void;
 }
 
@@ -16,6 +17,7 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
   onClose,
   poolAddress,
   CreateVault,
+  chain,
 }) => {
   useEffect(() => {
     console.log("ConfirmModal open:", open);
@@ -30,7 +32,7 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
             <div className="p-6">
               <div className="flex justify-between items-center mb-3">
                 <div>
-                  <Dialog.Title className="text-md text-yellow-400 font-medium">
+                  <Dialog.Title className={`text-md ${changeColors[chain]} font-medium`}>
                     Create Vault
                   </Dialog.Title>
                 </div>
@@ -55,7 +57,7 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
                 }}
               >
                 <button
-                  className={`hover:border-yellow-400 hover:text-white cursor-pointer mx-auto p-2 border-[1px] border-white rounded-lg w-full text-yellow-400 ${
+                  className={`${changeBorder[chain]} hover:text-white cursor-pointer mx-auto p-2 border-[1px] border-white rounded-lg w-full ${changeColors[chain]} ${
                     isLoading && "bg-blue-500/90 text-white hover:bg-blue-500"
                   }`}
                 >

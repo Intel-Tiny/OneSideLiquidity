@@ -462,10 +462,10 @@ export default function InteractiveLiquidityVisualization(props: MainProps) {
               {liquidityRange.toFixed(0)}%
               <span className="text-sm sm:text-xs text-gray-400 ml-1">Range</span>
             </div>
-            <div className="text-2xl sm:text-lg sm:p-2 font-medium text-gray-200 truncate">
+            {/* <div className="text-2xl sm:text-lg sm:p-2 font-medium text-gray-200 truncate">
               {Math.abs(upperTick - lowerTick).toLocaleString()}
               <span className="text-sm sm:text-xs text-gray-400 ml-1">Ticks</span>
-            </div>
+            </div> */}
           </div>
         </div>
         <div className="h-20 w-[1px] bg-gray-800 mx-2 sm:mx-1"></div>
@@ -486,7 +486,7 @@ export default function InteractiveLiquidityVisualization(props: MainProps) {
             <span className="text-3xl sm:text-lg font-bold text-green-400 leading-none">
               {calculatedAPR}
             </span>  
-            <span className="text-xl sm:text-xs font-bold text-green-400 leading-none ml-1">%</span>
+            {selectedToken && <span className="text-xl sm:text-xs font-bold text-green-400 leading-none ml-1">%</span>}
           </div>
         </div>
       </div>
@@ -506,10 +506,10 @@ export default function InteractiveLiquidityVisualization(props: MainProps) {
         </div>
         <div className="h-24 w-px bg-gray-800"></div>
         <div className="flex-1 text-center pt-4 sm:pt-0">
-          <div className="text-5xl sm:text-2xl font-bold text-yellow-400 leading-tight">
+          <div className={`text-5xl sm:text-2xl font-bold ${props.chainId?"text-yellow-400":"text-purple-500"} leading-tight`}>
             {simulatedTick === lowerTick ? "0" : tokenRatios.hermes}%
           </div>
-          <div className="text-sm text-yellow-400 uppercase tracking-wider mt-2">
+          <div className={`text-sm ${props.chainId?"text-yellow-400":"text-purple-500"} uppercase tracking-wider mt-2`}>
             {MAINSYMBOLS[props.chainId]}
           </div>
         </div>
@@ -567,13 +567,13 @@ export default function InteractiveLiquidityVisualization(props: MainProps) {
           max="100"
           value={sliderValue}
           onChange={handleSliderChange}
-          className="w-full h-2 bg-gray-800 rounded-lg appearance-none cursor-pointer accent-[#FFE804]
+          className={`w-full h-2 bg-gray-800 rounded-lg appearance-none cursor-pointer accent-[#FFE804]
           [&::-webkit-slider-thumb]:appearance-none
           [&::-webkit-slider-thumb]:w-4
           [&::-webkit-slider-thumb]:h-4
           [&::-webkit-slider-thumb]:rounded-full
-          [&::-webkit-slider-thumb]:bg-[#FFE804]
-          [&::-webkit-slider-thumb]:cursor-pointer
+          ${props.chainId === 0 ? '[&::-webkit-slider-thumb]:bg-purple-500' : '[&::-webkit-slider-thumb]:bg-yellow-400'}
+          ${props.chainId === 0 ? '[&::-moz-range-thumb]:bg-purple-500' : '[&::-moz-range-thumb]:bg-yellow-400'}
           [&::-webkit-slider-thumb]:transition-all
           [&::-webkit-slider-thumb]:hover:scale-110
           [&::-moz-range-thumb]:w-4
@@ -583,7 +583,7 @@ export default function InteractiveLiquidityVisualization(props: MainProps) {
           [&::-moz-range-thumb]:border-0
           [&::-moz-range-thumb]:cursor-pointer
           [&::-moz-range-thumb]:transition-all
-          [&::-moz-range-thumb]:hover:scale-110"
+          [&::-moz-range-thumb]:hover:scale-110`}
         />
         <div className="absolute inset-x-0 top-6 text-white text-center text-sm">
           Simulated Price: {formatTickPrice(simulatedTick)} {MAINSYMBOLS[props.chainId]} per {selectedToken?.symbol || 'token'}
