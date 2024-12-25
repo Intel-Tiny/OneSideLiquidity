@@ -64,16 +64,6 @@ const MEMETOKENADDRESS = [
   "0xDDf7d080C82b8048BAAe54e376a3406572429b4e",
 ]
 
-const MEME = [
-  {
-    icon: HERMES,
-    name: "HERMES",
-  },
-  {
-    icon: LOGO,
-    name: "GODDOG",
-  },
-]
 
 const MainTokens = [
   "0xDDf7d080C82b8048BAAe54e376a3406572429b4e",
@@ -145,9 +135,7 @@ const handleImageError = (
 
 function Homepage() {
   const [isSelectChain, setSelectChain] = useState(false);
-  const [isSelectMain, setSelectMain] = useState(false);
   const [chain, setChain] = useState<number | undefined>(undefined);
-  const [meme, setMeme] = useState<number | undefined>(undefined);
   const [myTokenList, setMyTokenList] = useState<any>(null);
   const [selectedToken, setSelectedToken] = useState<SelectedTokenType | null>(
     null
@@ -272,12 +260,12 @@ function Homepage() {
       if (!pool) {
         return;
       }
-      if (meme === undefined) {
-        toast.error("Please select meme");
+      if (chain === undefined) {
+        toast.error("Please select chain");
         return;
       }
       const selectedTokenContract = new ethers.Contract(
-        pool.token0 === MEMETOKENADDRESS[meme]
+        pool.token0 === MEMETOKENADDRESS[chain]
           ? pool?.token1
           : pool?.token0,
         tokenABI,
@@ -528,13 +516,13 @@ function Homepage() {
       if (!selectedToken || chain === undefined) {
         return;
       }
-      if (meme === undefined) {
-        toast.error("Please select MEME");
+      if (chain === undefined) {
+        toast.error("Please select Chain!");
         return;
       }
       try {
         let address1 = selectedToken.address;
-        let address2 = MEMETOKENADDRESS[meme];
+        let address2 = MEMETOKENADDRESS[chain];
         let token0: string, token1: string;
 
         if (address1.toLowerCase() < address2.toLowerCase()) {
@@ -812,13 +800,13 @@ function Homepage() {
       );
 
       // Validate token order
-      if(meme === undefined) {
-        toast.error("Please select a meme");
+      if(chain === undefined) {
+        toast.error("Please select a chain");
         setIsLoading(false);
         return;
       }
       let address1 = selectedToken.address;
-      let address2 = MEMETOKENADDRESS[meme];
+      let address2 = MEMETOKENADDRESS[chain];
       const fee = BigInt("10000");
 
       let token0: string, token1: string;
@@ -1087,16 +1075,16 @@ function Homepage() {
           ) : (
             <div className="bg-[#111111] rounded-2xl border border-gray-800/30 shadow-xl">
               {/* Header with Uniswap branding and chain selector */}
-              <div
-                className="flex mx-4 mt-4 items-center gap-2"
-                // onClick={() => testPool()}
-              >
-                <img src={Uniswap_LOGO} alt="Uniswap" className="h-5 w-5" />
-                <span className="text-xs text-gray-400">
-                  Powered by Uniswap V3
-                </span>
-              </div>
               <div className="p-3 border-b border-gray-800/30 flex justify-between items-center">
+                <div
+                  className="flex items-center"
+                  // onClick={() => testPool()}
+                >
+                  <img src={Uniswap_LOGO} alt="Uniswap" className="h-5 w-5" />
+                  <span className="text-xs text-gray-400">
+                    Powered by Uniswap V3
+                  </span>
+                </div>
                 <div className="relative flex">
                   <ChainSelector
                     chain={chain}
@@ -1105,16 +1093,6 @@ function Homepage() {
                     chains={Icon}
                     onChainSelect={setChain}
                     modalName="Select Chain"
-                  />
-                </div>
-                <div className="relative flex">
-                  <ChainSelector
-                    chain={meme}
-                    isOpen={isSelectMain}
-                    setIsOpen={setSelectMain}
-                    chains={MEME}
-                    onChainSelect={setMeme}
-                    modalName="Select MEME"
                   />
                 </div>
               </div>
@@ -1140,14 +1118,14 @@ function Homepage() {
                       className={`flex items-center gap-2 px-3 py-2 rounded-xl cursor-pointer transition-all duration-200 min-w-[120px] h-[40px] ${
                         selectedToken
                           ? "bg-[#1B1B1B] hover:bg-[#2D2D2D]"
-                          : chain !== undefined && meme !== undefined
+                          : chain !== undefined
                           ? "bg-[#FFE804] text-black hover:bg-[#FFE804]/90"
                           : "bg-[#1B1B1B] hover:bg-[#2D2D2D]"
                       }`}
                       onClick={
                         () => {
-                          if(chain === undefined || meme === undefined )  {
-                            toast.error("Please Select Chain and MEME");
+                          if(chain === undefined )  {
+                            toast.error("Please Select Chain");
                             return;
                           }
                           setShow(true)
@@ -1270,11 +1248,11 @@ function Homepage() {
                   selectedToken={selectedToken}
                   chainId={chain || 0}
                   v2PairAddress={
-                    selectedToken && chain !== undefined && meme !== undefined
+                    selectedToken && chain !== undefined 
                       ? computeV2PairAddress(
                           Icon[chain].factoryAddress,
                           selectedToken.address,
-                          MEMETOKENADDRESS[meme]
+                          MEMETOKENADDRESS[chain]
                         )
                       : undefined
                   }
@@ -1291,7 +1269,6 @@ function Homepage() {
           open={show}
           onClose={() => setShow(false)}
           chain={chain ?? -1}
-          meme={meme ?? -1}
           AllTokenData={myTokenList}
           BasicTokens={BasicTokens}
           selectedToken={selectedToken}
