@@ -220,7 +220,7 @@ function Homepage() {
       const param = {
         pool: address,
         manager: managerAddress,
-        managerFee: 0,
+        managerFee: 59420,
         rebalanceDelegate: managerAddress,
         maxTotalSupply: BigInt(maxTotalSupply),
         baseThreshold: 5400,
