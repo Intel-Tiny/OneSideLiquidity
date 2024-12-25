@@ -586,7 +586,7 @@ export default function InteractiveLiquidityVisualization(props: MainProps) {
           [&::-moz-range-thumb]:hover:scale-110"
         />
         <div className="absolute inset-x-0 top-6 text-white text-center text-sm">
-          Simulated Price: {formatTickPrice(simulatedTick)} GODDOG per {selectedToken?.symbol || 'token'}
+          Simulated Price: {formatTickPrice(simulatedTick)} {MAINSYMBOLS[props.chainId]} per {selectedToken?.symbol || 'token'}
         </div>
       </div>
     </div>
