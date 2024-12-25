@@ -272,8 +272,12 @@ function Homepage() {
       if (!pool) {
         return;
       }
+      if (meme === undefined) {
+        toast.error("Please select meme");
+        return;
+      }
       const selectedTokenContract = new ethers.Contract(
-        pool.token0 === Icon[chain].GoddogTokenAddress
+        pool.token0 === MEMETOKENADDRESS[meme]
           ? pool?.token1
           : pool?.token0,
         tokenABI,
@@ -524,10 +528,13 @@ function Homepage() {
       if (!selectedToken || chain === undefined) {
         return;
       }
-
+      if (meme === undefined) {
+        toast.error("Please select MEME");
+        return;
+      }
       try {
         let address1 = selectedToken.address;
-        let address2 = Icon[chain].GoddogTokenAddress;
+        let address2 = MEMETOKENADDRESS[meme];
         let token0: string, token1: string;
 
         if (address1.toLowerCase() < address2.toLowerCase()) {
@@ -1262,11 +1269,11 @@ function Homepage() {
                   selectedToken={selectedToken}
                   chainId={chain || 0}
                   v2PairAddress={
-                    selectedToken && chain !== undefined
+                    selectedToken && chain !== undefined && meme !== undefined
                       ? computeV2PairAddress(
                           Icon[chain].factoryAddress,
                           selectedToken.address,
-                          Icon[chain].GoddogTokenAddress
+                          MEMETOKENADDRESS[meme]
                         )
                       : undefined
                   }
