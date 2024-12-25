@@ -1117,8 +1117,9 @@ function Homepage() {
                       className={`flex items-center gap-2 px-3 py-2 rounded-xl cursor-pointer transition-all duration-200 min-w-[120px] h-[40px] ${
                         selectedToken
                           ? "bg-[#1B1B1B] hover:bg-[#2D2D2D]"
-                          : chain !== undefined
+                          : chain === 1
                           ? "bg-[#FFE804] text-black hover:bg-[#FFE804]/90"
+                          : chain === 0? "bg-purple-500 hover:bg-purple-600"
                           : "bg-[#1B1B1B] hover:bg-[#2D2D2D]"
                       }`}
                       onClick={
@@ -1134,7 +1135,7 @@ function Homepage() {
                       {selectedToken ? (
                         <>
                           <div className="flex items-center gap-2">
-                            <div className="w-6 h-6 rounded-full bg-[#2D2D2D] flex items-center justify-center overflow-hidden">
+                            <div className={`w-6 h-6 rounded-full bg-[#2D2D2D] flex items-center justify-center overflow-hidden`}>
                               <img
                                 src={selectedToken.logoURI || FALLBACK_TOKEN}
                                 alt={selectedToken.symbol}

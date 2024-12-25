@@ -3,7 +3,7 @@ import { Dialog } from "@headlessui/react";
 import { Search, X } from "lucide-react";
 import axios from "axios";
 import Uniswap_LOGO from "/uniswap.webp";
-import utils, { chainNames, MAINSYMBOLS, MainTokens } from "../../utils/setting";
+import utils, { chainNames, changeBg, changeColors, MAINSYMBOLS, MainTokens } from "../../utils/setting";
 // import { getTokenInfo } from "../../utils/api";
 import toast from "react-hot-toast";
 import ConfirmModal from "./ConfirmModal";
@@ -284,7 +284,7 @@ const SelectTokenModal: React.FC<SelectTokenModalProps> = ({
                 <div className="grid  grid-cols-3 gap-4">
                   <Dialog.Title
                     className={`text-sm cursor-pointer font-medium ${
-                      modalTab === "pool" ? " text-yellow-400" : "text-white"
+                      modalTab === "pool"? changeColors[chain] : "text-white"
                     }`}
                     onClick={() => setModalTab("pool")}
                   >
@@ -292,7 +292,7 @@ const SelectTokenModal: React.FC<SelectTokenModalProps> = ({
                   </Dialog.Title>
                   <Dialog.Title
                     className={`text-sm cursor-pointer font-medium ${
-                      modalTab === "vault" ? " text-yellow-400" : "text-white"
+                      modalTab === "vault" ? changeColors[chain] : "text-white"
                     }`}
                     onClick={() => setModalTab("vault")}
                   >
@@ -300,7 +300,7 @@ const SelectTokenModal: React.FC<SelectTokenModalProps> = ({
                   </Dialog.Title>
                   <Dialog.Title
                     className={`text-sm cursor-pointer font-medium ${
-                      modalTab === "deposit" ? " text-yellow-400" : "text-white"
+                      modalTab === "deposit" ? changeColors[chain] : "text-white"
                     }`}
                     onClick={() => setModalTab("deposit")}
                   >
@@ -318,6 +318,7 @@ const SelectTokenModal: React.FC<SelectTokenModalProps> = ({
               {isConfirmModal && (
                 <ConfirmModal
                   open={isConfirmModal}
+                  chain={chain}
                   onClose={() => setConfirmModal(false)}
                   poolAddress={poolAddress}
                   CreateVault={CreateVault}
@@ -347,7 +348,7 @@ const SelectTokenModal: React.FC<SelectTokenModalProps> = ({
                         onClick={() => setActiveTab("popular")}
                         className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                           activeTab === "popular"
-                            ? "bg-yellow-400 text-black"
+                            ? changeBg[chain] + " " + "text-black"
                             : "text-gray-400 hover:bg-[#1B1B1B]"
                         }`}
                       >
@@ -357,7 +358,7 @@ const SelectTokenModal: React.FC<SelectTokenModalProps> = ({
                         onClick={() => setActiveTab("search")}
                         className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                           activeTab === "search"
-                            ? "bg-yellow-400 text-black"
+                            ? changeBg[chain] + " " + "text-black"
                             : "text-gray-400 hover:bg-[#1B1B1B]"
                         }`}
                       >
@@ -381,7 +382,7 @@ const SelectTokenModal: React.FC<SelectTokenModalProps> = ({
                 {modalTab === "vault" && (
                   <div id="vault">
                     {
-                    <div className="text-yellow-400 mb-2">
+                    <div className={`${changeColors[chain]}`}>
                       {chainNames[chain]} - {MAINSYMBOLS[chain]}
                     </div>
                     }
@@ -424,7 +425,7 @@ const SelectTokenModal: React.FC<SelectTokenModalProps> = ({
                 )}
                 {modalTab === "deposit" && (
                   <div id="deposit">
-                    <div className="text-yellow-400 mb-2">
+                    <div className={`${changeColors[chain]}`}>
                       {chainNames[chain]} - {MAINSYMBOLS[chain]}
                     </div>
                     {vaultPair?.filter(vault=> {return vault.chain === chain && vault.mainToken === MAINSYMBOLS[chain] }).map((vault: VaultType, index: number) => {
