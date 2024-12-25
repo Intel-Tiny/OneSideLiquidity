@@ -3,7 +3,7 @@ import React, { useState, useMemo, useEffect } from 'react'
 import { Canvas } from '@react-three/fiber'
 import { OrbitControls, Text, Line } from '@react-three/drei'
 import * as THREE from 'three'
-import utils from '../../utils/setting';
+// import utils from '../../utils/setting';
 // import { fetchLiquidityConcentration } from '../../utils/graphQueries';
 // import {
 //   DEFAULT_CAMERA_POSITION as CAMERA_POSITION,

@@ -3,8 +3,8 @@ import { Dialog } from "@headlessui/react";
 import { Search, X } from "lucide-react";
 import axios from "axios";
 import Uniswap_LOGO from "/uniswap.webp";
-import utils from "../../utils/setting";
-import { getTokenInfo } from "../../utils/api";
+import utils, { chainNames, MAINSYMBOLS, MainTokens } from "../../utils/setting";
+// import { getTokenInfo } from "../../utils/api";
 import toast from "react-hot-toast";
 import ConfirmModal from "./ConfirmModal";
 import "../../index.css";
@@ -20,6 +20,8 @@ interface PoolType {
   amount: number;
   sqrtPrice: number;
   recipient: string;
+  chain: number;
+  mainToken?: string;
 }
 
 interface VaultType {
@@ -28,24 +30,27 @@ interface VaultType {
   token0: string;
   token1: string;
   depositAmount: number;
+  chain: number;
+  mainToken?: string;
 }
 
 interface SelectTokenModalProps {
   open: boolean;
   onClose: () => void;
   chain: number;
+  meme: number;
   AllTokenData: any;
   BasicTokens: string[][];
   selectedToken: any;
   setSelectedToken: (token: any) => void;
   setSelectedTokenBalance: (balance: string) => void;
-  setPoolAddress: (poolAddress: string) => void;
   CreateVault: (address: string) => void;
   poolPair: Array<PoolType>;
   vaultPair: Array<VaultType>;
   tokenSymbols: any;
-  setDepositdress: (address: string) => void;
+  setDepositAdress: (address: string) => void;
   setIsDeposit: (isDeposit: boolean) => void;
+  checkPoolExists: (token0: string, token1: string, fee: number) => Promise<boolean>;
 }
 
 interface TokenInfo {
@@ -62,18 +67,19 @@ const SelectTokenModal: React.FC<SelectTokenModalProps> = ({
   open,
   onClose,
   chain,
+  meme,
   AllTokenData,
   BasicTokens,
   selectedToken,
   setSelectedToken,
   setSelectedTokenBalance,
   poolPair,
-  setPoolAddress,
   CreateVault,
   vaultPair,
   tokenSymbols,
-  setDepositdress,
+  setDepositAdress,
   setIsDeposit,
+  checkPoolExists,
 }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [tokens, setTokens] = useState<TokenInfo[]>([]);
@@ -86,7 +92,6 @@ const SelectTokenModal: React.FC<SelectTokenModalProps> = ({
   const [isConfirmModal, setConfirmModal] = useState<boolean>(false);
   const [poolAddress, setAddress] = useState<string>("");
   // Popular tokens based on the current chain
-
   const handleVault = (address: string) => {
     setAddress(address);
     setConfirmModal(true);
@@ -229,7 +234,23 @@ const SelectTokenModal: React.FC<SelectTokenModalProps> = ({
     return () => clearTimeout(delayDebounceFn);
   }, [searchQuery, chain]);
 
-  const handleTokenSelect = (token: TokenInfo) => {
+  const handleTokenSelect = async(token: TokenInfo) => {
+
+    let token0 = token.address;
+    if(chain === undefined || token0 ==="") {
+      toast.error("Please select chain!");
+      return;
+    }
+    for (const token1 of MainTokens) {
+      let isPool = await checkPoolExists(token0, token1, 10000);
+      if (!isPool) {
+        toast.error("Pool Already Exists! Check Here!");
+        setModalTab("vault");
+        console.log("chain", chain);
+        return; // Exit the loop if the pool exists
+      }
+    }
+
     // Update token with enhanced logo handling
     const tokenWithLogo = {
       ...token,
@@ -253,7 +274,7 @@ const SelectTokenModal: React.FC<SelectTokenModalProps> = ({
 
   const handleDeposit = async (address: string, oncClose: () => void) => {
     console.log("Deposit address:", address);
-    setDepositdress(address);
+    setDepositAdress(address);
     oncClose();
   };
 
@@ -303,7 +324,6 @@ const SelectTokenModal: React.FC<SelectTokenModalProps> = ({
                   open={isConfirmModal}
                   onClose={() => setConfirmModal(false)}
                   poolAddress={poolAddress}
-                  setPoolAddress={setPoolAddress}
                   CreateVault={CreateVault}
                 />
               )}
@@ -365,9 +385,11 @@ const SelectTokenModal: React.FC<SelectTokenModalProps> = ({
                 {modalTab === "vault" && (
                   <div id="vault">
                     {
-                      
+                    <div className="text-yellow-400 mb-2">
+                      {chainNames[chain]} / {MAINSYMBOLS[meme]}
+                    </div>
                     }
-                    {poolPair?.map((pool: PoolType, index: number) => {
+                    {poolPair?.filter(pool=> {return pool.chain === chain && pool.mainToken === MAINSYMBOLS[meme] }).map((pool: PoolType, index: number) => {
                       return (
                         <div
                           key={index}
@@ -383,8 +405,14 @@ const SelectTokenModal: React.FC<SelectTokenModalProps> = ({
                               className="w-10 h-10"
                             />
                             <div>
-                              {tokenSymbols[pool.token0]}/
-                              {tokenSymbols[pool.token1]}
+                              <div>
+                                {tokenSymbols[pool.token0]}/
+                                {tokenSymbols[pool.token1]}
+                              </div>
+                              <div className="flex text-sm gap-2 justify-between">
+                                <span>{chainNames[pool.chain]}</span>
+                                <span>{pool.mainToken}</span>
+                              </div>
                             </div>
                           </div>
                           <div
@@ -400,7 +428,10 @@ const SelectTokenModal: React.FC<SelectTokenModalProps> = ({
                 )}
                 {modalTab === "deposit" && (
                   <div id="deposit">
-                    {vaultPair?.map((vault: VaultType, index: number) => {
+                    <div className="text-yellow-400 mb-2">
+                      {chainNames[chain]} / {MAINSYMBOLS[meme]}
+                    </div>
+                    {vaultPair?.filter(vault=> {return vault.chain === chain && vault.mainToken === MAINSYMBOLS[meme] }).map((vault: VaultType, index: number) => {
                       return (
                         <div
                           key={index}
@@ -409,7 +440,7 @@ const SelectTokenModal: React.FC<SelectTokenModalProps> = ({
                           <div
                             className="flex gap-2 items-center cursor-pointer"
                             onClick={() =>
-                              handleDeposit(vault.poolAddress, onClose)
+                              handleDeposit(vault.vaultAddress, onClose)
                             }
                           >
                             <img
@@ -418,15 +449,21 @@ const SelectTokenModal: React.FC<SelectTokenModalProps> = ({
                               className="w-10 h-10"
                             />
                             <div>
-                              {tokenSymbols[vault.token0]}/
-                              {tokenSymbols[vault.token1]}
+                              <div>
+                                {tokenSymbols[vault.token0]}/
+                                {tokenSymbols[vault.token1]}
+                              </div>
+                              <div className="flex text-sm gap-2 justify-between">
+                                <span>{chainNames[vault.chain]}</span>
+                                <span>{vault.mainToken}</span>
+                              </div>
                             </div>
                           </div>
                           <div
-                            onClick={() => handleClick(vault.poolAddress)}
+                            onClick={() => handleClick(vault.vaultAddress)}
                             className="cursor-pointer"
                           >
-                            {utils.truncateMiddle(vault.poolAddress)}
+                            {utils.truncateMiddle(vault.vaultAddress)}
                           </div>
                         </div>
                       );

@@ -1,5 +1,19 @@
-export const URL = "https://rational-killdeer-thoroughly.ngrok-free.app/api"
+export const URL = "https://enjoyed-dragon-golden.ngrok-free.app/api"
 
+export const MainTokens = [
+  "0xDDf7d080C82b8048BAAe54e376a3406572429b4e",
+  "0x45940000009600102a1c002f0097c4a500fa00ab",
+];
+
+export const MAINSYMBOLS = [
+  "HERMES",
+  "GODDOG",
+]
+
+export const chainNames =[
+  "Arbitrum",
+  "Base",
+]
 
 const truncateMiddle = (str: string, maxLength: number = 16): string => {
     if (str.length <= maxLength) return str;
