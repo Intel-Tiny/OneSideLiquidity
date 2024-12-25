@@ -33,6 +33,7 @@ import { computeV2PairAddress } from "../../utils/graphQueries";
 import FALLBACK_TOKEN from "/token-placeholder.svg";
 import { URL } from "../../utils/setting";
 import { getTokenInfo, getTokenMoreInfo } from "../../utils/api";
+import HERMES from '/Hermes.webp';
 
 type DynamicWallet = Wallet<any>;
 
@@ -57,6 +58,17 @@ const Icon = [
     vaultFactoryAddress: "0x5B7B8b487D05F77977b7ABEec5F922925B9b2aFa",
   },
 ];
+
+const MEME = [
+  {
+    icon: HERMES,
+    name: "HERMES",
+  },
+  {
+    icon: LOGO,
+    name: "GODDOG",
+  },
+]
 
 const MainTokens = [
   "0xDDf7d080C82b8048BAAe54e376a3406572429b4e",
@@ -99,6 +111,8 @@ interface PoolType {
   amount: number;
   sqrtPrice: number;
   recipient: string;
+  chain: number;
+  mainToken?: string;
 }
 
 interface VaultType {
@@ -107,6 +121,8 @@ interface VaultType {
   token0: string;
   token1: string;
   depositAmount: number;
+  chain: number;
+  mainToken?: string;
 }
 
 const tokenABI = [
@@ -124,7 +140,9 @@ const handleImageError = (
 
 function Homepage() {
   const [isSelectChain, setSelectChain] = useState(false);
+  const [isSelectMain, setSelectMain] = useState(false);
   const [chain, setChain] = useState<number | undefined>(undefined);
+  const [meme, setMeme] = useState<number | undefined>(undefined);
   const [myTokenList, setMyTokenList] = useState<any>(null);
   const [selectedToken, setSelectedToken] = useState<SelectedTokenType | null>(
     null
@@ -264,6 +282,7 @@ function Homepage() {
         token0: pool?.token0 || "",
         token1: pool?.token1 || "",
         depositAmount: Number(_amount),
+        chain: chain,
       });
       toast.success("Successfully created new vault!");
       return true;
@@ -391,6 +410,7 @@ function Homepage() {
   }, [poolPair]);
 
   useEffect(() => {
+    console.log("this is chain ", chain)
     const updateBalance = async () => {
       if (selectedToken) {
         const balance = await getTokenBalance(selectedToken.address);
@@ -919,6 +939,7 @@ function Homepage() {
         amount: Number(amount),
         recipient: primaryWallet?.address,
         sqrtPrice: Number(sqrtPrice),
+        chain: chain,
       });
 
       toast.success("Position created successfully!");
@@ -1048,23 +1069,34 @@ function Homepage() {
           ) : (
             <div className="bg-[#111111] rounded-2xl border border-gray-800/30 shadow-xl">
               {/* Header with Uniswap branding and chain selector */}
+              <div
+                className="flex mx-4 mt-4 items-center gap-2"
+                onClick={() => testPool()}
+              >
+                <img src={Uniswap_LOGO} alt="Uniswap" className="h-5 w-5" />
+                <span className="text-xs text-gray-400">
+                  Powered by Uniswap V3
+                </span>
+              </div>
               <div className="p-3 border-b border-gray-800/30 flex justify-between items-center">
-                <div
-                  className="flex items-center gap-2"
-                  onClick={() => testPool()}
-                >
-                  <img src={Uniswap_LOGO} alt="Uniswap" className="h-5 w-5" />
-                  <span className="text-xs text-gray-400">
-                    Powered by Uniswap V3
-                  </span>
-                </div>
-                <div className="relative">
+                <div className="relative flex">
                   <ChainSelector
                     chain={chain}
                     isOpen={isSelectChain}
                     setIsOpen={setSelectChain}
                     chains={Icon}
                     onChainSelect={setChain}
+                    modalName="Select Chain"
+                  />
+                </div>
+                <div className="relative flex">
+                  <ChainSelector
+                    chain={meme}
+                    isOpen={isSelectMain}
+                    setIsOpen={setSelectMain}
+                    chains={MEME}
+                    onChainSelect={setMeme}
+                    modalName="Select MEME"
                   />
                 </div>
               </div>
@@ -1090,11 +1122,19 @@ function Homepage() {
                       className={`flex items-center gap-2 px-3 py-2 rounded-xl cursor-pointer transition-all duration-200 min-w-[120px] h-[40px] ${
                         selectedToken
                           ? "bg-[#1B1B1B] hover:bg-[#2D2D2D]"
-                          : chain !== undefined
+                          : chain !== undefined && meme !== undefined
                           ? "bg-[#FFE804] text-black hover:bg-[#FFE804]/90"
                           : "bg-[#1B1B1B] hover:bg-[#2D2D2D]"
                       }`}
-                      onClick={() => setShow(true)}
+                      onClick={
+                        () => {
+                          if(chain === undefined || meme === undefined )  {
+                            toast.error("Please Select Chain and MEME");
+                            return;
+                          }
+                          setShow(true)
+                        }
+                      }
                     >
                       {selectedToken ? (
                         <>
@@ -1232,7 +1272,8 @@ function Homepage() {
         <SelectTokenModal
           open={show}
           onClose={() => setShow(false)}
-          chain={chain ?? 0}
+          chain={chain ?? -1}
+          meme={meme ?? -1}
           AllTokenData={myTokenList}
           BasicTokens={BasicTokens}
           selectedToken={selectedToken}
@@ -1241,8 +1282,10 @@ function Homepage() {
           CreateVault={CreateVault}
           poolPair={poolPair}
           vaultPair={vaultPair}
+          checkPoolExists={checkPoolExists}
           tokenSymbols={tokenSymbols}
           setIsDeposit={setIsDeposit}
+          
           setDepositAdress={setDepositAddress}
         />
       )}

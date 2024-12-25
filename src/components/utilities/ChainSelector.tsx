@@ -6,9 +6,10 @@ interface ChainSelectorProps {
   setIsOpen: (isOpen: boolean) => void;
   chains: any[];
   onChainSelect: (chain: number) => void;
+  modalName: string,
 }
 
-const ChainSelector = ({ chain, isOpen, setIsOpen, chains, onChainSelect }: ChainSelectorProps) => {
+const ChainSelector = ({ chain, isOpen, setIsOpen, chains, onChainSelect, modalName }: ChainSelectorProps) => {
   return (
     <div className="relative">
       <div
@@ -23,17 +24,17 @@ const ChainSelector = ({ chain, isOpen, setIsOpen, chains, onChainSelect }: Chai
             <span className="text-sm font-medium">{chains[chain].name}</span>
           </>
         ) : (
-          <span className="text-sm font-medium">Select Chain</span>
+          <span className="text-sm font-medium">{modalName}</span>
         )}
         <ChevronDown className={`h-4 w-4 ${chain === undefined ? 'text-black' : 'text-gray-400'} ml-1`} />
       </div>
       
       {isOpen && (
-        <div className="absolute top-full mt-1.5 right-0 w-48 bg-[#111111] rounded-xl shadow-xl border border-gray-800/30 backdrop-blur-sm">
+        <div className="absolute top-full mt-1.5 right-0 w-[130px] bg-[#111111] rounded-xl shadow-xl border border-gray-800/30 backdrop-blur-sm">
           <div className="py-1.5">
             {chains.map((chainItem, index) => (
               <div
-                key={chainItem.chainId}
+                key={index}
                 className="flex items-center justify-between px-3 py-2 hover:bg-[#1B1B1B] cursor-pointer transition-colors"
                 onClick={() => {
                   onChainSelect(index);
