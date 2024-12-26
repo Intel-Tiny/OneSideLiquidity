@@ -290,7 +290,7 @@ const SelectTokenModal: React.FC<SelectTokenModalProps> = ({
                   >
                     Select Token
                   </Dialog.Title>
-                  <Dialog.Title
+                  {/* <Dialog.Title
                     className={`text-sm cursor-pointer font-medium ${
                       modalTab === "vault" ? changeColors[chain] : "text-white"
                     }`}
@@ -305,7 +305,7 @@ const SelectTokenModal: React.FC<SelectTokenModalProps> = ({
                     onClick={() => setModalTab("deposit")}
                   >
                     Deposit
-                  </Dialog.Title>
+                  </Dialog.Title> */}
                 </div>
                 <button
                   onClick={onClose}
@@ -379,7 +379,7 @@ const SelectTokenModal: React.FC<SelectTokenModalProps> = ({
                     )}
                   </div>
                 )}
-                {modalTab === "vault" && (
+                {/* {modalTab === "vault" && (
                   <div id="vault">
                     {
                     <div className={`${changeColors[chain]}`}>
@@ -466,7 +466,7 @@ const SelectTokenModal: React.FC<SelectTokenModalProps> = ({
                       );
                     })}
                   </div>
-                )}
+                )} */}
 
                 {modalTab === "pool" && (
                   <div className="max-h-[300px] overflow-y-auto">
