@@ -612,7 +612,7 @@ function Homepage() {
       if (poolAddress === ethers.ZeroAddress) {
         return false;
       } else {
-        return true;
+        return poolAddress;
       }
     } catch (error) {
       console.error("Error checking pool:", error);

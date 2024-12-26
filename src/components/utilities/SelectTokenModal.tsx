@@ -187,6 +187,12 @@ const SelectTokenModal: React.FC<SelectTokenModalProps> = ({
               chainId: chain,
             },
           ]);
+          let isPool = await checkPoolExists(token.address, MainTokens[chain], 10000);
+          if (isPool !== false && isPool !== true) {
+            toast.success("Pool Already Exists! Create a Vault!");
+            setAddress(isPool);
+            return; // Exit the loop if the pool exists
+          }
         }
       } else {
         // Search by name/symbol
@@ -209,7 +215,6 @@ const SelectTokenModal: React.FC<SelectTokenModalProps> = ({
             });
           }
         }
-
         setTokens(Array.from(uniqueTokens.values()));
       }
     } catch (err) {
@@ -239,13 +244,8 @@ const SelectTokenModal: React.FC<SelectTokenModalProps> = ({
       toast.error("Please select chain!");
       return;
     }
-      let isPool = await checkPoolExists(token0, MainTokens[chain], 10000);
-      if (isPool === true) {
-        toast.error("Pool Already Exists! Check Here!");
-        setModalTab("vault");
-        console.log("chain", chain);
-        return; // Exit the loop if the pool exists
-      }
+    if(poolAddress) return;
+
 
     // Update token with enhanced logo handling
     const tokenWithLogo = {
@@ -540,7 +540,7 @@ const SelectTokenModal: React.FC<SelectTokenModalProps> = ({
                                   {token.symbol}
                                 </span>
                                 <span className="text-sm text-gray-400 truncate w-full">
-                                  {token.name}
+                                  {poolAddress ?? token.name}
                                 </span>
                               </div>
                               <div className="text-right ml-2 flex-shrink-0">
@@ -563,6 +563,14 @@ const SelectTokenModal: React.FC<SelectTokenModalProps> = ({
                             </button>
                           ))}
                     </div>
+                    {poolAddress && tokens.length > 0 && (
+                      <div 
+                        className="flex mx-4 cursor-pointer justify-center py-0.5 border-[1px] rounded-lg text-white font-semibold"
+                        onClick={() => setConfirmModal(true)}
+                      >
+                        <p>Create Vault</p>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
