@@ -58,16 +58,11 @@ const Icon = [
   },
 ];
 
-const MEMETOKENADDRESS = [
+const MainTokens = [
   "0x45940000009600102a1c002f0097c4a500fa00ab",
   "0xDDf7d080C82b8048BAAe54e376a3406572429b4e",
 ]
 
-
-const MainTokens = [
-  "0xDDf7d080C82b8048BAAe54e376a3406572429b4e",
-  "0x45940000009600102a1c002f0097c4a500fa00ab",
-];
 const BasicTokens = [
   [
     "WETH",
@@ -264,7 +259,7 @@ function Homepage() {
         return;
       }
       const selectedTokenContract = new ethers.Contract(
-        pool.token0 === MEMETOKENADDRESS[chain]
+        pool.token0 === MainTokens[chain]
           ? pool?.token1
           : pool?.token0,
         tokenABI,
@@ -521,7 +516,7 @@ function Homepage() {
       }
       try {
         let address1 = selectedToken.address;
-        let address2 = MEMETOKENADDRESS[chain];
+        let address2 = MainTokens[chain];
         let token0: string, token1: string;
 
         if (address1.toLowerCase() < address2.toLowerCase()) {
@@ -805,7 +800,7 @@ function Homepage() {
         return;
       }
       let address1 = selectedToken.address;
-      let address2 = MEMETOKENADDRESS[chain];
+      let address2 = MainTokens[chain];
       const fee = BigInt("10000");
 
       let token0: string, token1: string;
@@ -1252,7 +1247,7 @@ function Homepage() {
                       ? computeV2PairAddress(
                           Icon[chain].factoryAddress,
                           selectedToken.address,
-                          MEMETOKENADDRESS[chain]
+                          MainTokens[chain]
                         )
                       : undefined
                   }
