@@ -44,7 +44,7 @@ const Icon = [
     routerAddress: "0xC36442b4a4522E871399CD717aBDD847Ab11FE88",
     factoryAddress: "0x1F98431c8aD98523631AE4a59f267346ea31F984",
     HermesTokenAddress: "0x45940000009600102a1c002f0097c4a500fa00ab",
-    vaultFactoryAddress: "0x5B7B8b487D05F77977b7ABEec5F922925B9b2aFa",
+    vaultFactoryAddress: "0x7F9c69b6299461E7d6B0E26e201863D1A7BfAdfb",
   },
   {
     icon: BASE,
