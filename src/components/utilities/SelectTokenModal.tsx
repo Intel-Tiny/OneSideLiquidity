@@ -272,7 +272,7 @@ const SelectTokenModal: React.FC<SelectTokenModalProps> = ({
       console.error("Failed to copy: ", err);
     }
   };
-//@ts-ignore
+//@ts-ignore   
   const handleDeposit = async (address: string, oncClose: () => void) => {
     console.log("Deposit address:", address);
     setDepositAdress(address);
