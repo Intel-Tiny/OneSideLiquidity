@@ -73,7 +73,7 @@ const PreviewModal = ({
   const NextStep = [
     "agent",
     "vault",
-    "approve",
+    "approve",  
     "maxDeposit",
     "rebalance",
     "deposit",
