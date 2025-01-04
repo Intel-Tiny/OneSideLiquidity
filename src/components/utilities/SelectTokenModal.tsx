@@ -8,8 +8,13 @@ import axios from "axios";
 import utils, { chainNames, changeBg, changeColors, MAINSYMBOLS, MainTokens } from "../../utils/setting";
 // import { getTokenInfo } from "../../utils/api";
 import toast from "react-hot-toast";
+
 import ConfirmModal from "./ConfirmModal";
 import "../../index.css";
+
+
+
+
 
 interface PoolType {
   poolAddress: string;
@@ -49,6 +54,8 @@ interface SelectTokenModalProps {
   poolPair: Array<PoolType>;
   vaultPair: Array<VaultType>;
   tokenSymbols: any;
+  poolAddress: string;
+  setAddress: (address: string) => void;
   setDepositAdress: (address: string) => void;
   setIsDeposit: (isDeposit: boolean) => void;
   checkPoolExists: (token0: string, token1: string, fee: number) => Promise<boolean>;
@@ -82,6 +89,8 @@ const SelectTokenModal: React.FC<SelectTokenModalProps> = ({
   setDepositAdress,
   setIsDeposit,
   checkPoolExists,
+  poolAddress,
+  setAddress,
 }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [tokens, setTokens] = useState<TokenInfo[]>([]);
@@ -92,13 +101,14 @@ const SelectTokenModal: React.FC<SelectTokenModalProps> = ({
     "pool"
   );
   const [isConfirmModal, setConfirmModal] = useState<boolean>(false);
-  const [poolAddress, setAddress] = useState<string>("");
+  // const [poolAddress, setAddress] = useState<string>("");
   // Popular tokens based on the current chain
 //@ts-ignore
   const handleVault = (address: string) => {
     setAddress(address);
     setConfirmModal(true);
   };
+
   const popularTokens = useMemo(() => {
     if (chain === undefined || !BasicTokens[chain]) return [];
     return BasicTokens[chain]
@@ -196,8 +206,9 @@ const SelectTokenModal: React.FC<SelectTokenModalProps> = ({
           if (isPool !== false && isPool !== true) {
             toast.success("Pool Already Exists! Create a Vault!");
             setAddress(isPool);
-            return; // Exit the loop if the pool exists
+            // return; // Exit the loop if the pool exists
           }
+          else setAddress("");
         }
       } else {
         // Search by name/symbol
@@ -249,7 +260,7 @@ const SelectTokenModal: React.FC<SelectTokenModalProps> = ({
       toast.error("Please select chain!");
       return;
     }
-    if(poolAddress) return;
+    // if(poolAddress) return;
 
 
     // Update token with enhanced logo handling
@@ -272,7 +283,7 @@ const SelectTokenModal: React.FC<SelectTokenModalProps> = ({
       console.error("Failed to copy: ", err);
     }
   };
-//@ts-ignore   
+//@ts-ignore
   const handleDeposit = async (address: string, oncClose: () => void) => {
     console.log("Deposit address:", address);
     setDepositAdress(address);
@@ -568,14 +579,16 @@ const SelectTokenModal: React.FC<SelectTokenModalProps> = ({
                             </button>
                           ))}
                     </div>
-                    {poolAddress && tokens.length > 0 && (
+                    {/* {poolAddress && tokens.length > 0 && (
                       <div 
                         className="flex mx-4 cursor-pointer justify-center py-0.5 border-[1px] rounded-lg text-white font-semibold"
-                        onClick={() => setConfirmModal(true)}
+                        // onClick={() => isAgent?setConfirmModal(true): createAgent()}
+
                       >
-                        <p>Create Vault</p>
+                        {isAgent?<p>Create Vault</p>:
+                        <p>Create Agent</p>}
                       </div>
-                    )}
+                    )} */}
                   </div>
                 )}
               </div>

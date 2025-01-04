@@ -1,7 +1,11 @@
-import React from "react";
-import { X, ExternalLink } from "lucide-react";
+import React, { useState } from "react";
+import { X, ExternalLink, Check } from "lucide-react";
 import Loader from "./Loader";
 import FALLBACK_TOKEN from "/token-placeholder.svg";
+import axios from "axios";
+import { URL } from "../../utils/setting";
+
+
 
 interface PreviewModalProps {
   open: boolean;
@@ -11,13 +15,28 @@ interface PreviewModalProps {
     name: string;
     symbol: string;
     logoURI: string;
+    address: string;
   };
   tokenAmount: string;
   isLoading: boolean;
+  setIsLoading: (loading: boolean) => void;
   isSuccess?: boolean;
   chainId?: number;
   positionId?: string;
   isDeposit: boolean;
+  isApprove: boolean;
+  poolAddress: string;
+  agentAddress: string;
+  setAgentAddress: (address: string) => void;
+  setAddress: (address: string) => void;
+  handleApprove: () => void;
+  handleAddLiquidity: () => void;
+  isAgent: boolean;
+  setAgent: (isAgent: boolean) => void;
+  CreateVault: (address: string) => void;
+  progressState: any;
+  setProgressState: (state: any) => void;
+  handleNextStep: (step: string) => void;
 }
 
 const handleImageError = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
@@ -27,7 +46,6 @@ const handleImageError = (event: React.SyntheticEvent<HTMLImageElement, Event>) 
 const PreviewModal = ({
   open,
   onClose,
-  onApprove,
   selectToken,
   tokenAmount,
   isLoading,
@@ -35,6 +53,15 @@ const PreviewModal = ({
   chainId,
   positionId,
   isDeposit,
+  isApprove,
+  handleApprove,
+  poolAddress,
+  handleAddLiquidity,
+  setAgentAddress,
+  setIsLoading,
+  progressState,
+  setProgressState,
+  handleNextStep,
 }: PreviewModalProps) => {
   if (!open) return null;
 
@@ -42,14 +69,50 @@ const PreviewModal = ({
     const network = chainId === 8453 ? 'base' : 'arbitrum';
     return `https://app.uniswap.org/pools/${positionId}?chain=${network}`;
   };
+  const [isCreate, setIsCreate] = useState<boolean>(false);
+  const NextStep = [
+    "agent",
+    "vault",
+    "approve",
+    "maxDeposit",
+    "rebalance",
+    "deposit",
+  ];
 
+  const handleAgent = async () => {
+    setIsLoading(true)
+    await 
+    axios.post(`${URL}/agent/creatagent`, {chain: chainId, tokenAddress: selectToken.address})
+    .then((res) => {
+      console.log("agent Address", res.data);
+      if(res.data.state === "success") 
+      {
+        setProgressState({...progressState, ["agent"]: true});
+        setAgentAddress(res.data.agentAddress);
+      }
+    })
+    .catch((err) => {
+      console.log(err);
+    })
+    setIsLoading(false)
+  }
+
+  const hanldeCreate = async () => {
+    setIsCreate(true);
+    if(poolAddress) {
+      handleAgent();
+    }
+    else {
+      handleApprove();
+    }
+  };
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
       <div className="relative w-full max-w-md bg-[#1B1B1B] rounded-2xl shadow-xl">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-800">
           <h2 className="text-lg font-semibold text-white">
-            {isSuccess ? "Position Created!" : !isDeposit?  "Add liquidity" : "Deposit"}
+            {!isApprove? "Approve":isSuccess ? "Position Created!" : !isDeposit?  "Add liquidity" : "Deposit"}
           </h2>
           <button
             onClick={onClose}
@@ -96,7 +159,7 @@ const PreviewModal = ({
         </div>
 
         {/* Footer */}
-        <div className="p-4 border-t border-gray-800">
+        {!isCreate?<div className="p-4 border-t border-gray-800">
           {isSuccess ? (
             <div className="space-y-3">
               <a
@@ -116,14 +179,96 @@ const PreviewModal = ({
             </div>
           ) : (
             <button
-              onClick={onApprove}
+              onClick={hanldeCreate}
               disabled={isLoading}
               className="w-full py-3 bg-[#FFE804] text-black font-medium rounded-xl hover:bg-[#FFE804]/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isLoading ? <Loader /> : "Add"}
+              {isLoading ? <Loader /> : "Create"}
             </button>
           )}
+        </div>:
+        !poolAddress?
+        <div className="p-10 border-t flex flex-col gap-4 border-gray-800">
+          <div className="flex justify-between items-center">
+            <div className={`${isApprove?"text-blue-500":""} cursor-pointer`}>1. Approve</div> 
+            <div className="w-10"> {!isApprove && isLoading ? <Loader /> : isApprove && <Check />} </div>
+          </div>
+          {isApprove && <div className="flex justify-between items-center">
+            <div 
+              className={`${isSuccess?"text-blue-500":""} cursor-pointer`}
+              onClick={handleAddLiquidity}
+            >
+              2. Add Liquidity
+            </div> 
+            <div className="w-10"> {!isSuccess && isLoading ? <Loader /> : isSuccess && <Check />} </div>
+          </div>}
         </div>
+        :
+        <div className="p-10 border-t flex flex-col gap-4 border-gray-800">
+          {NextStep?.map((step, index) => {
+            return (
+              (index===0 || progressState[NextStep[index-1]]) &&
+              <div className="flex justify-between items-center cursor-pointer" key={index}
+                onClick={() => handleNextStep(step)}
+              >
+                <div className={`${progressState[step]?"text-blue-500":""}`}>{index + 1}. {step}</div>
+                <div className="w-10"> {!progressState[step] && (index>0?progressState[NextStep[index-1]]:true) && isLoading ? <Loader /> : progressState[step] && <Check />} </div>
+              </div>
+            )
+          })}
+        </div>
+        // <div className="p-10 border-t flex flex-col gap-4 border-gray-800">
+        //   <div className="flex justify-between items-center">
+        //     <div className={`${isAgent?"text-blue-500":""}`}>1. Create Agent</div> 
+        //     <div className="w-10"> {!isAgent && isLoading ? <Loader /> : isAgent && <Check />} </div>
+        //   </div>
+        //   {isAgent && <div className="flex justify-between items-center">
+        //     <div 
+        //       className={`${isVault?"text-blue-500":""} cursor-pointer`}
+        //       onClick={() => CreateVault(poolAddress)}
+        //     >
+        //       2. Create Vaulte
+        //     </div> 
+        //     <div className="w-10"> {!isVault && isLoading ? <Loader /> : isVault && <Check />} </div>
+        //   </div>}
+        //   {isVault && <div className="flex justify-between items-center">
+        //     <div 
+        //       className={`${isApprove?"text-blue-500":""} cursor-pointer`}
+        //       onClick={onApprove}
+        //     >
+        //       3. Approve
+        //     </div> 
+        //     <div className="w-10"> {!isApprove && isLoading ? <Loader /> : isApprove && <Check />} </div>
+        //   </div>}
+        //   {isApprove && <div className="flex justify-between items-center">
+        //     <div 
+        //       className={`${isSuccess?"text-blue-500":""} cursor-pointer`}
+        //       onClick={onApprove}
+        //     >
+        //       4. Initial Deposit
+        //     </div> 
+        //     <div className="w-10"> {!isSuccess && isLoading ? <Loader /> : isSuccess && <Check />} </div>
+        //   </div>}
+        //   {isApprove && <div className="flex justify-between items-center">
+        //     <div 
+        //       className={`${isSuccess?"text-blue-500":""} cursor-pointer`}
+        //       onClick={onApprove}
+        //     >
+        //       5. Rebalance
+        //     </div> 
+        //     <div className="w-10"> {!isSuccess && isLoading ? <Loader /> : isSuccess && <Check />} </div>
+        //   </div>}
+        //   {isApprove && <div className="flex justify-between items-center">
+        //     <div 
+        //       className={`${isSuccess?"text-blue-500":""} cursor-pointer`}
+        //       onClick={onApprove}
+        //     >
+        //       6. Deposit
+        //     </div> 
+        //     <div className="w-10"> {!isSuccess && isLoading ? <Loader /> : isSuccess && <Check />} </div>
+        //   </div>}
+        // </div>
+        }
       </div>
     </div>
   );
