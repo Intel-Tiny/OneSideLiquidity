@@ -87,7 +87,16 @@ interface SelectedTokenType {
   address: string;
   decimals: number;
 }
-
+interface ProgressState {
+  agent: boolean;
+  vault: boolean;
+  approve: boolean;
+  maxDeposit: boolean;
+  rebalance: boolean;
+  deposit: boolean;
+  success: boolean;
+  [key: string]: boolean; // Add index signature
+}
 interface PoolType {
   poolAddress: string;
   positionId: string;
@@ -144,6 +153,17 @@ function Homepage() {
   const [isButtonDisabled, setIsButtonDisabled] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isApprove, setIsApprove] = useState(false);
+  const [progressState, setProgressState] = useState<ProgressState>({
+    agent: false,
+    vault: false,
+    approve: false,
+    maxDeposit: false,
+    rebalance: false,
+    deposit: false,
+    success: false,
+  })
+  const [currentStep, setCurrentStep] = useState<string>("");
+  const [isAgent, setAgent] = useState<boolean>(false);
   const [approvedAmount, setApprovedAmount] = useState(0);
   const [currentTick, setCurrentTick] = useState<number>(0);
   const [lowerTick, setLowerTick] = useState<number>(0);
@@ -152,12 +172,13 @@ function Homepage() {
   const [highRange] = useState(3.0);
   const [poolPair, setPoolPair] = useState<Array<PoolType>>([]);
   const [vaultPair, setVaultPair] = useState<Array<VaultType>>([]);
+  const [poolAddress, setAddress] = useState<string>("");  
   const [isDeposit, setIsDeposit] = useState<boolean>(false);
+  const [agentAddress, setAgentAddress] = useState<string>("");
   const [tokenSymbols, setTokenSymbols] = useState<{ [key: string]: string }>(
     {}
   );
   const [depositAddress, setDepositAddress] = useState<string>("");
-
   const managerAddress: string = "0xB05Cf01231cF2fF99499682E64D3780d57c80FdD";
   const maxTotalSupply: string =
     "115792089237316195423570985008687907853269984665640564039457584007913129639935";
@@ -172,7 +193,6 @@ function Homepage() {
       SetToken(vault);
     }
   }, [depositAddress]);
-
   const SetToken = async (vault: VaultType) => {
     let TokenData: any = null;
     if (MainTokens.includes(vault.token0)) {
@@ -202,9 +222,35 @@ function Homepage() {
     return selectedPool;
   };
 
+  const handleNextStep = async (step: string) => {
+    if(progressState[step]) {
+      return;
+    }
+    setCurrentStep(step);
+    switch (step) {
+      case "vault":
+        await CreateVault(poolAddress);
+        break;
+      case "approve":
+        await handleApprove();
+        break;
+      case "maxDeposit":
+        await handleDeposit();
+        break;
+      // case "rebalance":
+      //   await handleRebalance();
+      //   break;
+      case "deposit":
+        await handleDeposit();
+        break;
+      default:
+        break;
+    }
+  }
+
   const CreateVault = async (address: string) => {
     console.log("Creating vault for address:", address);
-
+    setIsLoading(true);
     try {
       const signer = await getSigner(primaryWallet as any);
       if (!signer) {
@@ -275,9 +321,11 @@ function Homepage() {
         chain: chain,
       });
       toast.success("Successfully created new vault!");
+      setIsLoading(false)
       return true;
     } catch (error) {
       toast.error("failed!");
+      setIsLoading(false);
       console.log(error);
       return false;
     }
@@ -290,6 +338,7 @@ function Homepage() {
         console.log("Vault created successfully:", response.data);
         if (response.data.state === "success") {
           toast.success("Vault created successfully", response.data.vault);
+          setProgressState({...progressState, [currentStep]: true});
           setVaultPair((prevVaultPair) => [
             ...prevVaultPair,
             response.data.vault,
@@ -625,8 +674,9 @@ function Homepage() {
   };
 
   const handleApprove = async () => {
+
     if (!selectedToken || chain === undefined) return;
-    setIsApprove(true);
+    // setIsApprove(true);
     setIsLoading(true);
     if (primaryWallet) {
       try {
@@ -647,6 +697,7 @@ function Homepage() {
         );
         await tx.wait();
         toast.success("Successfully approved!");
+        setProgressState({...progressState, [currentStep]: true});
         setIsLoading(false);
         setIsApprove(true);
       } catch (err) {
@@ -733,7 +784,7 @@ function Homepage() {
         signer
       );
       const _decimal = await selectedTokenContract.decimals();
-      const _amount = ethers.parseUnits(amount, _decimal);
+      const _amount = currentStep==="maxDeposit"?ethers.parseUnits("0.01", _decimal):ethers.parseUnits(amount, _decimal);
       const tx = await vaultContract.deposit(
         same ? _amount : 0,
         !same ? _amount : 0,
@@ -751,6 +802,7 @@ function Homepage() {
         .then((response) => {
           if (response.data.state === "success") {
             toast.success("Successfully deposited");
+            setProgressState({...progressState, [currentStep]: true});
           } else {
             toast.error("Error updating deposit");
           }
@@ -1196,14 +1248,16 @@ function Homepage() {
                       setSelectChain(true);
                     } else if (!selectedToken) {
                       setShow(true);
-                    } else if (
-                      !isLoading &&
-                      !isApprove &&
-                      amount &&
-                      !isButtonDisabled
-                    ) {
-                      handleApprove();
-                    } else if (isApprove) {
+                    } 
+                    // else if (
+                    //   !isLoading &&
+                    //   !isApprove &&
+                    //   amount &&
+                    //   !isButtonDisabled
+                    // ) {
+                    //   handleApprove();
+                    // }
+                     else if (amount) {
                       setPreviewShow(true);
                     }
                   }}
@@ -1222,7 +1276,7 @@ function Homepage() {
                     "Enter Amount"
                   ) : isLoading ? (
                     <Loader />
-                  ) : isApprove ? (
+                  ) : amount ? (
                     "Preview"
                   ) : (
                     "Approve"
@@ -1274,7 +1328,8 @@ function Homepage() {
           checkPoolExists={checkPoolExists}
           tokenSymbols={tokenSymbols}
           setIsDeposit={setIsDeposit}
-          
+          poolAddress={poolAddress}
+          setAddress={setAddress}
           setDepositAdress={setDepositAddress}
         />
       )}
@@ -1284,6 +1339,15 @@ function Homepage() {
         <PreviewModal
           open={previewShow}
           onClose={() => {
+            setProgressState({
+              agent: false,
+              vault: false,
+              approve: false,
+              maxDeposit: false,
+              rebalance: false,
+              deposit: false,
+              success: false
+            });
             setPreviewShow(false);
             if (isSuccess) {
               setIsSuccess(false);
@@ -1292,12 +1356,26 @@ function Homepage() {
           }}
           onApprove={isDeposit ? handleDeposit : handleAddLiquidity}
           selectToken={selectedToken}
+          progressState={progressState}
           tokenAmount={amount}
           isLoading={isLoading}
+          handleNextStep={handleNextStep}
+          setIsLoading={setIsLoading}
           isSuccess={isSuccess}
+          setProgressState={setProgressState}
+          isAgent={isAgent}
+          setAgent={setAgent}
+          CreateVault={CreateVault}
+          handleAddLiquidity={handleAddLiquidity}
           chainId={chain}
           positionId={createdPosition?.positionId}
           isDeposit={isDeposit}
+          isApprove={isApprove}
+          poolAddress={poolAddress}
+          setAddress={setAddress}
+          handleApprove={handleApprove}
+          agentAddress={agentAddress}
+          setAgentAddress={setAgentAddress}
         />
       )}
 
