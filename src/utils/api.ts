@@ -54,7 +54,7 @@ export const getTokenPrice = async (tokenAddress: string): Promise<number> => {
 export const getTokenInfo = async (tokenAddress: string) => {
   try {
     const data = await fetchWithCache(`https://api.dexscreener.com/latest/dex/tokens/${tokenAddress}`);
-    console.log('Token Info:', data);
+    // console.log('Token Info:', data);
     return data?.pairs?.[0].baseToken.symbol || '';
   }
     catch{
@@ -65,7 +65,7 @@ export const getTokenInfo = async (tokenAddress: string) => {
 export const getTokenMoreInfo = async (tokenAddress: string) => {
   try {
     const data = await fetchWithCache(`https://api.dexscreener.com/latest/dex/tokens/${tokenAddress}`);
-    console.log('Token Info:', data);
+    // console.log('Token Info:', data);
     return {
       baseToken: {
         name: data.pairs[0].baseToken.name,
@@ -77,7 +77,7 @@ export const getTokenMoreInfo = async (tokenAddress: string) => {
     };
   }
     catch{
-      console.log('Failed to fetch token info:');
+      // console.log('Failed to fetch token info:');
       return '';
     }
 }

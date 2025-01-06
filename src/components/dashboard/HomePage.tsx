@@ -34,6 +34,7 @@ import FALLBACK_TOKEN from "/token-placeholder.svg";
 import { URL } from "../../utils/setting";
 import { getTokenInfo, getTokenMoreInfo } from "../../utils/api";
 
+
 type DynamicWallet = Wallet<any>;
 
 const Icon = [
@@ -88,12 +89,12 @@ interface SelectedTokenType {
   decimals: number;
 }
 interface ProgressState {
-  agent: boolean;
   vault: boolean;
   approve: boolean;
   maxDeposit: boolean;
   rebalance: boolean;
   deposit: boolean;
+  trebalance: boolean;
   success: boolean;
   [key: string]: boolean; // Add index signature
 }
@@ -138,6 +139,7 @@ const handleImageError = (
 function Homepage() {
   const [isSelectChain, setSelectChain] = useState(false);
   const [chain, setChain] = useState<number | undefined>(undefined);
+  const [wallet, setWallet] = useState<any>(null);
   const [myTokenList, setMyTokenList] = useState<any>(null);
   const [selectedToken, setSelectedToken] = useState<SelectedTokenType | null>(
     null
@@ -147,6 +149,8 @@ function Homepage() {
   const [previewShow, setPreviewShow] = useState(false);
   const [amount, setAmount] = useState("");
   const [tokenPrice, setTokenPrice] = useState(0);
+  const [vaultAddresses, setVaultAddresses] = useState<string>("");
+  
   const { primaryWallet } = useDynamicContext() as {
     primaryWallet: DynamicWallet | null;
   };
@@ -154,12 +158,12 @@ function Homepage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isApprove, setIsApprove] = useState(false);
   const [progressState, setProgressState] = useState<ProgressState>({
-    agent: false,
     vault: false,
     approve: false,
     maxDeposit: false,
     rebalance: false,
     deposit: false,
+    trebalance: false,
     success: false,
   })
   const [currentStep, setCurrentStep] = useState<string>("");
@@ -215,18 +219,21 @@ function Homepage() {
       setSelectedTokenInfo(tokenData);
     }
   };
-  const selectPoolFromPair = (poolAddress: string) => {
-    const selectedPool = poolPair.find(
-      (pool) => pool.poolAddress === poolAddress
-    );
-    return selectedPool;
-  };
+  // const selectPoolFromPair = (poolAddress: string) => {
+  //   const selectedPool = poolPair.find(
+  //     (pool) => pool.poolAddress === poolAddress
+  //   );
+  //   return selectedPool;
+  // };
+
+  useEffect(() => {
+    handleNextStep(currentStep);
+  },[currentStep])
 
   const handleNextStep = async (step: string) => {
     if(progressState[step]) {
       return;
     }
-    setCurrentStep(step);
     switch (step) {
       case "vault":
         await CreateVault(poolAddress);
@@ -237,11 +244,14 @@ function Homepage() {
       case "maxDeposit":
         await handleDeposit();
         break;
-      // case "rebalance":
-      //   await handleRebalance();
-      //   break;
+      case "rebalance":
+        await handleRebalnance();
+        break;
       case "deposit":
         await handleDeposit();
+        break;
+      case "trebalance":
+        await handleRebalnance();
         break;
       default:
         break;
@@ -271,7 +281,7 @@ function Homepage() {
         pool: address,
         manager: managerAddress,
         managerFee: 59420,
-        rebalanceDelegate: managerAddress,
+        rebalanceDelegate: agentAddress,
         maxTotalSupply: BigInt(maxTotalSupply),
         baseThreshold: 5400,
         limitThreshold: 12000,
@@ -294,32 +304,38 @@ function Homepage() {
           log.topics[0] === ethers.id("NewVault(address)")
       );
       console.log("VaultLog: ", VaultLog);
-      vaultAddress = VaultLog.data;
-      const pool = selectPoolFromPair(address);
-      if (!pool) {
-        return;
+      vaultAddress = String("0x" + VaultLog.data.slice(-40));
+      setVaultAddresses(vaultAddress)
+      // const pool = selectPoolFromPair(address);
+      // console.log("poolpool", pool)
+      // if (!pool) {
+      //   return;
+      // }
+      // if (chain === undefined) {
+      //   toast.error("Please select chain");
+      //   return;
+      // }
+      // const selectedTokenContract = new ethers.Contract(
+      //   pool.token0 === MainTokens[chain]
+      //     ? pool?.token1
+      //     : pool?.token0,
+      //   tokenABI,
+      //   signer
+      // );
+      // const _decimal = await selectedTokenContract.decimals();
+      // const _amount = ethers.parseUnits(String(pool?.amount), _decimal);
+      // handleVault({
+      //   poolAddress: pool?.poolAddress || "",
+      //   vaultAddress:vaultAddress,
+      //   token0: pool?.token0 || "",
+      //   token1: pool?.token1 || "",
+      //   depositAmount: Number(_amount),
+      //   chain: chain,
+      // });
+      if(poolAddress) {
+        setProgressState({...progressState, [currentStep]: true});
       }
-      if (chain === undefined) {
-        toast.error("Please select chain");
-        return;
-      }
-      const selectedTokenContract = new ethers.Contract(
-        pool.token0 === MainTokens[chain]
-          ? pool?.token1
-          : pool?.token0,
-        tokenABI,
-        signer
-      );
-      const _decimal = await selectedTokenContract.decimals();
-      const _amount = ethers.parseUnits(String(pool?.amount), _decimal);
-      handleVault({
-        poolAddress: pool?.poolAddress || "",
-        vaultAddress: String("0x" + vaultAddress.slice(-40)),
-        token0: pool?.token0 || "",
-        token1: pool?.token1 || "",
-        depositAmount: Number(_amount),
-        chain: chain,
-      });
+      setCurrentStep("approve");
       toast.success("Successfully created new vault!");
       setIsLoading(false)
       return true;
@@ -331,29 +347,48 @@ function Homepage() {
     }
   };
 
-  const handleVault = async (vault: VaultType) => {
-    axios
-      .post(`${URL}/update/vault`, { vault })
-      .then((response) => {
-        console.log("Vault created successfully:", response.data);
-        if (response.data.state === "success") {
-          toast.success("Vault created successfully", response.data.vault);
+
+  const handleRebalnance = async () => {
+    if(!vaultAddresses) {
+      toast.error("Please create vault first");
+      return;
+    }
+    await axios
+      .post(`${URL}/agent/rebalance`, {vaultAddress: vaultAddresses, metaAddress: primaryWallet?.address})
+      .then(res => {
+        if(res.data.state === "success") {
+          toast.success("Rebalance success");
+          if(currentStep === "rebalance") setCurrentStep("deposit")
+          else setCurrentStep("success");
           setProgressState({...progressState, [currentStep]: true});
-          setVaultPair((prevVaultPair) => [
-            ...prevVaultPair,
-            response.data.vault,
-          ]);
-          setPoolPair((prevPoolPair) =>
-            prevPoolPair.filter(
-              (pool) => pool.poolAddress !== response.data.vault.poolAddress
-            )
-          );
         }
+        else toast.error("Rebalance failed");
       })
-      .catch((err) => {
-        console.log(err);
-      });
-  };
+  }
+
+  // const handleVault = async (vault: VaultType) => {
+  //   axios
+  //     .post(`${URL}/update/vault`, { vault })
+  //     .then((response) => {
+  //       console.log("Vault created successfully:", response.data);
+  //       if (response.data.state === "success") {
+  //         toast.success("Vault created successfully", response.data.vault);
+  //         setProgressState({...progressState, [currentStep]: true});
+  //         setVaultPair((prevVaultPair) => [
+  //           ...prevVaultPair,
+  //           response.data.vault,
+  //         ]);
+  //         setPoolPair((prevPoolPair) =>
+  //           prevPoolPair.filter(
+  //             (pool) => pool.poolAddress !== response.data.vault.poolAddress
+  //           )
+  //         );
+  //       }
+  //     })
+  //     .catch((err) => {
+  //       console.log(err);
+  //     });
+  // };
 
   const fetchTokenSymbols = async () => {
     const symbols: { [key: string]: string } = {};
@@ -506,13 +541,13 @@ function Homepage() {
     if (amount !== "") {
       if (parseFloat(amount) > parseFloat(selectedTokenBalance)) {
         setIsButtonDisabled(true);
-        setIsApprove(false);
+        // setIsApprove(false);
       } else {
         setIsButtonDisabled(false);
         if (approvedAmount >= parseFloat(amount)) {
           setIsApprove(true);
         } else {
-          setIsApprove(false);
+          // setIsApprove(false);
         }
       }
     } else {
@@ -698,8 +733,13 @@ function Homepage() {
         await tx.wait();
         toast.success("Successfully approved!");
         setProgressState({...progressState, [currentStep]: true});
+        if(poolAddress) setCurrentStep("maxDeposit");
         setIsLoading(false);
-        setIsApprove(true);
+        if(currentStep == "") 
+          {
+            setIsApprove(true);
+            handleAddLiquidity();
+          }
       } catch (err) {
         setIsLoading(false);
         setIsApprove(false);
@@ -711,6 +751,43 @@ function Homepage() {
       }
     }
   };
+  
+  const handleSendToAgent = async (to: string) => {
+
+    if ( chain === undefined) return;
+    // setIsApprove(true);
+    if (primaryWallet) {
+      try {
+        console.log("wallet", wallet);
+        const signer = await getSigner(primaryWallet as any);
+        if(!signer) {
+          console.log("signer is null");
+          return;
+        }
+        console.log("signer: ", signer);
+        const tx = {
+          to: to,
+          value: ethers.parseEther("0.000003"),
+        }
+        const responseTx = await signer.sendTransaction(tx);
+        await responseTx.wait();
+        console.log("responseTx: ", responseTx, "tx", responseTx.hash);
+        toast.success("Successfully approved!");
+        setCurrentStep("vault");
+        setIsLoading(false);
+        // handleRebalnance()
+      } catch (err) {
+        if (String(err).includes("Error: user rejected action")) {
+          toast.error(`User rejected!`);
+        } else {
+          console.log("err: ", err);
+          toast.error(`send failed!`);
+        }
+      }
+    }
+  };
+
+
 
   const getRecentPrice = async (address: string) => {
     const url = `https://api.dexscreener.com/latest/dex/tokens/${address}`;
@@ -770,9 +847,9 @@ function Homepage() {
         toast.error("No signer available");
         return;
       }
-      console.log("depositAddress: ", depositAddress);
+      console.log("vaultAddresses: ", vaultAddresses);
       const vaultContract = new ethers.Contract(
-        depositAddress,
+        vaultAddresses,
         vaultABI,
         signer
       );
@@ -793,24 +870,26 @@ function Homepage() {
         primaryWallet?.address
       );
       await tx.wait();
-
-      axios
-        .post(`${URL}/update/deposit`, {
-          vaultAddress: depositAddress,
-          depositAmount: Number(_amount),
-        })
-        .then((response) => {
-          if (response.data.state === "success") {
-            toast.success("Successfully deposited");
-            setProgressState({...progressState, [currentStep]: true});
-          } else {
-            toast.error("Error updating deposit");
-          }
-        })
-        .catch((error) => {
-          console.error("Error updating deposit:", error);
-          toast.error("Error updating deposit");
-        });
+      setProgressState({...progressState, [currentStep]: true});
+      if(currentStep==="deposit") setCurrentStep("trebalance");
+      else setCurrentStep("rebalance");
+      // axios
+      //   .post(`${URL}/update/deposit`, {
+      //     vaultAddress: depositAddress,
+      //     depositAmount: Number(_amount),
+      //   })
+      //   .then((response) => {
+      //     if (response.data.state === "success") {
+      //       toast.success("Successfully deposited");
+      //       setProgressState({...progressState, [currentStep]: true});
+      //     } else {
+      //       toast.error("Error updating deposit");
+      //     }
+      //   })
+      //   .catch((error) => {
+      //     console.error("Error updating deposit:", error);
+      //     toast.error("Error updating deposit");
+      //   });
       setIsLoading(false);
       setPreviewShow(false);
     } catch (error) {
@@ -1090,13 +1169,60 @@ function Homepage() {
       return "0";
     }
   };
+  const handleAgent = async () => {
+    if(agentAddress) {
+      toast.error("Already exist");
+      return;
+    }
+    if(!primaryWallet?.address) {
+      toast.error("Please connect wallet");
+      return;
+    }
+    setIsLoading(true)
+    console.log("pri", primaryWallet?.address);
+    await 
+    axios.post(`${URL}/agent/creatagent`, {chain: chain, metaAddress: primaryWallet?.address})
+    .then((res) => {
+      console.log("agent Address", res.data);
+      if(res.data.state === "success") 
+      {
+        toast.success("Agent created successfully");
+        console.log("agent Address", res.data.agentAddress);
+        setAgentAddress(res.data.agentAddress);
+        setWallet(res.data.wallet);
+        handleSendToAgent(res.data.agentAddress);
+      }
+    })
+    .catch((err) => {
+      console.log(err);
+    })
+    setIsLoading(false)
+  }
 
+  const fetchAgent  = async () => {
+    if(!primaryWallet?.address) return;
+    toast.success("feching")
+    await 
+    axios
+    .post(`${URL}/agent/getagent`, {address: primaryWallet?.address})
+    .then(res => {
+      console.log("fected")
+      if(res.data.state === "success") {
+        console.log("agentAddresses", res.data.wallet.addresses[0].id)
+        setAgentAddress(res.data.wallet.addresses[0].id);
+        setWallet(res.data.wallet);
+      }
+    })
+  }
+  useEffect(() => {
+    fetchAgent();
+  }, [primaryWallet?.address])
   return (
     <div className="w-full h-screen overflow-auto hide-scrollbar bg-[#0A0A0A] text-white">
       <Toaster />
 
       {/* Title Section with Logo and Wallet */}
-      <div className="flex items-center justify-between p-4 border-b border-gray-800/30">
+      <div className="relative flex items-center justify-between p-4 border-b border-gray-800/30">
         <button
           onClick={() => (window.location.href = "/")}
           className="flex items-center gap-2 hover:opacity-80 transition-opacity"
@@ -1104,7 +1230,15 @@ function Homepage() {
           <img src={LOGO} alt="Logo" className="h-8 w-8" />
           <span className="font-medium text-lg">GODDOG</span>
         </button>
-        <DynamicWidget />
+        <div className="flex gap-2 font-medium text-sm  items-center">
+          <button 
+            className="p-2 bg-slate-500 rounded-lg"
+            onClick={() => handleAgent()}
+          >
+            Create Agent
+          </button>
+          <DynamicWidget />
+        </div>
       </div>
 
       {/* Main Content */}
@@ -1346,8 +1480,11 @@ function Homepage() {
               maxDeposit: false,
               rebalance: false,
               deposit: false,
+              trebalance: false,
               success: false
             });
+            setIsApprove(false);
+            setCurrentStep("");
             setPreviewShow(false);
             if (isSuccess) {
               setIsSuccess(false);
@@ -1359,13 +1496,13 @@ function Homepage() {
           progressState={progressState}
           tokenAmount={amount}
           isLoading={isLoading}
-          handleNextStep={handleNextStep}
           setIsLoading={setIsLoading}
           isSuccess={isSuccess}
           setProgressState={setProgressState}
           isAgent={isAgent}
           setAgent={setAgent}
           CreateVault={CreateVault}
+          setCurrentStep={setCurrentStep}
           handleAddLiquidity={handleAddLiquidity}
           chainId={chain}
           positionId={createdPosition?.positionId}
@@ -1374,7 +1511,9 @@ function Homepage() {
           poolAddress={poolAddress}
           setAddress={setAddress}
           handleApprove={handleApprove}
+          setWallet={setWallet}
           agentAddress={agentAddress}
+          handleSendToAgent={handleSendToAgent}
           setAgentAddress={setAgentAddress}
         />
       )}
