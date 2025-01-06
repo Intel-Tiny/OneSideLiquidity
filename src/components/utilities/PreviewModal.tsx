@@ -2,8 +2,6 @@ import React, { useState } from "react";
 import { X, ExternalLink, Check } from "lucide-react";
 import Loader from "./Loader";
 import FALLBACK_TOKEN from "/token-placeholder.svg";
-import axios from "axios";
-import { URL } from "../../utils/setting";
 
 
 
@@ -58,13 +56,7 @@ const PreviewModal = ({
   isApprove,
   handleApprove,
   poolAddress,
-  handleAddLiquidity,
-  setAgentAddress,
-  setIsLoading,
   progressState,
-  setProgressState,
-  setWallet,
-  handleSendToAgent,
   setCurrentStep,
 }: PreviewModalProps) => {
   if (!open) return null;
@@ -82,25 +74,25 @@ const PreviewModal = ({
     "deposit",
   ];
 
-  const handleAgent = async () => {
-    setIsLoading(true)
-    await 
-    axios.post(`${URL}/agent/creatagent`, {chain: chainId, tokenAddress: selectToken.address})
-    .then((res) => {
-      console.log("agent Address", res.data);
-      if(res.data.state === "success") 
-      {
-        setProgressState({...progressState, ["agent"]: true});
-        setAgentAddress(res.data.agentAddress);
-        setWallet(res.data.wallet);
-        handleSendToAgent(res.data.agentAddress);
-      }
-    })
-    .catch((err) => {
-      console.log(err);
-    })
-    setIsLoading(false)
-  }
+  // const handleAgent = async () => {
+  //   setIsLoading(true)
+  //   await 
+  //   axios.post(`${URL}/agent/creatagent`, {chain: chainId, tokenAddress: selectToken.address})
+  //   .then((res) => {
+  //     console.log("agent Address", res.data);
+  //     if(res.data.state === "success") 
+  //     {
+  //       setProgressState({...progressState, ["agent"]: true});
+  //       setAgentAddress(res.data.agentAddress);
+  //       setWallet(res.data.wallet);
+  //       handleSendToAgent(res.data.agentAddress);
+  //     }
+  //   })
+  //   .catch((err) => {
+  //     console.log(err);
+  //   })
+  //   setIsLoading(false)
+  // }
 
   const hanldeCreate = async () => {
     setIsCreate(true);
