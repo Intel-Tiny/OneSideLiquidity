@@ -861,7 +861,7 @@ function Homepage() {
         signer
       );
       const _decimal = await selectedTokenContract.decimals();
-      const _amount = currentStep==="maxDeposit"?ethers.parseUnits("0.01", _decimal):ethers.parseUnits(amount, _decimal);
+      const _amount = currentStep==="maxDeposit"?ethers.parseUnits((Number(amount)/100).toString(), _decimal):ethers.parseUnits(amount, _decimal);
       const tx = await vaultContract.deposit(
         same ? _amount : 0,
         !same ? _amount : 0,
