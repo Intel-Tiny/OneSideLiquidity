@@ -286,7 +286,7 @@ function Homepage() {
         baseThreshold: 5400,
         limitThreshold: 12000,
         fullRangeWeight: 200000,
-        period: 518400,
+        period: 3,
         minTickMove: 0,
         maxTwapDeviation: 100,
         twapDuration: 60,
@@ -305,6 +305,7 @@ function Homepage() {
       );
       console.log("VaultLog: ", VaultLog);
       vaultAddress = String("0x" + VaultLog.data.slice(-40));
+      console.log("Idu", vaultAddress)
       setVaultAddresses(vaultAddress)
       // const pool = selectPoolFromPair(address);
       // console.log("poolpool", pool)
@@ -358,8 +359,8 @@ function Homepage() {
       .then(res => {
         if(res.data.state === "success") {
           toast.success("Rebalance success");
-          if(currentStep === "rebalance") setCurrentStep("deposit")
-          else setCurrentStep("success");
+          if(currentStep == "trebalance") setCurrentStep("success")
+          else setCurrentStep("deposit");
           setProgressState({...progressState, [currentStep]: true});
         }
         else toast.error("Rebalance failed");
@@ -724,7 +725,7 @@ function Homepage() {
         const _decimal = await selectedTokenContract.decimals();
         let targetAddress = Icon[chain].routerAddress;
         console.log("targetAddress: ", targetAddress);
-        if (isDeposit) targetAddress = depositAddress;
+        if (poolAddress) targetAddress = vaultAddresses;
         console.log("targetAddress: ", targetAddress);
         const tx = await selectedTokenContract.approve(
           targetAddress,
@@ -767,7 +768,7 @@ function Homepage() {
         console.log("signer: ", signer);
         const tx = {
           to: to,
-          value: ethers.parseEther("0.000003"),
+          value: ethers.parseEther("0.0003"),
         }
         const responseTx = await signer.sendTransaction(tx);
         await responseTx.wait();
@@ -861,7 +862,10 @@ function Homepage() {
         signer
       );
       const _decimal = await selectedTokenContract.decimals();
-      const _amount = currentStep==="maxDeposit"?ethers.parseUnits((Number(amount)/100).toString(), _decimal):ethers.parseUnits(amount, _decimal);
+      console.log("HandleMAXDEPOSIT", (Number(amount)/100).toString())
+      const _amount = currentStep==="maxDeposit"?ethers.parseUnits(amount, _decimal)/BigInt(10):ethers.parseUnits(amount, _decimal)* BigInt(9) /BigInt(10);
+      console.log("amount", _amount)
+      console.log("valtcontrat", await vaultContract.name())
       const tx = await vaultContract.deposit(
         same ? _amount : 0,
         !same ? _amount : 0,
@@ -869,7 +873,9 @@ function Homepage() {
         0,
         primaryWallet?.address
       );
+      console.log("suec!")
       await tx.wait();
+      console.log("ok", currentStep)
       setProgressState({...progressState, [currentStep]: true});
       if(currentStep==="deposit") setCurrentStep("trebalance");
       else setCurrentStep("rebalance");
@@ -891,7 +897,6 @@ function Homepage() {
       //     toast.error("Error updating deposit");
       //   });
       setIsLoading(false);
-      setPreviewShow(false);
     } catch (error) {
       console.log(error);
       setIsLoading(false);

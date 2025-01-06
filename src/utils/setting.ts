@@ -1,4 +1,4 @@
-export const URL = " https://informed-bullfrog-guided.ngrok-free.app/api"
+export const URL = "https://informed-bullfrog-guided.ngrok-free.app/api"
 
 export const MainTokens = [
   "0x45940000009600102a1c002f0097c4a500fa00ab",

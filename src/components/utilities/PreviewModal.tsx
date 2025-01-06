@@ -72,7 +72,17 @@ const PreviewModal = ({
     "maxDeposit",
     "rebalance",
     "deposit",
+    "trebalance"
   ];
+
+  const StepNames = [
+    "Create Vault",
+    "Approve Vault",
+    "Test Deposit",
+    "Test Rebalance",
+    "Deposit",
+    "Rebalance",
+  ]
 
   // const handleAgent = async () => {
   //   setIsLoading(true)
@@ -198,7 +208,7 @@ const PreviewModal = ({
             >
               2. Add Liquidity
             </div> 
-            <div className="w-10"> {!isSuccess && isLoading && isApprove ? <Loader /> : isSuccess && <Check />} </div>
+            <div className="w-10"> {!isSuccess && isLoading && isApprove ? <Loader /> : isSuccess && <Check className="ml-2" />} </div>
           </div>
         </div>
         :
@@ -209,8 +219,8 @@ const PreviewModal = ({
               <div className="flex justify-between items-center cursor-pointer" key={index}
                 // onClick={() => setCurrentStep(step)}
               >
-                <div className={`${progressState[step]?"text-blue-500":""}`}>{index + 1}. {step}</div>
-                <div className="w-10"> {!progressState[step] && (index>0?progressState[NextStep[index-1]]:true) && isLoading ? <Loader /> : progressState[step] && <Check />} </div>
+                <div className={`${progressState[step]?"text-blue-500":""}`}>{index + 1}. {StepNames[index]}</div>
+                <div className="w-10"> {!progressState[step] && (index>0?progressState[NextStep[index-1]]:true) && isLoading ? <Loader /> : progressState[step] && <Check className="ml-2" />} </div>
               </div>
             )
           })}
