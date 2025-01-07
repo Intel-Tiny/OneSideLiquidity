@@ -360,17 +360,16 @@ function Homepage() {
       .then(res => {
         if(res.data.state === "success") {
           toast.success("Rebalance success");
-          setIsLoading(true);
           if(currentStep == "trebalance") setCurrentStep("success")
           else setCurrentStep("deposit");
           setProgressState({...progressState, [currentStep]: true});
         }
         else {
-          setIsLoading(true);
           toast.error("Rebalance failed");
         }
       })
       .catch(()=>setIsLoading(false))
+      setIsLoading(false);
   }
 
   // const handleVault = async (vault: VaultType) => {
@@ -782,6 +781,7 @@ function Homepage() {
         toast.success("Successfully approved!");
         setCurrentStep("vault");
         setIsLoading(false);
+        fetchAgent();
         // handleRebalnance()
       } catch (err) {
         if (String(err).includes("Error: user rejected action")) {
@@ -1199,7 +1199,7 @@ function Homepage() {
       {
         toast.success("Agent created successfully");
         console.log("agent Address", res.data.agentAddress);
-        setBalance(res.data.balance);
+        setBalance(0);
         setAgentAddress(res.data.agentAddress);
         setWallet(res.data.wallet);
         handleSendToAgent(res.data.agentAddress);
@@ -1214,7 +1214,6 @@ function Homepage() {
   const fetchAgent  = async () => {
     if(!primaryWallet?.address) return;
     if(chain === undefined) return;
-    toast.success("feching")
     await 
     axios
     .post(`${URL}/agent/getagent`, {address: primaryWallet?.address, chain: chain})
