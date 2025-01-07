@@ -360,17 +360,16 @@ function Homepage() {
       .then(res => {
         if(res.data.state === "success") {
           toast.success("Rebalance success");
-          setIsLoading(true);
           if(currentStep == "trebalance") setCurrentStep("success")
           else setCurrentStep("deposit");
           setProgressState({...progressState, [currentStep]: true});
         }
         else {
-          setIsLoading(true);
           toast.error("Rebalance failed");
         }
       })
       .catch(()=>setIsLoading(false))
+      setIsLoading(false);
   }
 
   // const handleVault = async (vault: VaultType) => {
