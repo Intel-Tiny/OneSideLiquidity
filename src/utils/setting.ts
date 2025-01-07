@@ -30,6 +30,11 @@ export const changeBorder = [
   "hover:border-yellow-400",
 ]
 
+export const chainIDS = [
+  "arbitrum",
+  "base",
+]
+
 const truncateMiddle = (str: string, maxLength: number = 16): string => {
     if (str.length <= maxLength) return str;
     
