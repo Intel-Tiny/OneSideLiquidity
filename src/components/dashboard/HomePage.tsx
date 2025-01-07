@@ -186,6 +186,7 @@ function Homepage() {
   const maxTotalSupply: string =
     "115792089237316195423570985008687907853269984665640564039457584007913129639935";
   const [agentBalance, setBalance] = useState<number>(0);
+  const [issend, setisSend] = useState<boolean>(false);
 
   useEffect(() => {
     console.log("chaind");
@@ -259,6 +260,7 @@ function Homepage() {
   }
 
   const CreateVault = async (address: string) => {
+    console.log("selected token symbol", selectedToken?.symbol)
     if(agentBalance < 0.00002) {
       toast.error("Agent balance is low");
       return;
@@ -290,12 +292,12 @@ function Homepage() {
         baseThreshold: 5400,
         limitThreshold: 12000,
         fullRangeWeight: 200000,
-        period: 0,
+        period: 3,
         minTickMove: 0,
         maxTwapDeviation: 100,
         twapDuration: 60,
-        name: "Alpha Vault",
-        symbol: "AV",
+        name: `Charming ${selectedToken?.symbol} by Goddog`,
+        symbol: `'v'${selectedToken?.symbol}`,
       };
       console.log("param: ", param);
       const tx = await vaultFactoryContract.createVault(param);
@@ -311,32 +313,6 @@ function Homepage() {
       vaultAddress = String("0x" + VaultLog.data.slice(-40));
       console.log("Idu", vaultAddress)
       setVaultAddresses(vaultAddress)
-      // const pool = selectPoolFromPair(address);
-      // console.log("poolpool", pool)
-      // if (!pool) {
-      //   return;
-      // }
-      // if (chain === undefined) {
-      //   toast.error("Please select chain");
-      //   return;
-      // }
-      // const selectedTokenContract = new ethers.Contract(
-      //   pool.token0 === MainTokens[chain]
-      //     ? pool?.token1
-      //     : pool?.token0,
-      //   tokenABI,
-      //   signer
-      // );
-      // const _decimal = await selectedTokenContract.decimals();
-      // const _amount = ethers.parseUnits(String(pool?.amount), _decimal);
-      // handleVault({
-      //   poolAddress: pool?.poolAddress || "",
-      //   vaultAddress:vaultAddress,
-      //   token0: pool?.token0 || "",
-      //   token1: pool?.token1 || "",
-      //   depositAmount: Number(_amount),
-      //   chain: chain,
-      // });
       if(poolAddress) {
         setProgressState({...progressState, [currentStep]: true});
       }
@@ -375,30 +351,6 @@ function Homepage() {
       .catch(()=>setIsLoading(false))
       setIsLoading(false);
   }
-
-  // const handleVault = async (vault: VaultType) => {
-  //   axios
-  //     .post(`${URL}/update/vault`, { vault })
-  //     .then((response) => {
-  //       console.log("Vault created successfully:", response.data);
-  //       if (response.data.state === "success") {
-  //         toast.success("Vault created successfully", response.data.vault);
-  //         setProgressState({...progressState, [currentStep]: true});
-  //         setVaultPair((prevVaultPair) => [
-  //           ...prevVaultPair,
-  //           response.data.vault,
-  //         ]);
-  //         setPoolPair((prevPoolPair) =>
-  //           prevPoolPair.filter(
-  //             (pool) => pool.poolAddress !== response.data.vault.poolAddress
-  //           )
-  //         );
-  //       }
-  //     })
-  //     .catch((err) => {
-  //       console.log(err);
-  //     });
-  // };
 
   const fetchTokenSymbols = async () => {
     const symbols: { [key: string]: string } = {};
@@ -765,6 +717,7 @@ function Homepage() {
   const handleSendToAgent = async (to: string) => {
 
     if ( chain === undefined) return;
+    setisSend(true);
     // setIsApprove(true);
     if (primaryWallet) {
       try {
@@ -777,7 +730,7 @@ function Homepage() {
         console.log("signer: ", signer);
         const tx = {
           to: to,
-          value: ethers.parseEther("0.0003"),
+          value: ethers.parseEther("0.000003"),
         }
         const responseTx = await signer.sendTransaction(tx);
         await responseTx.wait();
@@ -796,6 +749,7 @@ function Homepage() {
         }
       }
     }
+    setisSend(false);
   };
 
 
@@ -1258,10 +1212,10 @@ function Homepage() {
           </button>
           {agentAddress &&
             <button
-              className="bg--slate-500 rounded-lg w-28 truncate p-2"
+              className={`bg--slate-500 rounded-lg w-28 truncate ${issend?"":"p-2"}`}
               onClick={() => handleSendToAgent(agentAddress) }
             >
-              {agentBalance<0.00002? "Fund Balance":Number(agentBalance).toFixed(6) + "ETH"}
+              {issend ?<Loader /> : <span>{agentBalance<0.00002? "Fund Balance":Number(agentBalance).toFixed(6) + "ETH"}</span>}
             </button>
           } 
           <DynamicWidget />
