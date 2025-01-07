@@ -297,7 +297,7 @@ function Homepage() {
         maxTwapDeviation: 100,
         twapDuration: 60,
         name: `Charming ${selectedToken?.symbol} by Goddog`,
-        symbol: `'v'${selectedToken?.symbol}`,
+        symbol: `v${selectedToken?.symbol}`,
       };
       console.log("param: ", param);
       const tx = await vaultFactoryContract.createVault(param);
