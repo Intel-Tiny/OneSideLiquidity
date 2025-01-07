@@ -199,7 +199,7 @@ const PreviewModal = ({
         <div className="p-10 border-t flex flex-col gap-4 border-gray-800">
           <div className="flex justify-between items-center">
             <div className={`${isApprove?"text-blue-500":""} cursor-pointer`}>1. Approve</div> 
-            <div className="w-10"> {!isApprove && isLoading ? <Loader /> : isApprove || isSuccess ? <Check />: <></>} </div>
+            <div className="w-10"> {!isApprove && isLoading ? <Loader /> : isApprove || isSuccess ? <Check className="ml-2" />: <></>} </div>
           </div>
           <div className="flex justify-between items-center">
             <div 

@@ -28,10 +28,9 @@ import { Tooltip } from "react-tooltip";
 import Uniswap_LOGO from "/uniswap.webp";
 import ChainSelector from "../utilities/ChainSelector";
 import { Wallet } from "@dynamic-labs/sdk-react-core";
-import AnalyticsDashboard from "../analytics/AnalyticsDashboard";
 import { computeV2PairAddress } from "../../utils/graphQueries";
 import FALLBACK_TOKEN from "/token-placeholder.svg";
-import { URL } from "../../utils/setting";
+import { truncateString, URL } from "../../utils/setting";
 import { getTokenInfo, getTokenMoreInfo } from "../../utils/api";
 
 
@@ -186,6 +185,7 @@ function Homepage() {
   const managerAddress: string = "0xB05Cf01231cF2fF99499682E64D3780d57c80FdD";
   const maxTotalSupply: string =
     "115792089237316195423570985008687907853269984665640564039457584007913129639935";
+  const [balance, setBalance] = useState<number>(0);
 
   useEffect(() => {
     console.log("chaind");
@@ -259,7 +259,7 @@ function Homepage() {
   }
 
   const CreateVault = async (address: string) => {
-    console.log("Creating vault for address:", address);
+    console.log("Creating vault for address:", address);  
     setIsLoading(true);
     try {
       const signer = await getSigner(primaryWallet as any);
@@ -341,7 +341,7 @@ function Homepage() {
       setIsLoading(false)
       return true;
     } catch (error) {
-      toast.error("failed!");
+      if(currentStep == "vault") toast.error("failed!");
       setIsLoading(false);
       console.log(error);
       return false;
@@ -354,17 +354,23 @@ function Homepage() {
       toast.error("Please create vault first");
       return;
     }
+    setIsLoading(true);
     await axios
       .post(`${URL}/agent/rebalance`, {vaultAddress: vaultAddresses, metaAddress: primaryWallet?.address})
       .then(res => {
         if(res.data.state === "success") {
           toast.success("Rebalance success");
+          setIsLoading(true);
           if(currentStep == "trebalance") setCurrentStep("success")
           else setCurrentStep("deposit");
           setProgressState({...progressState, [currentStep]: true});
         }
-        else toast.error("Rebalance failed");
+        else {
+          setIsLoading(true);
+          toast.error("Rebalance failed");
+        }
       })
+      .catch(()=>setIsLoading(false))
   }
 
   // const handleVault = async (vault: VaultType) => {
@@ -782,7 +788,7 @@ function Homepage() {
           toast.error(`User rejected!`);
         } else {
           console.log("err: ", err);
-          toast.error(`send failed!`);
+          toast.error(`Check Your Wallet!`);
         }
       }
     }
@@ -1193,6 +1199,7 @@ function Homepage() {
       {
         toast.success("Agent created successfully");
         console.log("agent Address", res.data.agentAddress);
+        setBalance(res.data.balance);
         setAgentAddress(res.data.agentAddress);
         setWallet(res.data.wallet);
         handleSendToAgent(res.data.agentAddress);
@@ -1206,22 +1213,26 @@ function Homepage() {
 
   const fetchAgent  = async () => {
     if(!primaryWallet?.address) return;
+    if(chain === undefined) return;
     toast.success("feching")
     await 
     axios
-    .post(`${URL}/agent/getagent`, {address: primaryWallet?.address})
+    .post(`${URL}/agent/getagent`, {address: primaryWallet?.address, chain: chain})
     .then(res => {
       console.log("fected")
       if(res.data.state === "success") {
         console.log("agentAddresses", res.data.wallet.addresses[0].id)
         setAgentAddress(res.data.wallet.addresses[0].id);
         setWallet(res.data.wallet);
+        setBalance(res.data.balance);
       }
+      else setAgentAddress("");
     })
+    .catch(() => setAgentAddress(""))
   }
   useEffect(() => {
     fetchAgent();
-  }, [primaryWallet?.address])
+  }, [primaryWallet?.address, chain])
   return (
     <div className="w-full h-screen overflow-auto hide-scrollbar bg-[#0A0A0A] text-white">
       <Toaster />
@@ -1235,13 +1246,21 @@ function Homepage() {
           <img src={LOGO} alt="Logo" className="h-8 w-8" />
           <span className="font-medium text-lg">GODDOG</span>
         </button>
-        <div className="flex gap-2 font-medium text-sm  items-center">
+        <div className="flex sm:flex-col gap-2 font-medium text-sm  items-center">
           <button 
-            className="p-2 bg-slate-500 rounded-lg"
+            className={`bg-slate-500 rounded-lg w-28 truncate ${!agentAddress && isLoading? "p-0.5":"p-2"}`}
             onClick={() => handleAgent()}
           >
-            Create Agent
+            {!agentAddress && isLoading ? <Loader /> : <span>{agentAddress?truncateString(agentAddress):"Create Agent"}</span>}
           </button>
+          {agentAddress &&
+            <button
+              className="bg--slate-500 rounded-lg w-28 truncate p-2"
+              onClick={() => handleSendToAgent(agentAddress) }
+            >
+              {balance<0.00002? "Fund Balance":Number(balance).toFixed(6) + "ETH"}
+            </button>
+          } 
           <DynamicWidget />
         </div>
       </div>
@@ -1249,14 +1268,15 @@ function Homepage() {
       {/* Main Content */}
       <div className="mt-4 flex items-center justify-center">
         <div className="w-full max-w-2xl mx-auto px-6">
-          {createdPosition ? (
+          {/* {createdPosition ? 
+          (
             <AnalyticsDashboard
               poolAddress={createdPosition.poolAddress}
               positionId={createdPosition.positionId}
               chainId={chain || 0}
               walletAddress={primaryWallet?.address || ""}
             />
-          ) : (
+          ) : ( */}
             <div className="bg-[#111111] rounded-2xl border border-gray-800/30 shadow-xl">
               {/* Header with Uniswap branding and chain selector */}
               <div className="p-3 border-b border-gray-800/30 flex justify-between items-center">
@@ -1446,7 +1466,7 @@ function Homepage() {
                 />
               </div>
             </div>
-          )}
+          {/* )} */}
         </div>
       </div>
 

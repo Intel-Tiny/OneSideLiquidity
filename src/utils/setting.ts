@@ -54,5 +54,10 @@ const formatFloatString = (floatString: string): string => {
     return numberValue.toFixed(2);
   }
 
-export default {truncateMiddle, formatFloatString};
+ export const truncateString = (str: string): string => {
+    if (str.length <= 8) return str;
+    return str.slice(0, 4) + '...' + str.slice(-4);
+  };
+
+export default {truncateMiddle, formatFloatString, truncateString};
 
