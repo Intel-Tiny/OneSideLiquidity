@@ -3,8 +3,6 @@ import { X, ExternalLink, Check } from "lucide-react";
 import Loader from "./Loader";
 import FALLBACK_TOKEN from "/token-placeholder.svg";
 
-
-
 interface PreviewModalProps {
   open: boolean;
   onClose: () => void;
@@ -52,7 +50,6 @@ const PreviewModal = ({
   isSuccess,
   chainId,
   positionId,
-  isDeposit,
   isApprove,
   handleApprove,
   poolAddress,
@@ -78,31 +75,11 @@ const PreviewModal = ({
   const StepNames = [
     "Create Vault",
     "Approve Vault",
-    "Test Deposit",
-    "Test Rebalance",
-    "Deposit",
-    "Rebalance",
+    "Initial Deposit",
+    "Rebalance Vault (via Agent)",
+    "Deposit Remainder",
+    "Rebalance Vault (via Agent)",
   ]
-
-  // const handleAgent = async () => {
-  //   setIsLoading(true)
-  //   await 
-  //   axios.post(`${URL}/agent/creatagent`, {chain: chainId, tokenAddress: selectToken.address})
-  //   .then((res) => {
-  //     console.log("agent Address", res.data);
-  //     if(res.data.state === "success") 
-  //     {
-  //       setProgressState({...progressState, ["agent"]: true});
-  //       setAgentAddress(res.data.agentAddress);
-  //       setWallet(res.data.wallet);
-  //       handleSendToAgent(res.data.agentAddress);
-  //     }
-  //   })
-  //   .catch((err) => {
-  //     console.log(err);
-  //   })
-  //   setIsLoading(false)
-  // }
 
   const hanldeCreate = async () => {
     setIsCreate(true);

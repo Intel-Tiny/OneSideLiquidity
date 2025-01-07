@@ -5,7 +5,7 @@ import { Search, X } from "lucide-react";
 import axios from "axios";
 // import Uniswap_LOGO from "/uniswap.webp";
 //@ts-ignore
-import utils, { chainNames, changeBg, changeColors, MAINSYMBOLS, MainTokens } from "../../utils/setting";
+import utils, { chainIDS, chainNames, changeBg, changeColors, MAINSYMBOLS, MainTokens } from "../../utils/setting";
 // import { getTokenInfo } from "../../utils/api";
 import toast from "react-hot-toast";
 
@@ -173,6 +173,7 @@ const SelectTokenModal: React.FC<SelectTokenModalProps> = ({
   };
 
   const searchTokens = async (query: string) => {
+    console.log("Searching for tokens with query:", query);
     if (!query) {
       setTokens([]);
       return;
@@ -183,7 +184,8 @@ const SelectTokenModal: React.FC<SelectTokenModalProps> = ({
 
     try {
       // If query looks like an address
-      if (query.startsWith("0x") && query.length === 42) {
+      if (query.startsWith("0x") && query.length === 42) 
+      {
         const response = await axios.get(
           `https://api.dexscreener.com/latest/dex/tokens/${query}`
         );
@@ -218,7 +220,12 @@ const SelectTokenModal: React.FC<SelectTokenModalProps> = ({
         const uniqueTokens = new Map<string, TokenInfo>();
 
         for (const pair of response.data.pairs || []) {
+
+          if(pair?.chainId === chainIDS[chain]) {
+            console.log("hererere")
           const token = pair.baseToken;
+          console.log("token: ", pair.chainId);
+          console.log("pair: ", pair.chainId);
           if (!uniqueTokens.has(token.address)) {
             uniqueTokens.set(token.address, {
               address: token.address,
@@ -232,6 +239,7 @@ const SelectTokenModal: React.FC<SelectTokenModalProps> = ({
           }
         }
         setTokens(Array.from(uniqueTokens.values()));
+      }
       }
     } catch (err) {
       setError("Failed to fetch tokens");
@@ -260,6 +268,13 @@ const SelectTokenModal: React.FC<SelectTokenModalProps> = ({
       toast.error("Please select chain!");
       return;
     }
+    let isPool = await checkPoolExists(token.address, MainTokens[chain], 10000);
+    if (isPool !== false && isPool !== true) {
+      toast.success("Pool Already Exists! Create a Vault!");
+      setAddress(isPool);
+      // return; // Exit the loop if the pool exists
+    }
+    else setAddress("");
     // if(poolAddress) return;
 
 

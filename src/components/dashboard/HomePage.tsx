@@ -185,7 +185,7 @@ function Homepage() {
   const managerAddress: string = "0xB05Cf01231cF2fF99499682E64D3780d57c80FdD";
   const maxTotalSupply: string =
     "115792089237316195423570985008687907853269984665640564039457584007913129639935";
-  const [balance, setBalance] = useState<number>(0);
+  const [agentBalance, setBalance] = useState<number>(0);
 
   useEffect(() => {
     console.log("chaind");
@@ -259,6 +259,10 @@ function Homepage() {
   }
 
   const CreateVault = async (address: string) => {
+    if(agentBalance < 0.00002) {
+      toast.error("Agent balance is low");
+      return;
+    }
     console.log("Creating vault for address:", address);  
     setIsLoading(true);
     try {
@@ -286,7 +290,7 @@ function Homepage() {
         baseThreshold: 5400,
         limitThreshold: 12000,
         fullRangeWeight: 200000,
-        period: 3,
+        period: 0,
         minTickMove: 0,
         maxTwapDeviation: 100,
         twapDuration: 60,
@@ -1257,7 +1261,7 @@ function Homepage() {
               className="bg--slate-500 rounded-lg w-28 truncate p-2"
               onClick={() => handleSendToAgent(agentAddress) }
             >
-              {balance<0.00002? "Fund Balance":Number(balance).toFixed(6) + "ETH"}
+              {agentBalance<0.00002? "Fund Balance":Number(agentBalance).toFixed(6) + "ETH"}
             </button>
           } 
           <DynamicWidget />
@@ -1508,6 +1512,7 @@ function Homepage() {
               success: false
             });
             setIsApprove(false);
+            setIsLoading(false);
             setCurrentStep("");
             setPreviewShow(false);
             if (isSuccess) {
