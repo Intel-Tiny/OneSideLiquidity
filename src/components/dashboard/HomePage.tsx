@@ -1,41 +1,44 @@
 /* eslint-disable */
-import { useEffect } from "react";
+import { useEffect, useState, ChangeEvent } from "react";
+import { ethers } from "ethers";
+import univ3prices from "@thanpolas/univ3prices";
+import { getSigner } from "@dynamic-labs/ethers-v6";
+import { base, arbitrum } from "viem/chains";
+import axios from "axios";
+import { DynamicWidget, useDynamicContext } from "@dynamic-labs/sdk-react-core";
+import { Wallet } from "@dynamic-labs/sdk-react-core";
+
 import { ChevronDown } from "lucide-react";
+import { Tooltip } from "react-tooltip";
+import { Toaster, toast } from "react-hot-toast";
+
 import BASE from "/Base.svg";
+import Uniswap_LOGO from "/uniswap.webp";
 import ARBITRUM from "/arbitrum.svg";
-const LOGO =
-  "https://ivory-accurate-pig-375.mypinata.cloud/ipfs/QmNxKrGR1ZJ3bKYdyYXf8tuTtKF3zaDShmmFdFABfXFdJQ?pinataGatewayToken=Yn-z4l06l9aFDk0xk-gQmyfHbcCrqKcsqSbuEqjtGUOHqRX5DEWFe-t-7SxbqmMf";
-import { useState, ChangeEvent } from "react";
+import FALLBACK_TOKEN from "/token-placeholder.svg";
+
 import { TokenList } from "../../utils/tokenList";
 import {
   factoryABI,
   nonfungiblePositionManagerABI,
   vaultFactoryABI,
   vaultABI,
+  tokenABI,
 } from "../../utils/constants";
-import { DynamicWidget, useDynamicContext } from "@dynamic-labs/sdk-react-core";
+import { computeV2PairAddress } from "../../utils/graphQueries";
+import { truncateString, URL } from "../../utils/setting";
+// import { getTokenInfo, getTokenMoreInfo } from "../../utils/api";
+
 import SelectTokenModal from "../utilities/SelectTokenModal";
 import PreviewModal from "../utilities/PreviewModal";
-import { base, arbitrum } from "viem/chains";
-import axios from "axios";
-import { getSigner } from "@dynamic-labs/ethers-v6";
-import { ethers } from "ethers";
 import Loader from "../utilities/Loader";
-import { Toaster, toast } from "react-hot-toast";
-import InteractiveLiquidityVisualization from "../utilities/Motion";
-import univ3prices from "@thanpolas/univ3prices";
-import { Tooltip } from "react-tooltip";
-import Uniswap_LOGO from "/uniswap.webp";
 import ChainSelector from "../utilities/ChainSelector";
-import { Wallet } from "@dynamic-labs/sdk-react-core";
-import { computeV2PairAddress } from "../../utils/graphQueries";
-import FALLBACK_TOKEN from "/token-placeholder.svg";
-import { truncateString, URL } from "../../utils/setting";
-import { getTokenInfo, getTokenMoreInfo } from "../../utils/api";
-
+import InteractiveLiquidityVisualization from "../utilities/Motion";
 
 type DynamicWallet = Wallet<any>;
 
+const LOGO =
+  "https://ivory-accurate-pig-375.mypinata.cloud/ipfs/QmNxKrGR1ZJ3bKYdyYXf8tuTtKF3zaDShmmFdFABfXFdJQ?pinataGatewayToken=Yn-z4l06l9aFDk0xk-gQmyfHbcCrqKcsqSbuEqjtGUOHqRX5DEWFe-t-7SxbqmMf";
 const Icon = [
   {
     icon: ARBITRUM,
@@ -56,12 +59,10 @@ const Icon = [
     vaultFactoryAddress: "0x5B7B8b487D05F77977b7ABEec5F922925B9b2aFa",
   },
 ];
-
 const MainTokens = [
   "0x45940000009600102a1c002f0097c4a500fa00ab",
   "0xDDf7d080C82b8048BAAe54e376a3406572429b4e",
-]
-
+];
 const BasicTokens = [
   [
     "WETH",
@@ -97,37 +98,6 @@ interface ProgressState {
   success: boolean;
   [key: string]: boolean; // Add index signature
 }
-interface PoolType {
-  poolAddress: string;
-  positionId: string;
-  token0: string;
-  token1: string;
-  fee: number;
-  lowerTick: number;
-  upperTick: number;
-  amount: number;
-  sqrtPrice: number;
-  recipient: string;
-  chain: number;
-  mainToken?: string;
-}
-
-interface VaultType {
-  poolAddress: string;
-  vaultAddress: string;
-  token0: string;
-  token1: string;
-  depositAmount: number;
-  chain: number;
-  mainToken?: string;
-}
-
-const tokenABI = [
-  // Only include the approve function
-  "function approve(address spender, uint256 amount) public returns (bool)",
-  "function allowance(address owner, address spender) public view returns (uint256)",
-  "function decimals() public view returns (uint256)",
-];
 
 const handleImageError = (
   event: React.SyntheticEvent<HTMLImageElement, Event>
@@ -136,9 +106,11 @@ const handleImageError = (
 };
 
 function Homepage() {
+  const { primaryWallet } = useDynamicContext() as {
+    primaryWallet: DynamicWallet | null;
+  };
   const [isSelectChain, setSelectChain] = useState(false);
   const [chain, setChain] = useState<number | undefined>(undefined);
-  const [wallet, setWallet] = useState<any>(null);
   const [myTokenList, setMyTokenList] = useState<any>(null);
   const [selectedToken, setSelectedToken] = useState<SelectedTokenType | null>(
     null
@@ -149,10 +121,7 @@ function Homepage() {
   const [amount, setAmount] = useState("");
   const [tokenPrice, setTokenPrice] = useState(0);
   const [vaultAddresses, setVaultAddresses] = useState<string>("");
-  
-  const { primaryWallet } = useDynamicContext() as {
-    primaryWallet: DynamicWallet | null;
-  };
+
   const [isButtonDisabled, setIsButtonDisabled] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isApprove, setIsApprove] = useState(false);
@@ -164,7 +133,7 @@ function Homepage() {
     deposit: false,
     trebalance: false,
     success: false,
-  })
+  });
   const [currentStep, setCurrentStep] = useState<string>("");
   const [isAgent, setAgent] = useState<boolean>(false);
   const [approvedAmount, setApprovedAmount] = useState(0);
@@ -173,66 +142,52 @@ function Homepage() {
   const [upperTick, setUpperTick] = useState<number>(0);
   const [lowRange] = useState(0.958);
   const [highRange] = useState(3.0);
-  const [poolPair, setPoolPair] = useState<Array<PoolType>>([]);
-  const [vaultPair, setVaultPair] = useState<Array<VaultType>>([]);
-  const [poolAddress, setAddress] = useState<string>("");  
+  // const [poolPair, setPoolPair] = useState<Array<PoolType>>([]);
+  // const [vaultPair, setVaultPair] = useState<Array<VaultType>>([]);
+  const [poolAddress, setAddress] = useState<string>("");
   const [isDeposit, setIsDeposit] = useState<boolean>(false);
   const [agentAddress, setAgentAddress] = useState<string>("");
-  const [tokenSymbols, setTokenSymbols] = useState<{ [key: string]: string }>(
-    {}
-  );
+  // const [tokenSymbols, setTokenSymbols] = useState<{ [key: string]: string }>(
+  //   {}
+  // );
   const [depositAddress, setDepositAddress] = useState<string>("");
+  const [createdPosition, setCreatedPosition] = useState<{
+    poolAddress: string;
+    positionId: string;
+  } | null>(null);
+  const [maxClicked, setMaxClicked] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
+
   const managerAddress: string = "0xB05Cf01231cF2fF99499682E64D3780d57c80FdD";
   const maxTotalSupply: string =
     "115792089237316195423570985008687907853269984665640564039457584007913129639935";
+  const minLimitBalance = 0.00002;
   const [agentBalance, setBalance] = useState<number>(0);
   const [issend, setisSend] = useState<boolean>(false);
 
-  useEffect(() => {
-    console.log("chaind");
-    const vault = vaultPair.find(
-      (vault) => vault.vaultAddress === depositAddress
-    );
-    console.log("vault", vault, "depositAddress", depositAddress);
-    if (vault) {
-      SetToken(vault);
-    }
-  }, [depositAddress]);
-  const SetToken = async (vault: VaultType) => {
-    let TokenData: any = null;
-    if (MainTokens.includes(vault.token0)) {
-      TokenData = await getTokenMoreInfo(vault.token1);
-    } else {
-      TokenData = await getTokenMoreInfo(vault.token0);
-    }
-    setIsDeposit(true);
-
-    console.log("TokenData", TokenData);
-    if (TokenData) {
-      let tokenData = {
-        name: TokenData.baseToken.name,
-        symbol: TokenData.baseToken.symbol,
-        logoURI: TokenData.baseToken.logoURI,
-        address: TokenData.baseToken.address,
-        decimals: TokenData.baseToken.decimals,
-      };
-      setSelectedToken(tokenData);
-      setSelectedTokenInfo(tokenData);
-    }
-  };
-  // const selectPoolFromPair = (poolAddress: string) => {
-  //   const selectedPool = poolPair.find(
-  //     (pool) => pool.poolAddress === poolAddress
-  //   );
-  //   return selectedPool;
+  // const SetToken = async (vault: VaultType) => {
+  //   let TokenData: any = null;
+  //   // if (MainTokens.includes(vault.token0)) {
+  //   //   TokenData = await getTokenMoreInfo(vault.token1);
+  //   // } else {
+  //   //   TokenData = await getTokenMoreInfo(vault.token0);
+  //   // }
+  //   setIsDeposit(true);
+  //   if (TokenData) {
+  //     let tokenData = {
+  //       name: TokenData.baseToken.name,
+  //       symbol: TokenData.baseToken.symbol,
+  //       logoURI: TokenData.baseToken.logoURI,
+  //       address: TokenData.baseToken.address,
+  //       decimals: TokenData.baseToken.decimals,
+  //     };
+  //     setSelectedToken(tokenData);
+  //     setSelectedTokenInfo(tokenData);
+  //   }
   // };
 
-  useEffect(() => {
-    handleNextStep(currentStep);
-  },[currentStep])
-
   const handleNextStep = async (step: string) => {
-    if(progressState[step]) {
+    if (progressState[step]) {
       return;
     }
     switch (step) {
@@ -257,15 +212,13 @@ function Homepage() {
       default:
         break;
     }
-  }
+  };
 
   const CreateVault = async (address: string) => {
-    console.log("selected token symbol", selectedToken?.symbol)
-    if(agentBalance < 0.00002) {
+    if (agentBalance < minLimitBalance) {
       toast.error("Agent balance is low");
       return;
     }
-    console.log("Creating vault for address:", address);  
     setIsLoading(true);
     try {
       const signer = await getSigner(primaryWallet as any);
@@ -273,7 +226,6 @@ function Homepage() {
         console.error("No signer available");
         return false;
       }
-      console.log("chain: ", chain);
       if (chain != 0 && chain != 1) {
         console.error("chain not selected");
         return false;
@@ -296,82 +248,63 @@ function Homepage() {
         minTickMove: 0,
         maxTwapDeviation: 100,
         twapDuration: 60,
-        name: `Charming ${selectedToken?.symbol} by Goddog`,
+        name: `Charming ${selectedToken?.symbol} by GODDOG`,
         symbol: `v${selectedToken?.symbol}`,
       };
-      console.log("param: ", param);
       const tx = await vaultFactoryContract.createVault(param);
       const receipt = await tx.wait();
-      console.log("receipt: ", receipt);
-      console.log("receipt.logs: ", receipt.logs);
       let vaultAddress = "";
       const VaultLog = receipt.logs.find(
         (log: { topics: string[]; Data: any }) =>
           log.topics[0] === ethers.id("NewVault(address)")
       );
-      console.log("VaultLog: ", VaultLog);
       vaultAddress = String("0x" + VaultLog.data.slice(-40));
-      console.log("Idu", vaultAddress)
-      setVaultAddresses(vaultAddress)
-      if(poolAddress) {
-        setProgressState({...progressState, [currentStep]: true});
+      setVaultAddresses(vaultAddress);
+      if (poolAddress) {
+        setProgressState({ ...progressState, [currentStep]: true });
       }
       setCurrentStep("approve");
       toast.success("Successfully created new vault!");
-      setIsLoading(false)
+      setIsLoading(false);
       return true;
     } catch (error) {
-      if(currentStep == "vault") toast.error("failed!");
+      if (currentStep == "vault") toast.error("failed!");
       setIsLoading(false);
       console.log(error);
       return false;
     }
   };
 
-
   const handleRebalnance = async () => {
-    if(!vaultAddresses) {
+    if (!vaultAddresses) {
       toast.error("Please create vault first");
       return;
     }
     setIsLoading(true);
+    console.log("vaultAddresses ------> ", vaultAddresses)
     await axios
-      .post(`${URL}/agent/rebalance`, {vaultAddress: vaultAddresses, metaAddress: primaryWallet?.address})
-      .then(res => {
-        if(res.data.state === "success") {
+      .post(`${URL}/agent/rebalance`, {
+        vaultAddress: vaultAddresses,
+        metaAddress: primaryWallet?.address,
+      })
+      .then((res) => {
+        if (res.data.state === "success") {
           toast.success("Rebalance success");
-          if(currentStep == "trebalance") setCurrentStep("success")
+          if (currentStep == "trebalance") setCurrentStep("success");
           else setCurrentStep("deposit");
-          setProgressState({...progressState, [currentStep]: true});
-        }
-        else {
+          setProgressState({ ...progressState, [currentStep]: true });
+        } else {
           toast.error("Rebalance failed");
         }
       })
-      .catch(()=>setIsLoading(false))
-      setIsLoading(false);
-  }
-
-  const fetchTokenSymbols = async () => {
-    const symbols: { [key: string]: string } = {};
-    for (const pool of poolPair) {
-      symbols[pool.token0] = await getTokenInfo(pool.token0);
-      symbols[pool.token1] = await getTokenInfo(pool.token1);
-    }
-    for (const vault of vaultPair) {
-      symbols[vault.token0] = await getTokenInfo(vault.token0);
-      symbols[vault.token1] = await getTokenInfo(vault.token1);
-    }
-    setTokenSymbols(symbols);
+      .catch(() => setIsLoading(false));
+    let balance = await getTokenBalance(selectedToken?.address as string);
+    if (balance) setSelectedTokenBalance(balance);
+    setIsLoading(false);
   };
-  const [createdPosition, setCreatedPosition] = useState<{
-    poolAddress: string;
-    positionId: string;
-  } | null>(null);
-  const [maxClicked, setMaxClicked] = useState(false);
-  const [isSuccess, setIsSuccess] = useState(false);
 
   const getTokenBalance = async (tokenAddress: string) => {
+    if (tokenAddress === undefined) return;
     if (!primaryWallet?.address) return "0";
     try {
       const signer = await getSigner(primaryWallet as any);
@@ -379,19 +312,10 @@ function Homepage() {
         console.error("No signer available");
         return "0";
       }
-
-      const contract = new ethers.Contract(
-        tokenAddress,
-        [
-          "function balanceOf(address) view returns (uint256)",
-          "function decimals() view returns (uint256)",
-        ],
-        signer
-      );
-
-      const balance = await contract.balanceOf(primaryWallet.address);
+      const contract = new ethers.Contract(tokenAddress, tokenABI, signer);
+      const balance1 = await contract.balanceOf(primaryWallet.address);
       const _decimal = await contract.decimals();
-      return ethers.formatUnits(balance, Number(_decimal));
+      return ethers.formatUnits(balance1, Number(_decimal));
     } catch (error) {
       console.error("Error fetching balance:", error);
       return "0";
@@ -412,49 +336,9 @@ function Homepage() {
         setTokenPrice(0);
         console.log("price error", error);
       });
-    console.log("item: ", item);
-    const balance = await getTokenBalance(item.address);
-    console.log("balance: ", balance);
-    setSelectedTokenBalance(balance);
+    let balance = await getTokenBalance(selectedToken?.address as string);
+    if (balance) setSelectedTokenBalance(balance);
   };
-  useEffect(() => {
-    console.log("this is load");
-    axios
-      .get(`${URL}/load/uniswap`, {
-        headers: {
-          "ngrok-skip-browser-warning": "true",
-        },
-      })
-      .then((response) => {
-        if (response.data.state === "success") {
-          setPoolPair(response.data.pool);
-          setVaultPair(response.data.vault);
-          console.log("poolPair", response.data);
-        } else {
-          console.log("error", response.data.state);
-        }
-      })
-      .catch((error) => {
-        console.log("error", error);
-      });
-  }, []);
-
-  useEffect(() => {
-    if (poolPair) {
-      fetchTokenSymbols();
-    }
-  }, [poolPair]);
-
-  useEffect(() => {
-    console.log("this is chain ", chain)
-    const updateBalance = async () => {
-      if (selectedToken) {
-        const balance = await getTokenBalance(selectedToken.address);
-        setSelectedTokenBalance(balance);
-      }
-    };
-    updateBalance();
-  }, [selectedToken, primaryWallet, chain]);
 
   const handleInputChange = async (event: ChangeEvent<HTMLInputElement>) => {
     const value = event.target.value;
@@ -472,15 +356,6 @@ function Homepage() {
     }
   };
 
-  useEffect(() => {
-    console.log("approvedAmount: ", approvedAmount);
-    if (approvedAmount >= Number(amount) && amount != "") {
-      setIsApprove(true);
-    } else {
-      setIsApprove(false);
-    }
-  }, [amount]);
-
   const handleRangeClick = () => {
     if (Number(selectedTokenBalance)) {
       const balance = String(Number(selectedTokenBalance));
@@ -490,37 +365,6 @@ function Homepage() {
       setIsButtonDisabled(false);
     }
   };
-
-  useEffect(() => {
-    if (selectedToken) {
-      setMaxClicked(false);
-      setIsApprove(false);
-      setAmount("");
-    }
-  }, [selectedToken]);
-
-  useEffect(() => {
-    if (amount !== "") {
-      if (parseFloat(amount) > parseFloat(selectedTokenBalance)) {
-        setIsButtonDisabled(true);
-        // setIsApprove(false);
-      } else {
-        setIsButtonDisabled(false);
-        if (approvedAmount >= parseFloat(amount)) {
-          setIsApprove(true);
-        } else {
-          // setIsApprove(false);
-        }
-      }
-    } else {
-      setIsButtonDisabled(true);
-      setIsApprove(false);
-    }
-  }, [amount, selectedTokenBalance, approvedAmount]);
-
-  useEffect(() => {
-    setMyTokenList(TokenList);
-  }, []);
 
   const switchNetwork = async () => {
     try {
@@ -546,107 +390,18 @@ function Homepage() {
     }
   };
 
-  useEffect(() => {
-    handleNetworkSwitch();
-  }, [chain, primaryWallet]);
-
-  useEffect(() => {
-    const updatePricesAndTicks = async () => {
-      if (!selectedToken || chain === undefined) {
-        return;
-      }
-      if (chain === undefined) {
-        toast.error("Please select Chain!");
-        return;
-      }
-      try {
-        let address1 = selectedToken.address;
-        let address2 = MainTokens[chain];
-        let token0: string, token1: string;
-
-        if (address1.toLowerCase() < address2.toLowerCase()) {
-          token0 = address1;
-          token1 = address2;
-        } else {
-          token0 = address2;
-          token1 = address1;
-        }
-
-        const [price1, price2] = await calculateTokenPrices(token0, token1);
-        if (!price1 || !price2) {
-          console.error("Failed to fetch token prices");
-          return;
-        }
-
-        let currentPrice = Number(price1) / Number(price2);
-        const state = token0 === address1;
-
-        // Calculate price ranges
-        const lowerPrice = state
-          ? currentPrice * lowRange
-          : currentPrice / lowRange;
-        const upperPrice = state
-          ? currentPrice * highRange
-          : currentPrice / highRange;
-
-        // Calculate ticks
-        const resLower = getPriceAndTickFromValues(lowerPrice);
-        const resUpper = getPriceAndTickFromValues(upperPrice);
-        const resCurrent = getPriceAndTickFromValues(currentPrice);
-
-        if (
-          resLower.tick !== undefined &&
-          resUpper.tick !== undefined &&
-          resCurrent.tick !== undefined
-        ) {
-          const tickSpacing = 200; // Use 200 for this pool
-
-          // Adjust ticks based on token order and spacing
-          const baseTickLower = state ? resLower.tick : -resUpper.tick;
-          const baseTickUpper = state ? resUpper.tick : -resLower.tick;
-
-          // Round to nearest valid tick
-          const normalizedLowerTick =
-            Math.ceil(baseTickLower / tickSpacing) * tickSpacing;
-          const normalizedUpperTick =
-            Math.floor(baseTickUpper / tickSpacing) * tickSpacing;
-
-          console.log("Setting ticks:", {
-            lower: normalizedLowerTick,
-            upper: normalizedUpperTick,
-            current: resCurrent.tick,
-            currentPrice,
-            lowerPrice,
-            upperPrice,
-          });
-
-          setLowerTick(normalizedLowerTick);
-          setUpperTick(normalizedUpperTick);
-          setCurrentTick(resCurrent.tick);
-        }
-      } catch (error) {
-        console.error("Error updating prices and ticks:", error);
-      }
-    };
-
-    updatePricesAndTicks();
-  }, [selectedToken, chain, lowRange, highRange]);
-
   const checkPoolExists = async (
     tokenA: string,
     tokenB: string,
     fee: number
   ) => {
     if (chain === undefined) return false;
-
     const signer = await getSigner(primaryWallet as any);
-
     const factoryContract = new ethers.Contract(
       Icon[chain].factoryAddress,
       factoryABI,
       signer
     );
-
     try {
       const poolAddress = await factoryContract.getPool(tokenA, tokenB, fee);
       if (poolAddress === ethers.ZeroAddress) {
@@ -671,9 +426,7 @@ function Homepage() {
   };
 
   const handleApprove = async () => {
-
     if (!selectedToken || chain === undefined) return;
-    // setIsApprove(true);
     setIsLoading(true);
     if (primaryWallet) {
       try {
@@ -685,23 +438,20 @@ function Homepage() {
         );
         const _decimal = await selectedTokenContract.decimals();
         let targetAddress = Icon[chain].routerAddress;
-        console.log("targetAddress: ", targetAddress);
         if (poolAddress) targetAddress = vaultAddresses;
-        console.log("targetAddress: ", targetAddress);
         const tx = await selectedTokenContract.approve(
           targetAddress,
           ethers.parseUnits(amount, _decimal)
         );
         await tx.wait();
         toast.success("Successfully approved!");
-        setProgressState({...progressState, [currentStep]: true});
-        if(poolAddress) setCurrentStep("maxDeposit");
+        setProgressState({ ...progressState, [currentStep]: true });
+        if (poolAddress) setCurrentStep("maxDeposit");
         setIsLoading(false);
-        if(currentStep == "") 
-          {
-            setIsApprove(true);
-            handleAddLiquidity();
-          }
+        if (currentStep == "") {
+          setIsApprove(true);
+          handleAddLiquidity();
+        }
       } catch (err) {
         setIsLoading(false);
         setIsApprove(false);
@@ -713,33 +463,28 @@ function Homepage() {
       }
     }
   };
-  
-  const handleSendToAgent = async (to: string) => {
 
-    if ( chain === undefined) return;
+  const handleSendToAgent = async (to: string) => {
+    if (chain === undefined) return;
     setisSend(true);
-    // setIsApprove(true);
     if (primaryWallet) {
       try {
-        console.log("wallet", wallet);
         const signer = await getSigner(primaryWallet as any);
-        if(!signer) {
+        if (!signer) {
           console.log("signer is null");
           return;
         }
         console.log("signer: ", signer);
         const tx = {
           to: to,
-          value: ethers.parseEther("0.000003"),
-        }
+          value: ethers.parseEther("0.0003"),
+        };
         const responseTx = await signer.sendTransaction(tx);
         await responseTx.wait();
-        console.log("responseTx: ", responseTx, "tx", responseTx.hash);
         toast.success("Successfully approved!");
         setCurrentStep("vault");
         setIsLoading(false);
         fetchAgent();
-        // handleRebalnance()
       } catch (err) {
         if (String(err).includes("Error: user rejected action")) {
           toast.error(`User rejected!`);
@@ -751,8 +496,6 @@ function Homepage() {
     }
     setisSend(false);
   };
-
-
 
   const getRecentPrice = async (address: string) => {
     const url = `https://api.dexscreener.com/latest/dex/tokens/${address}`;
@@ -787,21 +530,12 @@ function Homepage() {
         targetAddress
       );
       const _decimal = await selectedTokenContract.decimals();
-
       const approvedAmount1 = ethers.formatUnits(approvedAmount0, _decimal);
-
       setApprovedAmount(Number(approvedAmount1));
     } catch (error) {
       console.error("Error fetching approved amount:", error);
     }
   };
-
-  useEffect(() => {
-    if (selectedToken) {
-      getApprovedAmountOfSelectedToken();
-      setAmount("");
-    }
-  }, [selectedToken]);
 
   const handleDeposit = async () => {
     if (!selectedToken || chain === undefined) return;
@@ -812,7 +546,6 @@ function Homepage() {
         toast.error("No signer available");
         return;
       }
-      console.log("vaultAddresses: ", vaultAddresses);
       const vaultContract = new ethers.Contract(
         vaultAddresses,
         vaultABI,
@@ -826,10 +559,10 @@ function Homepage() {
         signer
       );
       const _decimal = await selectedTokenContract.decimals();
-      console.log("HandleMAXDEPOSIT", (Number(amount)/100).toString())
-      const _amount = currentStep==="maxDeposit"?ethers.parseUnits(amount, _decimal)/BigInt(10):ethers.parseUnits(amount, _decimal)* BigInt(9) /BigInt(10);
-      console.log("amount", _amount)
-      console.log("valtcontrat", await vaultContract.name())
+      const _amount =
+        currentStep === "maxDeposit"
+          ? ethers.parseUnits(amount, _decimal) / BigInt(10)
+          : (ethers.parseUnits(amount, _decimal) * BigInt(9)) / BigInt(10);
       const tx = await vaultContract.deposit(
         same ? _amount : 0,
         !same ? _amount : 0,
@@ -837,39 +570,20 @@ function Homepage() {
         0,
         primaryWallet?.address
       );
-      console.log("suec!")
       await tx.wait();
-      console.log("ok", currentStep)
-      setProgressState({...progressState, [currentStep]: true});
-      if(currentStep==="deposit") setCurrentStep("trebalance");
+      setProgressState({ ...progressState, [currentStep]: true });
+      if (currentStep === "deposit") setCurrentStep("trebalance");
       else setCurrentStep("rebalance");
-      // axios
-      //   .post(`${URL}/update/deposit`, {
-      //     vaultAddress: depositAddress,
-      //     depositAmount: Number(_amount),
-      //   })
-      //   .then((response) => {
-      //     if (response.data.state === "success") {
-      //       toast.success("Successfully deposited");
-      //       setProgressState({...progressState, [currentStep]: true});
-      //     } else {
-      //       toast.error("Error updating deposit");
-      //     }
-      //   })
-      //   .catch((error) => {
-      //     console.error("Error updating deposit:", error);
-      //     toast.error("Error updating deposit");
-      //   });
       setIsLoading(false);
     } catch (error) {
       console.log(error);
       setIsLoading(false);
     }
   };
+
   const handleAddLiquidity = async () => {
     if (!selectedToken || chain === undefined) return;
     setIsLoading(true);
-
     try {
       // Input validation
       if (!amount || parseFloat(amount) <= 0) {
@@ -877,7 +591,6 @@ function Homepage() {
         setIsLoading(false);
         return;
       }
-
       const signer = await getSigner(primaryWallet as any);
       if (!signer) {
         toast.error("No signer available");
@@ -893,7 +606,7 @@ function Homepage() {
       );
 
       // Validate token order
-      if(chain === undefined) {
+      if (chain === undefined) {
         toast.error("Please select a chain");
         setIsLoading(false);
         return;
@@ -901,7 +614,6 @@ function Homepage() {
       let address1 = selectedToken.address;
       let address2 = MainTokens[chain];
       const fee = BigInt("10000");
-
       let token0: string, token1: string;
       const isToken0 = address1.toLowerCase() < address2.toLowerCase();
       if (isToken0) {
@@ -915,11 +627,7 @@ function Homepage() {
       // Check user's balance
       const tokenContract = new ethers.Contract(
         selectedToken.address,
-        [
-          "function balanceOf(address) view returns (uint256)",
-          "function allowance(address,address) view returns (uint256)",
-          "function decimals() view returns (uint256)",
-        ],
+        tokenABI,
         signer
       );
 
@@ -954,7 +662,6 @@ function Homepage() {
       }
       const [price1, price2] = await calculateTokenPrices(token0, token1);
       let currentPrice = Number(price1) / Number(price2);
-
       const createFunctionSignature =
         "createAndInitializePoolIfNecessary(address,address,uint24,uint160)";
       // Calculate initial sqrt price based on current price
@@ -964,24 +671,16 @@ function Homepage() {
       const upperPrice = isToken0
         ? currentPrice * highRange
         : currentPrice / highRange;
-      console.log("lowerPrice: ", lowerPrice);
-      console.log("upperPrice: ", upperPrice);
       const resLower = getPriceAndTickFromValues(lowerPrice);
-      console.log("resLower: ", resLower.tick);
       const resUpper = getPriceAndTickFromValues(upperPrice);
-      console.log("resUpper: ", resUpper.tick);
       const tickLower = isToken0 ? resLower.tick + 200 : resUpper.tick;
       const tickUpper = isToken0 ? resUpper.tick : resLower.tick - 200;
       const sqrtPrice = resLower.price;
-      console.log("sqrtPrice: ", sqrtPrice);
       const iface = new ethers.Interface(nonfungiblePositionManagerABI);
       const params1 = [token0, token1, fee, BigInt(sqrtPrice)];
-      console.log("params1:", params1);
       const data1 = iface.encodeFunctionData(createFunctionSignature, params1);
-      console.log("data1", data1);
       const mintFunctionSignature =
         "mint((address,address,uint24,int24,int24,uint256,uint256,uint256,uint256,address,uint256))";
-
       const params2 = [
         {
           token0: token0,
@@ -997,8 +696,6 @@ function Homepage() {
           deadline: BigInt(Math.floor(Date.now() / 1000) + 1200),
         },
       ];
-
-      console.log("Estimating gas for mint params:", params2);
       const data2 = iface.encodeFunctionData(mintFunctionSignature, params2);
       const txData = [data1, data2];
       const tx = await nonfungiblePositionManager.multicall(txData);
@@ -1019,26 +716,9 @@ function Homepage() {
         signer
       );
       const poolAddress = await factoryContract.getPool(token0, token1, fee);
-      console.log("positionId: ", positionId);
-      console.log("poolAddress: ", poolAddress);
-
       setCreatedPosition({
         poolAddress,
         positionId: positionId || "",
-      });
-
-      handlePool({
-        poolAddress: poolAddress,
-        positionId: Number(positionId),
-        token0: token0,
-        token1: token1,
-        fee: Number(fee),
-        tickLower: Number(tickLower),
-        tickUpper: Number(tickUpper),
-        amount: Number(amount),
-        recipient: primaryWallet?.address,
-        sqrtPrice: Number(sqrtPrice),
-        chain: chain,
       });
 
       toast.success("Position created successfully!");
@@ -1058,39 +738,6 @@ function Homepage() {
     } finally {
       setIsLoading(false);
     }
-  };
-
-  // const testPool = () => {
-  //   handlePool({
-  //     poolAddress: "0x2B8A4530030021026622e6FaF9265F0aEDa19AC7",
-  //     positionId: "4038558",
-  //     token0: "0x45940000009600102a1c002f0097c4a500fa00ab",
-  //     token1: "0xAB8EBCC9eecc20Bd30c7b75c7b4e8fcCcFBf01aB",
-  //     fee: 10000,
-  //     tickLower: -10600,
-  //     tickUpper: 400,
-  //     amount: 50,
-  //     recipient: primaryWallet?.address,
-  //     sqrtPrice: 10000,
-  //   });
-  // };
-
-  const handlePool = (pool: object) => {
-    axios
-      .post(`${URL}/update/pool`, {
-        pool,
-      })
-      .then((response) => {
-        if (response.data.state === "success") {
-          setPoolPair((prePair) => [...prePair, response.data.pool]);
-        } else {
-          toast.error("Error creating position");
-        }
-      })
-      .catch((error) => {
-        console.error("Error creating position:", error);
-        toast.error("Error creating position");
-      });
   };
 
   const calculateImpermanentLoss = (priceRatio: number) => {
@@ -1138,62 +785,186 @@ function Homepage() {
       return "0";
     }
   };
+
   const handleAgent = async () => {
-    if(agentAddress) {
+    if (agentAddress) {
       toast.error("Already exist");
       return;
     }
-    if(!primaryWallet?.address) {
+    if (!primaryWallet?.address) {
       toast.error("Please connect wallet");
       return;
     }
-    setIsLoading(true)
-    console.log("pri", primaryWallet?.address);
-    await 
-    axios.post(`${URL}/agent/creatagent`, {chain: chain, metaAddress: primaryWallet?.address})
-    .then((res) => {
-      console.log("agent Address", res.data);
-      if(res.data.state === "success") 
-      {
-        toast.success("Agent created successfully");
-        console.log("agent Address", res.data.agentAddress);
-        setBalance(0);
-        setAgentAddress(res.data.agentAddress);
-        setWallet(res.data.wallet);
-        handleSendToAgent(res.data.agentAddress);
-      }
-    })
-    .catch((err) => {
-      console.log(err);
-    })
-    setIsLoading(false)
-  }
+    setIsLoading(true);
+    await axios
+      .post(`${URL}/agent/creatagent`, {
+        chain: chain,
+        metaAddress: primaryWallet?.address,
+      })
+      .then((res) => {
+        if (res.data.state === "success") {
+          toast.success("Agent created successfully");
+          setBalance(0);
+          setAgentAddress(res.data.agentAddress);
+          handleSendToAgent(res.data.agentAddress);
+        }
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+    setIsLoading(false);
+  };
 
-  const fetchAgent  = async () => {
-    if(!primaryWallet?.address) return;
-    if(chain === undefined) return;
-    await 
-    axios
-    .post(`${URL}/agent/getagent`, {address: primaryWallet?.address, chain: chain})
-    .then(res => {
-      console.log("fected")
-      if(res.data.state === "success") {
-        console.log("agentAddresses", res.data.wallet.addresses[0].id)
-        setAgentAddress(res.data.wallet.addresses[0].id);
-        setWallet(res.data.wallet);
-        setBalance(res.data.balance);
+  const fetchAgent = async () => {
+    if (!primaryWallet?.address) return;
+    if (chain === undefined) return;
+    await axios
+      .post(`${URL}/agent/getagent`, {
+        address: primaryWallet?.address,
+        chain: chain,
+      })
+      .then((res) => {
+        if (res.data.state === "success") {
+          setAgentAddress(res.data.wallet.addresses[0].id);
+          setBalance(res.data.balance);
+        } else setAgentAddress("");
+      })
+      .catch(() => setAgentAddress(""));
+  };
+
+  useEffect(() => {
+    handleNextStep(currentStep);
+  }, [currentStep]);
+
+  useEffect(() => {
+    const updateBalance = async () => {
+      if (selectedToken) {
+        let balance = await getTokenBalance(selectedToken?.address as string);
+        if (balance) setSelectedTokenBalance(balance);
       }
-      else setAgentAddress("");
-    })
-    .catch(() => setAgentAddress(""))
-  }
+    };
+    updateBalance();
+  }, [selectedToken, primaryWallet, chain]);
+
+  useEffect(() => {
+    if (approvedAmount >= Number(amount) && amount != "") {
+      setIsApprove(true);
+    } else {
+      setIsApprove(false);
+    }
+  }, [amount]);
+
+  useEffect(() => {
+    if (selectedToken) {
+      setMaxClicked(false);
+      setIsApprove(false);
+      setAmount("");
+    }
+  }, [selectedToken]);
+
+  useEffect(() => {
+    if (amount !== "") {
+      if (parseFloat(amount) > parseFloat(selectedTokenBalance)) {
+        setIsButtonDisabled(true);
+      } else {
+        setIsButtonDisabled(false);
+        if (approvedAmount >= parseFloat(amount)) {
+          setIsApprove(true);
+        } else {
+        }
+      }
+    } else {
+      setIsButtonDisabled(true);
+      setIsApprove(false);
+    }
+  }, [amount, selectedTokenBalance, approvedAmount]);
+
+  useEffect(() => {
+    setMyTokenList(TokenList);
+  }, []);
+
+  useEffect(() => {
+    handleNetworkSwitch();
+  }, [chain, primaryWallet]);
+
+  useEffect(() => {
+    const updatePricesAndTicks = async () => {
+      if (!selectedToken || chain === undefined) {
+        return;
+      }
+      if (chain === undefined) {
+        toast.error("Please select Chain!");
+        return;
+      }
+      try {
+        let address1 = selectedToken.address;
+        let address2 = MainTokens[chain];
+        let token0: string, token1: string;
+        if (address1.toLowerCase() < address2.toLowerCase()) {
+          token0 = address1;
+          token1 = address2;
+        } else {
+          token0 = address2;
+          token1 = address1;
+        }
+        const [price1, price2] = await calculateTokenPrices(token0, token1);
+        if (!price1 || !price2) {
+          console.error("Failed to fetch token prices");
+          return;
+        }
+        let currentPrice = Number(price1) / Number(price2);
+        const state = token0 === address1;
+        // Calculate price ranges
+        const lowerPrice = state
+          ? currentPrice * lowRange
+          : currentPrice / lowRange;
+        const upperPrice = state
+          ? currentPrice * highRange
+          : currentPrice / highRange;
+        // Calculate ticks
+        const resLower = getPriceAndTickFromValues(lowerPrice);
+        const resUpper = getPriceAndTickFromValues(upperPrice);
+        const resCurrent = getPriceAndTickFromValues(currentPrice);
+        if (
+          resLower.tick !== undefined &&
+          resUpper.tick !== undefined &&
+          resCurrent.tick !== undefined
+        ) {
+          const tickSpacing = 200; // Use 200 for this pool
+          // Adjust ticks based on token order and spacing
+          const baseTickLower = state ? resLower.tick : -resUpper.tick;
+          const baseTickUpper = state ? resUpper.tick : -resLower.tick;
+          // Round to nearest valid tick
+          const normalizedLowerTick =
+            Math.ceil(baseTickLower / tickSpacing) * tickSpacing;
+          const normalizedUpperTick =
+            Math.floor(baseTickUpper / tickSpacing) * tickSpacing;
+          setLowerTick(normalizedLowerTick);
+          setUpperTick(normalizedUpperTick);
+          setCurrentTick(resCurrent.tick);
+        }
+      } catch (error) {
+        console.error("Error updating prices and ticks:", error);
+      }
+    };
+
+    updatePricesAndTicks();
+  }, [selectedToken, chain, lowRange, highRange]);
+
+  useEffect(() => {
+    if (selectedToken) {
+      getApprovedAmountOfSelectedToken();
+      setAmount("");
+    }
+  }, [selectedToken]);
+
   useEffect(() => {
     fetchAgent();
-  }, [primaryWallet?.address, chain])
+  }, [primaryWallet?.address, chain]);
+
   return (
     <div className="w-full h-screen overflow-auto hide-scrollbar bg-[#0A0A0A] text-white">
       <Toaster />
-
       {/* Title Section with Logo and Wallet */}
       <div className="relative flex items-center justify-between p-4 border-b border-gray-800/30">
         <button
@@ -1204,20 +975,38 @@ function Homepage() {
           <span className="font-medium text-lg">GODDOG</span>
         </button>
         <div className="flex sm:flex-col gap-2 font-medium text-sm  items-center">
-          <button 
-            className={`bg-slate-500 rounded-lg w-28 truncate ${!agentAddress && isLoading? "p-0.5":"p-2"}`}
+          <button
+            className={`bg-slate-500 rounded-lg w-28 truncate ${
+              !agentAddress && isLoading ? "p-0.5" : "p-2"
+            }`}
             onClick={() => handleAgent()}
           >
-            {!agentAddress && isLoading ? <Loader /> : <span>{agentAddress?truncateString(agentAddress):"Create Agent"}</span>}
+            {!agentAddress && isLoading ? (
+              <Loader />
+            ) : (
+              <span>
+                {agentAddress ? truncateString(agentAddress) : "Create Agent"}
+              </span>
+            )}
           </button>
-          {agentAddress &&
+          {agentAddress && (
             <button
-              className={`bg--slate-500 rounded-lg w-28 truncate ${issend?"":"p-2"}`}
-              onClick={() => handleSendToAgent(agentAddress) }
+              className={`bg--slate-500 rounded-lg w-28 truncate ${
+                issend ? "" : "p-2"
+              }`}
+              onClick={() => handleSendToAgent(agentAddress)}
             >
-              {issend ?<Loader /> : <span>{agentBalance<0.00002? "Fund Balance":Number(agentBalance).toFixed(6) + "ETH"}</span>}
+              {issend ? (
+                <Loader />
+              ) : (
+                <span>
+                  {agentBalance < minLimitBalance
+                    ? "Fund Balance"
+                    : Number(agentBalance).toFixed(6) + "ETH"}
+                </span>
+              )}
             </button>
-          } 
+          )}
           <DynamicWidget />
         </div>
       </div>
@@ -1234,195 +1023,184 @@ function Homepage() {
               walletAddress={primaryWallet?.address || ""}
             />
           ) : ( */}
-            <div className="bg-[#111111] rounded-2xl border border-gray-800/30 shadow-xl">
-              {/* Header with Uniswap branding and chain selector */}
-              <div className="p-3 border-b border-gray-800/30 flex justify-between items-center">
-                <div
-                  className="flex items-center"
-                  // onClick={() => testPool()}
-                >
-                  <img src={Uniswap_LOGO} alt="Uniswap" className="h-5 w-5" />
-                  <span className="text-xs text-gray-400">
-                    Powered by Uniswap V3
-                  </span>
-                </div>
-                <div className="relative flex">
-                  <ChainSelector
-                    chain={chain}
-                    isOpen={isSelectChain}
-                    setIsOpen={setSelectChain}
-                    chains={Icon}
-                    onChainSelect={setChain}
-                    modalName="Select Chain"
-                  />
-                </div>
+          <div className="bg-[#111111] rounded-2xl border border-gray-800/30 shadow-xl">
+            {/* Header with Uniswap branding and chain selector */}
+            <div className="p-3 border-b border-gray-800/30 flex justify-between items-center">
+              <div className="flex items-center">
+                <img src={Uniswap_LOGO} alt="Uniswap" className="h-5 w-5" />
+                <span className="text-xs text-gray-400">
+                  Powered by Uniswap V3
+                </span>
               </div>
-
-              {/* Token Input */}
-              <div className="p-3">
-                <div className="bg-[#0A0A0A] rounded-xl p-3">
-                  <div className="flex items-center justify-between gap-4">
-                    <div className="flex-1">
-                      <div className="text-xs text-gray-400 mb-1">Deposit</div>
-                      <input
-                        type="text"
-                        className="w-full text-4xl bg-transparent outline-none font-medium"
-                        placeholder="0"
-                        value={amount}
-                        onChange={handleInputChange}
-                      />
-                      <div className="text-xs text-gray-400 mt-1">
-                        ~${(parseFloat(amount || "0") * tokenPrice).toFixed(2)}
-                      </div>
-                    </div>
-                    <div
-                      className={`flex items-center gap-2 px-3 py-2 rounded-xl cursor-pointer transition-all duration-200 min-w-[120px] h-[40px] ${
-                        selectedToken
-                          ? "bg-[#1B1B1B] hover:bg-[#2D2D2D]"
-                          : chain === 1
-                          ? "bg-[#FFE804] text-black hover:bg-[#FFE804]/90"
-                          : chain === 0? "bg-purple-500 hover:bg-purple-600"
-                          : "bg-[#1B1B1B] hover:bg-[#2D2D2D]"
-                      }`}
-                      onClick={
-                        () => {
-                          if(chain === undefined )  {
-                            toast.error("Please Select Chain");
-                            return;
-                          }
-                          setShow(true)
-                        }
-                      }
-                    >
-                      {selectedToken ? (
-                        <>
-                          <div className="flex items-center gap-2">
-                            <div className={`w-6 h-6 rounded-full bg-[#2D2D2D] flex items-center justify-center overflow-hidden`}>
-                              <img
-                                src={selectedToken.logoURI || FALLBACK_TOKEN}
-                                alt={selectedToken.symbol}
-                                className="w-full h-full object-cover"
-                                onError={handleImageError}
-                              />
-                            </div>
-                            <span className="font-medium">
-                              {selectedToken.symbol}
-                            </span>
-                          </div>
-                        </>
-                      ) : (
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium">Select Token</span>
-                        </div>
-                      )}
-                      <ChevronDown
-                        className={`h-4 w-4 ml-auto ${
-                          selectedToken
-                            ? "text-gray-400"
-                            : chain !== undefined
-                            ? "text-black"
-                            : "text-gray-400"
-                        }`}
-                      />
-                    </div>
-                  </div>
-                  <div className="flex justify-end mt-1.5 text-xs text-gray-400">
-                    <div className="flex items-center gap-2">
-                      <span>Balance: {selectedTokenBalance}</span>
-                      <button
-                        onClick={handleRangeClick}
-                        disabled={!selectedToken || maxClicked}
-                        className={`px-2 py-0.5 text-xs rounded transition-colors ${
-                          !selectedToken || maxClicked
-                            ? "bg-[#2D2D2D] text-gray-500 cursor-not-allowed"
-                            : "bg-[#FFE804] text-black hover:bg-[#FFE804]/90"
-                        }`}
-                      >
-                        Max
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Action Button */}
-              <div className="px-3 pb-3">
-                <button
-                  className={`w-full py-3 rounded-xl font-medium transition-all duration-200 ${
-                    chain === undefined || !selectedToken
-                      ? "bg-[#1B1B1B] text-gray-400 cursor-not-allowed"
-                      : isLoading
-                      ? "bg-blue-500/90 text-white hover:bg-blue-500"
-                      : isApprove
-                      ? "bg-[#FFE804] text-black hover:bg-[#FFE804]/90"
-                      : amount && !isButtonDisabled
-                      ? "bg-[#FFE804] text-black hover:bg-[#FFE804]/90"
-                      : "bg-[#1B1B1B] text-gray-400 cursor-not-allowed"
-                  }`}
-                  onClick={() => {
-                    if (chain === undefined) {
-                      setSelectChain(true);
-                    } else if (!selectedToken) {
-                      setShow(true);
-                    } 
-                    // else if (
-                    //   !isLoading &&
-                    //   !isApprove &&
-                    //   amount &&
-                    //   !isButtonDisabled
-                    // ) {
-                    //   handleApprove();
-                    // }
-                     else if (amount) {
-                      setPreviewShow(true);
-                    }
-                  }}
-                  disabled={
-                    chain === undefined ||
-                    !selectedToken ||
-                    isButtonDisabled ||
-                    (!amount && !isApprove)
-                  }
-                >
-                  {chain === undefined ? (
-                    "Select Chain"
-                  ) : !selectedToken ? (
-                    "Select Token"
-                  ) : amount === "" ? (
-                    "Enter Amount"
-                  ) : isLoading ? (
-                    <Loader />
-                  ) : amount ? (
-                    "Preview"
-                  ) : (
-                    "Approve"
-                  )}
-                </button>
-              </div>
-
-              {/* Liquidity Visualization */}
-              <div className="p-3 border-t border-gray-800/30">
-                <InteractiveLiquidityVisualization
-                  currentTick={currentTick}
-                  lowerTick={lowerTick}
-                  upperTick={upperTick}
-                  amount={amount}
-                  initialUsdValue={parseFloat(amount || "0") * tokenPrice}
-                  calculatedAPR={selectedToken ? calculateAPR() : "0%"}
-                  selectedToken={selectedToken}
-                  chainId={chain || 0}
-                  v2PairAddress={
-                    selectedToken && chain !== undefined 
-                      ? computeV2PairAddress(
-                          Icon[chain].factoryAddress,
-                          selectedToken.address,
-                          MainTokens[chain]
-                        )
-                      : undefined
-                  }
+              <div className="relative flex">
+                <ChainSelector
+                  chain={chain}
+                  isOpen={isSelectChain}
+                  setIsOpen={setSelectChain}
+                  chains={Icon}
+                  onChainSelect={setChain}
+                  modalName="Select Chain"
                 />
               </div>
             </div>
+
+            {/* Token Input */}
+            <div className="p-3">
+              <div className="bg-[#0A0A0A] rounded-xl p-3">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex-1">
+                    <div className="text-xs text-gray-400 mb-1">Deposit</div>
+                    <input
+                      type="text"
+                      className="w-full text-4xl bg-transparent outline-none font-medium"
+                      placeholder="0"
+                      value={amount}
+                      onChange={handleInputChange}
+                    />
+                    <div className="text-xs text-gray-400 mt-1">
+                      ~${(parseFloat(amount || "0") * tokenPrice).toFixed(2)}
+                    </div>
+                  </div>
+                  <div
+                    className={`flex items-center gap-2 px-3 py-2 rounded-xl cursor-pointer transition-all duration-200 min-w-[120px] h-[40px] ${
+                      selectedToken
+                        ? "bg-[#1B1B1B] hover:bg-[#2D2D2D]"
+                        : chain === 1
+                        ? "bg-[#FFE804] text-black hover:bg-[#FFE804]/90"
+                        : chain === 0
+                        ? "bg-purple-500 hover:bg-purple-600"
+                        : "bg-[#1B1B1B] hover:bg-[#2D2D2D]"
+                    }`}
+                    onClick={() => {
+                      if (chain === undefined) {
+                        toast.error("Please Select Chain");
+                        return;
+                      }
+                      setShow(true);
+                    }}
+                  >
+                    {selectedToken ? (
+                      <>
+                        <div className="flex items-center gap-2">
+                          <div
+                            className={`w-6 h-6 rounded-full bg-[#2D2D2D] flex items-center justify-center overflow-hidden`}
+                          >
+                            <img
+                              src={selectedToken.logoURI || FALLBACK_TOKEN}
+                              alt={selectedToken.symbol}
+                              className="w-full h-full object-cover"
+                              onError={handleImageError}
+                            />
+                          </div>
+                          <span className="font-medium">
+                            {selectedToken.symbol}
+                          </span>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">Select Token</span>
+                      </div>
+                    )}
+                    <ChevronDown
+                      className={`h-4 w-4 ml-auto ${
+                        selectedToken
+                          ? "text-gray-400"
+                          : chain !== undefined
+                          ? "text-black"
+                          : "text-gray-400"
+                      }`}
+                    />
+                  </div>
+                </div>
+                <div className="flex justify-end mt-1.5 text-xs text-gray-400">
+                  <div className="flex items-center gap-2">
+                    <span>Balance: {selectedTokenBalance}</span>
+                    <button
+                      onClick={handleRangeClick}
+                      disabled={!selectedToken || maxClicked}
+                      className={`px-2 py-0.5 text-xs rounded transition-colors ${
+                        !selectedToken || maxClicked
+                          ? "bg-[#2D2D2D] text-gray-500 cursor-not-allowed"
+                          : "bg-[#FFE804] text-black hover:bg-[#FFE804]/90"
+                      }`}
+                    >
+                      Max
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Action Button */}
+            <div className="px-3 pb-3">
+              <button
+                className={`w-full py-3 rounded-xl font-medium transition-all duration-200 ${
+                  chain === undefined || !selectedToken
+                    ? "bg-[#1B1B1B] text-gray-400 cursor-not-allowed"
+                    : isLoading
+                    ? "bg-blue-500/90 text-white hover:bg-blue-500"
+                    : isApprove
+                    ? "bg-[#FFE804] text-black hover:bg-[#FFE804]/90"
+                    : amount && !isButtonDisabled
+                    ? "bg-[#FFE804] text-black hover:bg-[#FFE804]/90"
+                    : "bg-[#1B1B1B] text-gray-400 cursor-not-allowed"
+                }`}
+                onClick={() => {
+                  if (chain === undefined) {
+                    setSelectChain(true);
+                  } else if (!selectedToken) {
+                    setShow(true);
+                  } else if (amount) {
+                    setPreviewShow(true);
+                  }
+                }}
+                disabled={
+                  chain === undefined ||
+                  !selectedToken ||
+                  isButtonDisabled ||
+                  (!amount && !isApprove)
+                }
+              >
+                {chain === undefined ? (
+                  "Select Chain"
+                ) : !selectedToken ? (
+                  "Select Token"
+                ) : amount === "" ? (
+                  "Enter Amount"
+                ) : isLoading ? (
+                  <Loader />
+                ) : amount ? (
+                  "Preview"
+                ) : (
+                  "Approve"
+                )}
+              </button>
+            </div>
+
+            {/* Liquidity Visualization */}
+            <div className="p-3 border-t border-gray-800/30">
+              <InteractiveLiquidityVisualization
+                currentTick={currentTick}
+                lowerTick={lowerTick}
+                upperTick={upperTick}
+                amount={amount}
+                initialUsdValue={parseFloat(amount || "0") * tokenPrice}
+                calculatedAPR={selectedToken ? calculateAPR() : "0%"}
+                selectedToken={selectedToken}
+                chainId={chain || 0}
+                v2PairAddress={
+                  selectedToken && chain !== undefined
+                    ? computeV2PairAddress(
+                        Icon[chain].factoryAddress,
+                        selectedToken.address,
+                        MainTokens[chain]
+                      )
+                    : undefined
+                }
+              />
+            </div>
+          </div>
           {/* )} */}
         </div>
       </div>
@@ -1439,10 +1217,10 @@ function Homepage() {
           setSelectedToken={setSelectedTokenInfo}
           setSelectedTokenBalance={setSelectedTokenBalance}
           CreateVault={CreateVault}
-          poolPair={poolPair}
-          vaultPair={vaultPair}
+          // poolPair={poolPair}
+          // vaultPair={vaultPair}
           checkPoolExists={checkPoolExists}
-          tokenSymbols={tokenSymbols}
+          // tokenSymbols={tokenSymbols}
           setIsDeposit={setIsDeposit}
           poolAddress={poolAddress}
           setAddress={setAddress}
@@ -1463,7 +1241,7 @@ function Homepage() {
               rebalance: false,
               deposit: false,
               trebalance: false,
-              success: false
+              success: false,
             });
             setIsApprove(false);
             setIsLoading(false);
@@ -1471,7 +1249,6 @@ function Homepage() {
             setPreviewShow(false);
             if (isSuccess) {
               setIsSuccess(false);
-              // Reset other necessary states if needed
             }
           }}
           onApprove={isDeposit ? handleDeposit : handleAddLiquidity}
@@ -1494,7 +1271,6 @@ function Homepage() {
           poolAddress={poolAddress}
           setAddress={setAddress}
           handleApprove={handleApprove}
-          setWallet={setWallet}
           agentAddress={agentAddress}
           handleSendToAgent={handleSendToAgent}
           setAgentAddress={setAgentAddress}

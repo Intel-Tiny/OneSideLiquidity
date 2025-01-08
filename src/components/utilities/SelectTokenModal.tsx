@@ -16,30 +16,30 @@ import "../../index.css";
 
 
 
-interface PoolType {
-  poolAddress: string;
-  positionId: string;
-  token0: string;
-  token1: string;
-  fee: number;
-  lowerTick: number;
-  upperTick: number;
-  amount: number;
-  sqrtPrice: number;
-  recipient: string;
-  chain: number;
-  mainToken?: string;
-}
+// interface PoolType {
+//   poolAddress: string;
+//   positionId: string;
+//   token0: string;
+//   token1: string;
+//   fee: number;
+//   lowerTick: number;
+//   upperTick: number;
+//   amount: number;
+//   sqrtPrice: number;
+//   recipient: string;
+//   chain: number;
+//   mainToken?: string;
+// }
 
-interface VaultType {
-  poolAddress: string;
-  vaultAddress: string;
-  token0: string;
-  token1: string;
-  depositAmount: number;
-  chain: number;
-  mainToken?: string;
-}
+// interface VaultType {
+//   poolAddress: string;
+//   vaultAddress: string;
+//   token0: string;
+//   token1: string;
+//   depositAmount: number;
+//   chain: number;
+//   mainToken?: string;
+// }
 
 interface SelectTokenModalProps {
   open: boolean;
@@ -51,9 +51,9 @@ interface SelectTokenModalProps {
   setSelectedToken: (token: any) => void;
   setSelectedTokenBalance: (balance: string) => void;
   CreateVault: (address: string) => void;
-  poolPair: Array<PoolType>;
-  vaultPair: Array<VaultType>;
-  tokenSymbols: any;
+  // poolPair: Array<PoolType>;
+  // vaultPair: Array<VaultType>;
+  // tokenSymbols: any;
   poolAddress: string;
   setAddress: (address: string) => void;
   setDepositAdress: (address: string) => void;
@@ -80,12 +80,12 @@ const SelectTokenModal: React.FC<SelectTokenModalProps> = ({
   setSelectedToken,
   setSelectedTokenBalance,
 //@ts-ignore
-  poolPair,
+  // poolPair,
   CreateVault,
 //@ts-ignore
-  vaultPair,
+  // vaultPair,
 //@ts-ignore
-  tokenSymbols,
+  // tokenSymbols,
   setDepositAdress,
   setIsDeposit,
   checkPoolExists,

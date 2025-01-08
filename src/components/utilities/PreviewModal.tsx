@@ -33,7 +33,6 @@ interface PreviewModalProps {
   progressState: any;
   setProgressState: (state: any) => void;
   setCurrentStep: (step: string) => void;
-  setWallet: (wallet: any) => void;
   handleSendToAgent: (to: string) => void;
 }
 

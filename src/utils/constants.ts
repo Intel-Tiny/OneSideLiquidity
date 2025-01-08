@@ -1973,3 +1973,11 @@ export const vaultABI = [
     type: "function",
   },
 ];
+
+export const tokenABI = [
+  // Only include the approve function
+  "function approve(address spender, uint256 amount) public returns (bool)",
+  "function allowance(address owner, address spender) public view returns (uint256)",
+  "function decimals() public view returns (uint256)",
+  "function balanceOf(address to) public view returns (uint256)",
+];
