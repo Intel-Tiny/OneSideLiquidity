@@ -6,7 +6,6 @@ import FALLBACK_TOKEN from "/token-placeholder.svg";
 interface PreviewModalProps {
   open: boolean;
   onClose: () => void;
-  onApprove: () => void;
   selectToken: {
     name: string;
     symbol: string;

@@ -3,21 +3,26 @@ import { useEffect, useState, ChangeEvent } from "react";
 import { ethers } from "ethers";
 import univ3prices from "@thanpolas/univ3prices";
 import { getSigner } from "@dynamic-labs/ethers-v6";
-import { base, arbitrum } from "viem/chains";
 import axios from "axios";
 import { DynamicWidget, useDynamicContext } from "@dynamic-labs/sdk-react-core";
 import { Wallet } from "@dynamic-labs/sdk-react-core";
-
 import { ChevronDown } from "lucide-react";
 import { Tooltip } from "react-tooltip";
 import { Toaster, toast } from "react-hot-toast";
-
-import BASE from "/Base.svg";
 import Uniswap_LOGO from "/uniswap.webp";
-import ARBITRUM from "/arbitrum.svg";
 import FALLBACK_TOKEN from "/token-placeholder.svg";
-
 import { TokenList } from "../../utils/tokenList";
+import { computeV2PairAddress } from "../../utils/graphQueries";
+import SelectTokenModal from "../utilities/SelectTokenModal";
+import PreviewModal from "../utilities/PreviewModal";
+import Loader from "../utilities/Loader";
+import ChainSelector from "../utilities/ChainSelector";
+import InteractiveLiquidityVisualization from "../utilities/Motion";
+import { truncateString, URL } from "../../utils/setting";
+import { LOGO } from "../../utils/setting";
+import { Icon } from "../../utils/setting";
+import { MainTokens } from "../../utils/setting";
+import { BasicTokens } from "../../utils/setting";
 import {
   factoryABI,
   nonfungiblePositionManagerABI,
@@ -25,61 +30,8 @@ import {
   vaultABI,
   tokenABI,
 } from "../../utils/constants";
-import { computeV2PairAddress } from "../../utils/graphQueries";
-import { truncateString, URL } from "../../utils/setting";
-// import { getTokenInfo, getTokenMoreInfo } from "../../utils/api";
-
-import SelectTokenModal from "../utilities/SelectTokenModal";
-import PreviewModal from "../utilities/PreviewModal";
-import Loader from "../utilities/Loader";
-import ChainSelector from "../utilities/ChainSelector";
-import InteractiveLiquidityVisualization from "../utilities/Motion";
 
 type DynamicWallet = Wallet<any>;
-
-const LOGO =
-  "https://ivory-accurate-pig-375.mypinata.cloud/ipfs/QmNxKrGR1ZJ3bKYdyYXf8tuTtKF3zaDShmmFdFABfXFdJQ?pinataGatewayToken=Yn-z4l06l9aFDk0xk-gQmyfHbcCrqKcsqSbuEqjtGUOHqRX5DEWFe-t-7SxbqmMf";
-const Icon = [
-  {
-    icon: ARBITRUM,
-    name: "Arbitrum",
-    chainId: arbitrum.id,
-    routerAddress: "0xC36442b4a4522E871399CD717aBDD847Ab11FE88",
-    factoryAddress: "0x1F98431c8aD98523631AE4a59f267346ea31F984",
-    HermesTokenAddress: "0x45940000009600102a1c002f0097c4a500fa00ab",
-    vaultFactoryAddress: "0x5B7B8b487D05F77977b7ABEec5F922925B9b2aFa",
-  },
-  {
-    icon: BASE,
-    name: "Base",
-    chainId: base.id,
-    routerAddress: "0x03a520b32C04BF3bEEf7BEb72E919cf822Ed34f1",
-    factoryAddress: "0x33128a8fC17869897dcE68Ed026d694621f6FDfD",
-    GoddogTokenAddress: "0xDDf7d080C82b8048BAAe54e376a3406572429b4e",
-    vaultFactoryAddress: "0x5B7B8b487D05F77977b7ABEec5F922925B9b2aFa",
-  },
-];
-const MainTokens = [
-  "0x45940000009600102a1c002f0097c4a500fa00ab",
-  "0xDDf7d080C82b8048BAAe54e376a3406572429b4e",
-];
-const BasicTokens = [
-  [
-    "WETH",
-    "USDT",
-    "USDC.e",
-    "DAI",
-    "ARB",
-    "GMX",
-    "MAGIC",
-    "RDNT",
-    "LINK",
-    "UNI",
-    "wstETH",
-    "WBTC",
-  ],
-  ["WETH", "USDT", "USDC", "DAI", "TOSHI"],
-];
 
 interface SelectedTokenType {
   name: string;
@@ -142,14 +94,9 @@ function Homepage() {
   const [upperTick, setUpperTick] = useState<number>(0);
   const [lowRange] = useState(0.958);
   const [highRange] = useState(3.0);
-  // const [poolPair, setPoolPair] = useState<Array<PoolType>>([]);
-  // const [vaultPair, setVaultPair] = useState<Array<VaultType>>([]);
   const [poolAddress, setAddress] = useState<string>("");
   const [isDeposit, setIsDeposit] = useState<boolean>(false);
   const [agentAddress, setAgentAddress] = useState<string>("");
-  // const [tokenSymbols, setTokenSymbols] = useState<{ [key: string]: string }>(
-  //   {}
-  // );
   const [depositAddress, setDepositAddress] = useState<string>("");
   const [createdPosition, setCreatedPosition] = useState<{
     poolAddress: string;
@@ -165,27 +112,70 @@ function Homepage() {
   const [agentBalance, setBalance] = useState<number>(0);
   const [issend, setisSend] = useState<boolean>(false);
 
-  // const SetToken = async (vault: VaultType) => {
-  //   let TokenData: any = null;
-  //   // if (MainTokens.includes(vault.token0)) {
-  //   //   TokenData = await getTokenMoreInfo(vault.token1);
-  //   // } else {
-  //   //   TokenData = await getTokenMoreInfo(vault.token0);
-  //   // }
-  //   setIsDeposit(true);
-  //   if (TokenData) {
-  //     let tokenData = {
-  //       name: TokenData.baseToken.name,
-  //       symbol: TokenData.baseToken.symbol,
-  //       logoURI: TokenData.baseToken.logoURI,
-  //       address: TokenData.baseToken.address,
-  //       decimals: TokenData.baseToken.decimals,
-  //     };
-  //     setSelectedToken(tokenData);
-  //     setSelectedTokenInfo(tokenData);
-  //   }
-  // };
+  const getButtonStyle = () => {
+    if (chain === undefined || !selectedToken || (!amount && !isApprove)) {
+      return "bg-[#1B1B1B] text-gray-400 cursor-not-allowed";
+    }
+    if (isLoading) {
+      return "bg-blue-500/90 text-white hover:bg-blue-500";
+    }
+    if (isApprove || (amount && !isButtonDisabled)) {
+      return "bg-[#FFE804] text-black hover:bg-[#FFE804]/90";
+    }
+    return "bg-[#1B1B1B] text-gray-400 cursor-not-allowed";
+  };
 
+  const getButtonContent = () => {
+    if (isLoading && !agentAddress) {
+      return <Loader />;
+    }
+    return (
+      <span>
+        {agentAddress ? truncateString(agentAddress) : "Create Agent"}
+      </span>
+    );
+  };
+  const isButtonDisabled1 = () => 
+    chain === undefined || !selectedToken || isButtonDisabled || (!amount && !isApprove);
+  
+  const closePreviewModal = () => {
+    setProgressState({
+      agent: false,
+      vault: false,
+      approve: false,
+      maxDeposit: false,
+      rebalance: false,
+      deposit: false,
+      trebalance: false,
+      success: false,
+    });
+    setIsApprove(false);
+    setIsLoading(false);
+    setCurrentStep("");
+    setPreviewShow(false);
+    if (isSuccess) {
+      setIsSuccess(false);
+    }
+  }
+  const handleButtonClick = () => {
+    if (chain === undefined) {
+      setSelectChain(true);
+    } else if (!selectedToken) {
+      setShow(true);
+    } else if (amount) {
+      setPreviewShow(true);
+    }
+  };
+  
+  const getButtonText = () => {
+    if (chain === undefined) return "Select Chain";
+    if (!selectedToken) return "Select Token";
+    if (amount === "") return "Enter Amount";
+    if (isLoading) return <Loader />;
+    if (amount) return "Preview";
+    return "Approve";
+  };
+  
   const handleNextStep = async (step: string) => {
     if (progressState[step]) {
       return;
@@ -976,19 +966,13 @@ function Homepage() {
         </button>
         <div className="flex sm:flex-col gap-2 font-medium text-sm  items-center">
           <button
-            className={`bg-slate-500 rounded-lg w-28 truncate ${
-              !agentAddress && isLoading ? "p-0.5" : "p-2"
-            }`}
-            onClick={() => handleAgent()}
-          >
-            {!agentAddress && isLoading ? (
-              <Loader />
-            ) : (
-              <span>
-                {agentAddress ? truncateString(agentAddress) : "Create Agent"}
-              </span>
-            )}
-          </button>
+          className={`bg-slate-500 rounded-lg w-28 truncate ${
+            isLoading && !agentAddress ? 'p-0.5' : 'p-2'
+          }`}
+          onClick={handleAgent}
+        >
+          {getButtonContent()}
+        </button>
           {agentAddress && (
             <button
               className={`bg--slate-500 rounded-lg w-28 truncate ${
@@ -1136,45 +1120,12 @@ function Homepage() {
             <div className="px-3 pb-3">
               <button
                 className={`w-full py-3 rounded-xl font-medium transition-all duration-200 ${
-                  chain === undefined || !selectedToken
-                    ? "bg-[#1B1B1B] text-gray-400 cursor-not-allowed"
-                    : isLoading
-                    ? "bg-blue-500/90 text-white hover:bg-blue-500"
-                    : isApprove
-                    ? "bg-[#FFE804] text-black hover:bg-[#FFE804]/90"
-                    : amount && !isButtonDisabled
-                    ? "bg-[#FFE804] text-black hover:bg-[#FFE804]/90"
-                    : "bg-[#1B1B1B] text-gray-400 cursor-not-allowed"
+                  getButtonStyle()
                 }`}
-                onClick={() => {
-                  if (chain === undefined) {
-                    setSelectChain(true);
-                  } else if (!selectedToken) {
-                    setShow(true);
-                  } else if (amount) {
-                    setPreviewShow(true);
-                  }
-                }}
-                disabled={
-                  chain === undefined ||
-                  !selectedToken ||
-                  isButtonDisabled ||
-                  (!amount && !isApprove)
-                }
+                onClick={handleButtonClick}
+                disabled={isButtonDisabled1()}
               >
-                {chain === undefined ? (
-                  "Select Chain"
-                ) : !selectedToken ? (
-                  "Select Token"
-                ) : amount === "" ? (
-                  "Enter Amount"
-                ) : isLoading ? (
-                  <Loader />
-                ) : amount ? (
-                  "Preview"
-                ) : (
-                  "Approve"
-                )}
+                {getButtonText()}
               </button>
             </div>
 
@@ -1217,10 +1168,7 @@ function Homepage() {
           setSelectedToken={setSelectedTokenInfo}
           setSelectedTokenBalance={setSelectedTokenBalance}
           CreateVault={CreateVault}
-          // poolPair={poolPair}
-          // vaultPair={vaultPair}
           checkPoolExists={checkPoolExists}
-          // tokenSymbols={tokenSymbols}
           setIsDeposit={setIsDeposit}
           poolAddress={poolAddress}
           setAddress={setAddress}
@@ -1233,25 +1181,8 @@ function Homepage() {
         <PreviewModal
           open={previewShow}
           onClose={() => {
-            setProgressState({
-              agent: false,
-              vault: false,
-              approve: false,
-              maxDeposit: false,
-              rebalance: false,
-              deposit: false,
-              trebalance: false,
-              success: false,
-            });
-            setIsApprove(false);
-            setIsLoading(false);
-            setCurrentStep("");
-            setPreviewShow(false);
-            if (isSuccess) {
-              setIsSuccess(false);
-            }
+            closePreviewModal();
           }}
-          onApprove={isDeposit ? handleDeposit : handleAddLiquidity}
           selectToken={selectedToken}
           progressState={progressState}
           tokenAmount={amount}
